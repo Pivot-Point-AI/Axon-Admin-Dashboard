@@ -1,8 +1,17 @@
 import type { HTTPValidationError } from "./types";
 
-export const API_BASE_URL =
+// The backend is only served over plain HTTP. Browsers block that as mixed
+// content when the app itself is loaded over HTTPS (e.g. on Vercel), so in
+// the browser we call it through the same-origin `/backend` proxy defined in
+// next.config.ts, which forwards server-side to the real HTTP origin. Server
+// components / SSR hit the backend directly since mixed-content rules don't
+// apply outside the browser.
+const BACKEND_ORIGIN =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
   "http://20.205.184.153:5013";
+
+export const API_BASE_URL =
+  typeof window !== "undefined" ? "/backend" : BACKEND_ORIGIN;
 
 // The Admin Dashboard API (auth/login, institutions, logs — all bearer-protected)
 // is served under a separate /admin prefix on the same host.
@@ -37,15 +46,24 @@ function buildUrl(
   query?: RequestOptions["query"],
   baseUrl: string = API_BASE_URL,
 ) {
-  const url = new URL(`${baseUrl}${path}`);
+  // baseUrl may be relative (the same-origin "/backend" proxy in the
+  // browser), which the URL constructor can't parse without a base — build
+  // the query string manually instead so both relative and absolute
+  // baseUrls work.
+  let url = `${baseUrl}${path}`;
   if (query) {
+    const params = new URLSearchParams();
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined && value !== null) {
-        url.searchParams.set(key, String(value));
+        params.set(key, String(value));
       }
     }
+    const qs = params.toString();
+    if (qs) {
+      url += (url.includes("?") ? "&" : "?") + qs;
+    }
   }
-  return url.toString();
+  return url;
 }
 
 function extractErrorMessage(status: number, body: unknown): string {

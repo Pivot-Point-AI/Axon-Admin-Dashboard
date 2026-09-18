@@ -5,6 +5,20 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   /* config options here */
+  async rewrites() {
+    // The backend only serves plain HTTP. Proxy client requests through this
+    // same-origin (HTTPS) path so browsers don't block them as mixed content.
+    const backendOrigin = (
+      process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://20.205.184.153:5013"
+    ).replace(/\/$/, "");
+
+    return [
+      {
+        source: "/backend/:path*",
+        destination: `${backendOrigin}/:path*`,
+      },
+    ];
+  },
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
