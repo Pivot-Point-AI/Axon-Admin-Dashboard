@@ -1,0 +1,44 @@
+{
+  "common": {
+    "home": "Home",
+    "edit": "Edit",
+    "close": "Close",
+    "saveChanges": "Save Changes",
+    "viewMore": "View More",
+    "delete": "Delete",
+    "filter": "Filter",
+    "seeAll": "See all"
+  },
+  "sidebar": {
+    "groups": {
+      "menu": "Menu"
+    },
+    "badges": {
+      "new": "new",
+      "pro": "pro"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "overview": "Overview",
+      "institutions": "Institutions",
+      "logs": "Logs",
+      "chatHistory": "Chat History",
+            "userProfile": "User Profile"
+
+    }
+  },
+  "header": {
+    "searchPlaceholder": "Search or type command...",
+    "toggleSidebar": "Toggle Sidebar"
+  },
+  "userDropdown": {
+    "editProfile": "Edit profile",
+    "language": "Language",
+    "signOut": "Sign out"
+  },
+  "notFound": {
+    "error": "ERROR",
+    "message": "We can’t seem to find the page you are looking for!",
+    "backHome": "Back to Home Page"
+  }
+}
