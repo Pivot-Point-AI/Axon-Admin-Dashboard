@@ -7,11 +7,17 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSidebar } from "../context/SidebarContext";
 import {
+  BoltIcon,
   BoxCubeIcon,
+  BoxIconLine,
   ChatIcon,
   ChevronDownIcon,
+  DocsIcon,
   GridIcon,
+  GroupIcon,
   HorizontaLDots,
+  ListIcon,
+  MailIcon,
   TableIcon,
   UserCircleIcon,
 } from "../icons/index";
@@ -51,6 +57,36 @@ const navItems: NavItem[] = [
     icon: <ChatIcon />,
     key: "chatHistory",
     path: "/chat-history",
+  },
+  {
+    icon: <GroupIcon />,
+    key: "users",
+    path: "/users",
+  },
+  {
+    icon: <ListIcon />,
+    key: "configurations",
+    path: "/configurations",
+  },
+  {
+    icon: <BoxIconLine />,
+    key: "masterData",
+    path: "/master-data",
+  },
+  {
+    icon: <MailIcon />,
+    key: "messages",
+    path: "/messages",
+  },
+  {
+    icon: <BoltIcon />,
+    key: "flows",
+    path: "/flows",
+  },
+  {
+    icon: <DocsIcon />,
+    key: "languages",
+    path: "/languages",
   },
   {
     icon: <UserCircleIcon />,

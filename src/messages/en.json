@@ -23,8 +23,13 @@
       "institutions": "Institutions",
       "logs": "Logs",
       "chatHistory": "Chat History",
-            "userProfile": "User Profile"
-
+      "users": "Dashboard Users",
+      "configurations": "Configurations",
+      "masterData": "Master Data",
+      "messages": "Messages",
+      "flows": "Flows",
+      "languages": "Languages",
+      "userProfile": "User Profile"
     }
   },
   "header": {

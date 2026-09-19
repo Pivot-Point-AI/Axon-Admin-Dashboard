@@ -1,5 +1,6 @@
 import ApiStatusBadge from "@/components/common/ApiStatusBadge";
 import DashboardStats from "@/components/dashboard/DashboardStats";
+import QuickLinks from "@/components/dashboard/QuickLinks";
 import RecentInstitutionsTable from "@/components/dashboard/RecentInstitutionsTable";
 import type { Metadata } from "next";
 
@@ -19,6 +20,8 @@ export default function DashboardHome() {
       </div>
 
       <DashboardStats />
+
+      <QuickLinks />
 
       <RecentInstitutionsTable />
     </div>

@@ -9,7 +9,8 @@ const STORAGE_KEY = "admin.auth";
 interface StoredAuth {
   accessToken: string;
   refreshToken: string;
-  adminId: string;
+  userId: string;
+  role: string;
   accessExpiresAt: number;
 }
 
@@ -17,7 +18,8 @@ type AdminAuthContextType = {
   isAuthenticated: boolean;
   isLoading: boolean;
   accessToken: string | null;
-  adminId: string | null;
+  userId: string | null;
+  role: string | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 };
@@ -77,7 +79,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
           const next: StoredAuth = {
             accessToken: response.access_token,
             refreshToken: response.refresh_token,
-            adminId: response.admin_id,
+            userId: response.user_id,
+            role: response.role,
             accessExpiresAt: Date.now() + response.access_expires_in * 1000,
           };
           writeStorage(next);
@@ -112,7 +115,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const next: StoredAuth = {
         accessToken: response.access_token,
         refreshToken: response.refresh_token,
-        adminId: response.admin_id,
+        userId: response.user_id,
+        role: response.role,
         accessExpiresAt: Date.now() + response.access_expires_in * 1000,
       };
       writeStorage(next);
@@ -128,7 +132,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
         isAuthenticated: !!auth,
         isLoading,
         accessToken: auth?.accessToken ?? null,
-        adminId: auth?.adminId ?? null,
+        userId: auth?.userId ?? null,
+        role: auth?.role ?? null,
         login,
         logout,
       }}

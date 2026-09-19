@@ -2,7 +2,7 @@ import { ADMIN_API_BASE_URL, apiRequest } from "./client";
 import type { LogHistoryResponse, LogSessionsResponse } from "./types";
 
 export function listLogSessions(bearerToken: string, limit = 200) {
-  return apiRequest<LogSessionsResponse>("/logs/sessions", {
+  return apiRequest<LogSessionsResponse>("/logs/logs/sessions", {
     query: { limit },
     bearerToken,
     baseUrl: ADMIN_API_BASE_URL,
@@ -15,7 +15,7 @@ export function getLogHistory(
   limit = 500,
 ) {
   return apiRequest<LogHistoryResponse>(
-    `/logs/history/${encodeURIComponent(sessionId)}`,
+    `/logs/logs/history/${encodeURIComponent(sessionId)}`,
     { query: { limit }, bearerToken, baseUrl: ADMIN_API_BASE_URL },
   );
 }
@@ -27,7 +27,7 @@ export async function fetchAudioObjectUrl(
   bearerToken: string,
 ): Promise<string> {
   const response = await fetch(
-    `${ADMIN_API_BASE_URL}/logs/audio/${encodeURIComponent(fileName)}`,
+    `${ADMIN_API_BASE_URL}/logs/logs/audio/${encodeURIComponent(fileName)}`,
     { headers: { Authorization: `Bearer ${bearerToken}` } },
   );
   if (!response.ok) {

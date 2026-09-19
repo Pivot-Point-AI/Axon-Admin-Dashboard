@@ -66,6 +66,84 @@ export interface DeleteInstitutionResponse {
   deleted: boolean;
 }
 
+export interface DashboardUserResponse {
+  user_id: string;
+  username: string;
+  email: string;
+  role: string;
+  created_at: string;
+}
+
+export interface CreateDashboardUserRequest {
+  username: string;
+  email: string;
+  role: string;
+}
+
+export interface ConfigResponse {
+  config_key: string;
+  config_value: string;
+  description?: string | null;
+  updated_at?: string | null;
+}
+
+export interface ConfigUpdateRequest {
+  config_value: string;
+  description?: string | null;
+}
+
+export interface BankModel {
+  bank_id?: number;
+  bank_name: string;
+  abbreviation?: string | null;
+  is_active?: boolean;
+}
+
+export interface BillerModel {
+  biller_id?: number;
+  company: string;
+  abbreviation?: string | null;
+  biller_type?: string | null;
+  category: string;
+  is_active?: boolean;
+}
+
+export interface DonationOrgModel {
+  org_id?: number;
+  org_name: string;
+  is_zakat_eligible?: boolean;
+  is_donation_eligible?: boolean;
+  synonyms?: string | null;
+  is_active?: boolean;
+}
+
+export interface MessageModel {
+  message_key: string;
+  parameters?: unknown[];
+  is_active?: boolean;
+  [key: string]: unknown;
+}
+
+export interface FlowModel {
+  intent_name: string;
+  is_enabled?: boolean;
+}
+
+export interface LanguageModel {
+  language_code: string;
+  language_name: string;
+  is_enabled?: boolean;
+}
+
+export interface LanguageUpdateModel {
+  language_name: string;
+  is_enabled?: boolean;
+}
+
+export interface PrimaryLanguageModel {
+  language_code: string;
+}
+
 export interface LogSessionsResponse {
   [key: string]: unknown;
 }

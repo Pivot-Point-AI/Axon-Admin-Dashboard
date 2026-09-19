@@ -4,7 +4,7 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { useAdminAuth } from "@/context/AdminAuthContext";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { EyeCloseIcon, EyeIcon } from "@/icons";
 import { ApiError } from "@/lib/api/client";
 import { FormEvent, useState } from "react";
@@ -66,9 +66,17 @@ export default function SignInForm() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="password">
-                    Password <span className="text-error-500">*</span>{" "}
-                  </Label>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <Label htmlFor="password" className="mb-0">
+                      Password <span className="text-error-500">*</span>{" "}
+                    </Label>
+                    <Link
+                      href="/forgot-password"
+                      className="text-sm text-brand-500 hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
                   <div className="relative">
                     <Input
                       id="password"

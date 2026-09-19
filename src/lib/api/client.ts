@@ -19,6 +19,13 @@ export const ADMIN_API_BASE_URL =
   process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL?.replace(/\/$/, "") ??
   `${API_BASE_URL}/admin`;
 
+// HTTPS tunnel to the same backend, used when the primary origin above is
+// unreachable (e.g. the IP host is down/firewalled). It's HTTPS, so it can be
+// called directly from the browser with no mixed-content proxying needed.
+export const FALLBACK_ADMIN_BASE_URL =
+  process.env.NEXT_PUBLIC_ADMIN_API_FALLBACK_URL?.replace(/\/$/, "") ??
+  "https://unaccused-shelby-unadept.ngrok-free.dev/admin";
+
 export class ApiError extends Error {
   status: number;
   detail: HTTPValidationError | unknown;
@@ -84,6 +91,24 @@ function extractErrorMessage(status: number, body: unknown): string {
   return `Request failed with status ${status}`;
 }
 
+async function performRequest<T>(url: string, init: RequestInit): Promise<T> {
+  const response = await fetch(url, init);
+
+  const contentType = response.headers.get("content-type") ?? "";
+  const isJson = contentType.includes("application/json");
+  const payload = isJson ? await response.json().catch(() => null) : null;
+
+  if (!response.ok) {
+    throw new ApiError(
+      extractErrorMessage(response.status, payload),
+      response.status,
+      payload,
+    );
+  }
+
+  return payload as T;
+}
+
 export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
@@ -94,7 +119,7 @@ export async function apiRequest<T>(
     body,
     bearerToken,
     licenseKey,
-    baseUrl,
+    baseUrl = API_BASE_URL,
     signal,
   } = options;
 
@@ -111,24 +136,31 @@ export async function apiRequest<T>(
     headers["X-License-Key"] = licenseKey;
   }
 
-  const response = await fetch(buildUrl(path, query, baseUrl), {
+  const init: RequestInit = {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
     signal,
-  });
+  };
 
-  const contentType = response.headers.get("content-type") ?? "";
-  const isJson = contentType.includes("application/json");
-  const payload = isJson ? await response.json().catch(() => null) : null;
+  const canFallBack =
+    baseUrl === ADMIN_API_BASE_URL && baseUrl !== FALLBACK_ADMIN_BASE_URL;
 
-  if (!response.ok) {
-    throw new ApiError(
-      extractErrorMessage(response.status, payload),
-      response.status,
-      payload,
-    );
+  try {
+    return await performRequest<T>(buildUrl(path, query, baseUrl), init);
+  } catch (err) {
+    // Retry against the ngrok fallback on a genuine network failure (server
+    // down, connection refused, mixed-content block) or on a 404, which here
+    // means the route hasn't been deployed to the primary origin yet even
+    // though the server itself is reachable.
+    const isNetworkFailure = err instanceof TypeError;
+    const isNotFound = err instanceof ApiError && err.status === 404;
+    if ((isNetworkFailure || isNotFound) && canFallBack) {
+      return await performRequest<T>(
+        buildUrl(path, query, FALLBACK_ADMIN_BASE_URL),
+        init,
+      );
+    }
+    throw err;
   }
-
-  return payload as T;
 }

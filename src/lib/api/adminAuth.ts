@@ -10,7 +10,8 @@ export interface AdminLoginResponse {
   refresh_token: string;
   access_expires_in: number;
   refresh_expires_in: number;
-  admin_id: string;
+  user_id: string;
+  role: string;
 }
 
 export function adminLogin(body: AdminLoginRequest) {
@@ -25,6 +26,22 @@ export function adminRefresh(refreshToken: string) {
   return apiRequest<AdminLoginResponse>("/auth/refresh", {
     method: "POST",
     body: { refresh_token: refreshToken },
+    baseUrl: ADMIN_API_BASE_URL,
+  });
+}
+
+export function adminForgotPassword(email: string) {
+  return apiRequest<unknown>("/auth/forgot-password", {
+    method: "POST",
+    body: { email },
+    baseUrl: ADMIN_API_BASE_URL,
+  });
+}
+
+export function adminResetPassword(token: string, newPassword: string) {
+  return apiRequest<unknown>("/auth/reset-password", {
+    method: "POST",
+    body: { token, new_password: newPassword },
     baseUrl: ADMIN_API_BASE_URL,
   });
 }
