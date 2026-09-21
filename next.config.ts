@@ -5,6 +5,12 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // Some backend routes (e.g. /admin/management/) are defined with a
+  // trailing slash. Without this, Next.js redirect-normalizes trailing
+  // slashes off incoming requests before rewrites run, so `/backend/admin/
+  // management/` silently becomes `/backend/admin/management` and 404s
+  // against the real backend.
+  skipTrailingSlashRedirect: true,
   async rewrites() {
     // The backend only serves plain HTTP. Proxy client requests through this
     // same-origin (HTTPS) path so browsers don't block them as mixed content.

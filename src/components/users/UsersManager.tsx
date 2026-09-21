@@ -50,7 +50,7 @@ export default function UsersManager() {
     setError(null);
     try {
       const data = await listDashboardUsers(accessToken);
-      setUsers(data);
+      setUsers(data ?? []);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load users.");
     } finally {

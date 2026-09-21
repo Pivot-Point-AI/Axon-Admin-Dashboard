@@ -19,13 +19,6 @@ export const ADMIN_API_BASE_URL =
   process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL?.replace(/\/$/, "") ??
   `${API_BASE_URL}/admin`;
 
-// HTTPS tunnel to the same backend, used when the primary origin above is
-// unreachable (e.g. the IP host is down/firewalled). It's HTTPS, so it can be
-// called directly from the browser with no mixed-content proxying needed.
-export const FALLBACK_ADMIN_BASE_URL =
-  process.env.NEXT_PUBLIC_ADMIN_API_FALLBACK_URL?.replace(/\/$/, "") ??
-  "https://unaccused-shelby-unadept.ngrok-free.dev/admin";
-
 export class ApiError extends Error {
   status: number;
   detail: HTTPValidationError | unknown;
@@ -143,24 +136,5 @@ export async function apiRequest<T>(
     signal,
   };
 
-  const canFallBack =
-    baseUrl === ADMIN_API_BASE_URL && baseUrl !== FALLBACK_ADMIN_BASE_URL;
-
-  try {
-    return await performRequest<T>(buildUrl(path, query, baseUrl), init);
-  } catch (err) {
-    // Retry against the ngrok fallback on a genuine network failure (server
-    // down, connection refused, mixed-content block) or on a 404, which here
-    // means the route hasn't been deployed to the primary origin yet even
-    // though the server itself is reachable.
-    const isNetworkFailure = err instanceof TypeError;
-    const isNotFound = err instanceof ApiError && err.status === 404;
-    if ((isNetworkFailure || isNotFound) && canFallBack) {
-      return await performRequest<T>(
-        buildUrl(path, query, FALLBACK_ADMIN_BASE_URL),
-        init,
-      );
-    }
-    throw err;
-  }
+  return performRequest<T>(buildUrl(path, query, baseUrl), init);
 }
