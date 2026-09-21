@@ -5,7 +5,7 @@ import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
-import Checkbox from "@/components/form/input/Checkbox";
+import Switch from "@/components/form/input/Switch";
 import LanguagePicker from "@/components/languages/LanguagePicker";
 import {
   Table,
@@ -339,7 +339,7 @@ export default function LanguagesManager() {
               <Input id="create-lang-code" value={createSelection} disabled />
             </div>
           )}
-          <Checkbox
+          <Switch
             id="create-enabled"
             label="Enabled"
             checked={createEnabled}
@@ -371,7 +371,7 @@ export default function LanguagesManager() {
               onChange={(e) => setEditName(e.target.value)}
             />
           </div>
-          <Checkbox
+          <Switch
             id="edit-enabled"
             label="Enabled"
             checked={editEnabled}

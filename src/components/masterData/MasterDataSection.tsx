@@ -5,7 +5,7 @@ import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
-import Checkbox from "@/components/form/input/Checkbox";
+import Switch from "@/components/form/input/Switch";
 import {
   Table,
   TableBody,
@@ -191,7 +191,7 @@ export default function MasterDataSection({
   ) => {
     if (field.type === "checkbox") {
       return (
-        <Checkbox
+        <Switch
           key={field.key}
           id={`field-${field.key}`}
           label={field.label}

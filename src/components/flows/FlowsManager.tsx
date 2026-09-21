@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
-import Checkbox from "@/components/form/input/Checkbox";
+import Switch from "@/components/form/input/Switch";
 import {
   Table,
   TableBody,
@@ -109,7 +109,7 @@ export default function FlowsManager() {
                       {intentName}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm">
-                      <Checkbox
+                      <Switch
                         checked={Boolean(flow.is_enabled ?? true)}
                         disabled={busyIntent === intentName}
                         onChange={(checked) => handleToggle(flow, checked)}

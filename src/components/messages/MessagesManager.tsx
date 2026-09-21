@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
-import Checkbox from "@/components/form/input/Checkbox";
+import Switch from "@/components/form/input/Switch";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import {
@@ -181,7 +181,7 @@ export default function MessagesManager() {
                       {parameters}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm">
-                      <Checkbox
+                      <Switch
                         checked={Boolean(message.is_active ?? true)}
                         disabled={busyKey === messageKey}
                         onChange={(checked) => handleToggle(message, checked)}
