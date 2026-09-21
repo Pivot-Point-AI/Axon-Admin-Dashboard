@@ -10,6 +10,7 @@ interface StoredAuth {
   accessToken: string;
   refreshToken: string;
   userId: string;
+  username: string;
   role: string;
   accessExpiresAt: number;
 }
@@ -19,6 +20,7 @@ type AdminAuthContextType = {
   isLoading: boolean;
   accessToken: string | null;
   userId: string | null;
+  username: string | null;
   role: string | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
@@ -80,6 +82,9 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
             accessToken: response.access_token,
             refreshToken: response.refresh_token,
             userId: response.user_id,
+            // The refresh response doesn't carry the username — keep the one
+            // captured at login.
+            username: current.username,
             role: response.role,
             accessExpiresAt: Date.now() + response.access_expires_in * 1000,
           };
@@ -116,6 +121,9 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
         accessToken: response.access_token,
         refreshToken: response.refresh_token,
         userId: response.user_id,
+        // The login response doesn't echo back a username — the backend
+        // only returns user_id/role — so we keep what the user typed in.
+        username,
         role: response.role,
         accessExpiresAt: Date.now() + response.access_expires_in * 1000,
       };
@@ -133,6 +141,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
         isLoading,
         accessToken: auth?.accessToken ?? null,
         userId: auth?.userId ?? null,
+        username: auth?.username ?? null,
         role: auth?.role ?? null,
         login,
         logout,

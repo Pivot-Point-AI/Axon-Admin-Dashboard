@@ -18,7 +18,8 @@ export default function UserDropdown() {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const pathname = usePathname();
-  const { logout } = useAdminAuth();
+  const { logout, username, role } = useAdminAuth();
+  const displayName = username || role || "Admin";
   const [isOpen, setIsOpen] = useState(false);
   const [isSubDropdownOpen, setIsSubDropdownOpen] = useState(false);
   const subDropdownRef = useRef<HTMLLIElement>(null);
@@ -62,7 +63,9 @@ export default function UserDropdown() {
           />
         </span>
 
-        <span className="me-1 block text-theme-sm font-medium">Admin</span>
+        <span className="me-1 block text-theme-sm font-medium">
+          {displayName}
+        </span>
 
         <ChevronDownIcon
           className={`size-5 text-gray-500 transition-transform duration-200 dark:text-gray-400 ${
@@ -78,8 +81,13 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block text-theme-sm font-medium text-gray-700 dark:text-gray-400">
-            Admin
+            {displayName}
           </span>
+          {role && (
+            <span className="block text-theme-xs text-gray-500 dark:text-gray-400">
+              {role}
+            </span>
+          )}
         </div>
 
         <ul className="flex flex-col gap-1 border-b border-gray-200 pt-4 pb-3 dark:border-gray-800">
