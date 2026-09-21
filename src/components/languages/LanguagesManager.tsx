@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Checkbox from "@/components/form/input/Checkbox";
+import LanguagePicker from "@/components/languages/LanguagePicker";
 import {
   Table,
   TableBody,
@@ -25,6 +26,42 @@ import {
 } from "@/lib/api/languages";
 import { asRecordArray } from "@/lib/api/normalize";
 
+// Common ISO 639-1 languages to pick from when adding a new language — the
+// code is derived from the selection rather than typed by hand, so it can
+// never drift from a valid ISO code.
+const LANGUAGE_OPTIONS: { code: string; name: string }[] = [
+  { code: "en", name: "English" },
+  { code: "ar", name: "Arabic" },
+  { code: "ur", name: "Urdu" },
+  { code: "es", name: "Spanish" },
+  { code: "fr", name: "French" },
+  { code: "de", name: "German" },
+  { code: "it", name: "Italian" },
+  { code: "pt", name: "Portuguese" },
+  { code: "ru", name: "Russian" },
+  { code: "zh", name: "Chinese" },
+  { code: "ja", name: "Japanese" },
+  { code: "ko", name: "Korean" },
+  { code: "hi", name: "Hindi" },
+  { code: "bn", name: "Bengali" },
+  { code: "fa", name: "Persian" },
+  { code: "tr", name: "Turkish" },
+  { code: "nl", name: "Dutch" },
+  { code: "sv", name: "Swedish" },
+  { code: "pl", name: "Polish" },
+  { code: "id", name: "Indonesian" },
+  { code: "ms", name: "Malay" },
+  { code: "vi", name: "Vietnamese" },
+  { code: "th", name: "Thai" },
+  { code: "pa", name: "Punjabi" },
+  { code: "ta", name: "Tamil" },
+  { code: "ml", name: "Malayalam" },
+  { code: "sw", name: "Swahili" },
+  { code: "he", name: "Hebrew" },
+  { code: "el", name: "Greek" },
+  { code: "uk", name: "Ukrainian" },
+];
+
 export default function LanguagesManager() {
   const { accessToken } = useAdminAuth();
   const [languages, setLanguages] = useState<Record<string, unknown>[]>([]);
@@ -32,8 +69,7 @@ export default function LanguagesManager() {
   const [error, setError] = useState<string | null>(null);
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [createCode, setCreateCode] = useState("");
-  const [createName, setCreateName] = useState("");
+  const [createSelection, setCreateSelection] = useState("");
   const [createEnabled, setCreateEnabled] = useState(true);
   const [createSubmitting, setCreateSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -68,9 +104,16 @@ export default function LanguagesManager() {
     load();
   }, [load]);
 
+  const existingCodes = new Set(
+    languages.map((l) => String(l.language_code ?? "").toLowerCase()),
+  );
+  const languagePickerOptions = LANGUAGE_OPTIONS.map((option) => ({
+    ...option,
+    disabled: existingCodes.has(option.code),
+  }));
+
   const openCreate = () => {
-    setCreateCode("");
-    setCreateName("");
+    setCreateSelection("");
     setCreateEnabled(true);
     setCreateError(null);
     setCreateOpen(true);
@@ -78,8 +121,9 @@ export default function LanguagesManager() {
 
   const submitCreate = async () => {
     if (!accessToken) return;
-    if (!createCode.trim() || !createName.trim()) {
-      setCreateError("Language code and name are required.");
+    const selected = LANGUAGE_OPTIONS.find((o) => o.code === createSelection);
+    if (!selected) {
+      setCreateError("Please select a language.");
       return;
     }
     setCreateSubmitting(true);
@@ -87,8 +131,8 @@ export default function LanguagesManager() {
     try {
       await createLanguage(
         {
-          language_code: createCode.trim(),
-          language_name: createName.trim(),
+          language_code: selected.code,
+          language_name: selected.name,
           is_enabled: createEnabled,
         },
         accessToken,
@@ -281,23 +325,20 @@ export default function LanguagesManager() {
         </h4>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="create-code">Language Code</Label>
-            <Input
-              id="create-code"
-              value={createCode}
-              onChange={(e) => setCreateCode(e.target.value)}
-              placeholder="e.g. en"
+            <Label htmlFor="create-lang-select">Language</Label>
+            <LanguagePicker
+              id="create-lang-select"
+              options={languagePickerOptions}
+              value={createSelection}
+              onChange={setCreateSelection}
             />
           </div>
-          <div>
-            <Label htmlFor="create-lang-name">Language Name</Label>
-            <Input
-              id="create-lang-name"
-              value={createName}
-              onChange={(e) => setCreateName(e.target.value)}
-              placeholder="e.g. English"
-            />
-          </div>
+          {createSelection && (
+            <div>
+              <Label htmlFor="create-lang-code">Language Code</Label>
+              <Input id="create-lang-code" value={createSelection} disabled />
+            </div>
+          )}
           <Checkbox
             id="create-enabled"
             label="Enabled"
@@ -310,7 +351,7 @@ export default function LanguagesManager() {
           <Button
             className="w-full"
             onClick={submitCreate}
-            disabled={createSubmitting}
+            disabled={createSubmitting || !createSelection}
           >
             {createSubmitting ? "Creating…" : "Create Language"}
           </Button>
