@@ -77,7 +77,9 @@ export default function LanguagesManager() {
   const [editTarget, setEditTarget] = useState<Record<string, unknown> | null>(
     null,
   );
-  const [editName, setEditName] = useState("");
+  // Code of the system language chosen for this record's display name. Empty
+  // when the record's current name isn't one of the system languages.
+  const [editSelection, setEditSelection] = useState("");
   const [editEnabled, setEditEnabled] = useState(true);
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -110,6 +112,16 @@ export default function LanguagesManager() {
   const languagePickerOptions = LANGUAGE_OPTIONS.map((option) => ({
     ...option,
     disabled: existingCodes.has(option.code),
+  }));
+
+  // Editing keeps the record's own code, so only block languages already
+  // registered under a *different* record.
+  const editingCode = String(editTarget?.language_code ?? "").toLowerCase();
+  const editPickerOptions = LANGUAGE_OPTIONS.map((option) => ({
+    ...option,
+    disabled:
+      existingCodes.has(option.code) &&
+      option.code !== editingCode,
   }));
 
   const openCreate = () => {
@@ -150,7 +162,12 @@ export default function LanguagesManager() {
 
   const openEdit = (language: Record<string, unknown>) => {
     setEditTarget(language);
-    setEditName(String(language.language_name ?? ""));
+    const currentName = String(language.language_name ?? "").toLowerCase();
+    const currentCode = String(language.language_code ?? "").toLowerCase();
+    const match =
+      LANGUAGE_OPTIONS.find((o) => o.code === currentCode) ??
+      LANGUAGE_OPTIONS.find((o) => o.name.toLowerCase() === currentName);
+    setEditSelection(match?.code ?? "");
     setEditEnabled(Boolean(language.is_enabled ?? true));
     setEditError(null);
   };
@@ -162,8 +179,13 @@ export default function LanguagesManager() {
       setEditError("Missing language_code on this record.");
       return;
     }
-    if (!editName.trim()) {
-      setEditError("Language name is required.");
+    // Only languages that exist in the system can be chosen; if the user
+    // leaves the picker alone, the record's current name is kept.
+    const selected = LANGUAGE_OPTIONS.find((o) => o.code === editSelection);
+    const languageName =
+      selected?.name ?? String(editTarget.language_name ?? "").trim();
+    if (!languageName) {
+      setEditError("Please select a language.");
       return;
     }
     setEditSubmitting(true);
@@ -171,7 +193,7 @@ export default function LanguagesManager() {
     try {
       await updateLanguage(
         code,
-        { language_name: editName.trim(), is_enabled: editEnabled },
+        { language_name: languageName, is_enabled: editEnabled },
         accessToken,
       );
       setEditTarget(null);
@@ -364,12 +386,18 @@ export default function LanguagesManager() {
         </h4>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="edit-lang-name">Language Name</Label>
-            <Input
+            <Label htmlFor="edit-lang-name">Language</Label>
+            <LanguagePicker
               id="edit-lang-name"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
+              options={editPickerOptions}
+              value={editSelection}
+              onChange={setEditSelection}
+              placeholder={String(editTarget?.language_name ?? "Search languages…")}
             />
+            <p className="mt-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
+              Choose from the languages available in the system. Languages
+              already added are disabled.
+            </p>
           </div>
           <Switch
             id="edit-enabled"

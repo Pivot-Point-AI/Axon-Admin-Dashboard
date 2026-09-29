@@ -1,6 +1,5 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import ApiStatusBadge from "@/components/common/ApiStatusBadge";
-import LogSessionsList from "@/components/logs/LogSessionsList";
+import LogsManager from "@/components/logs/LogsManager";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -13,9 +12,8 @@ export default function LogsPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <PageBreadcrumb pageTitle="Logs" />
-        <ApiStatusBadge />
       </div>
-      <LogSessionsList />
+      <LogsManager />
     </div>
   );
 }

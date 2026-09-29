@@ -1,4 +1,3 @@
-import ApiStatusBadge from "@/components/common/ApiStatusBadge";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import QuickLinks from "@/components/dashboard/QuickLinks";
 import RecentInstitutionsTable from "@/components/dashboard/RecentInstitutionsTable";
@@ -16,7 +15,6 @@ export default function DashboardHome() {
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
           Dashboard
         </h2>
-        <ApiStatusBadge />
       </div>
 
       <DashboardStats />

@@ -1,5 +1,12 @@
 import { ADMIN_API_BASE_URL, apiRequest } from "./client";
-import type { BankModel, BillerModel, DonationOrgModel } from "./types";
+import type {
+  BankModel,
+  BillerCategoryModel,
+  BillerModel,
+  BillerTypeModel,
+  CardTypeModel,
+  DonationOrgModel,
+} from "./types";
 
 // The backend doesn't declare a response_model for these list/write endpoints
 // (the OpenAPI spec just shows "string"), so the actual response shape is
@@ -112,6 +119,57 @@ export function updateDonation(
 export function removeDonation(orgId: number, bearerToken: string) {
   return apiRequest<unknown>(`/master-data/donations/${orgId}`, {
     method: "DELETE",
+    bearerToken,
+    baseUrl: ADMIN_API_BASE_URL,
+  });
+}
+
+export function getBillerTypes(bearerToken: string) {
+  return apiRequest<unknown>("/master-data/biller-types", {
+    bearerToken,
+    baseUrl: ADMIN_API_BASE_URL,
+  });
+}
+
+export function createBillerType(body: BillerTypeModel, bearerToken: string) {
+  return apiRequest<unknown>("/master-data/biller-types", {
+    method: "POST",
+    body,
+    bearerToken,
+    baseUrl: ADMIN_API_BASE_URL,
+  });
+}
+
+export function getBillerCategories(bearerToken: string) {
+  return apiRequest<unknown>("/master-data/biller-categories", {
+    bearerToken,
+    baseUrl: ADMIN_API_BASE_URL,
+  });
+}
+
+export function createBillerCategory(
+  body: BillerCategoryModel,
+  bearerToken: string,
+) {
+  return apiRequest<unknown>("/master-data/biller-categories", {
+    method: "POST",
+    body,
+    bearerToken,
+    baseUrl: ADMIN_API_BASE_URL,
+  });
+}
+
+export function getCardTypes(bearerToken: string) {
+  return apiRequest<unknown>("/master-data/card-types", {
+    bearerToken,
+    baseUrl: ADMIN_API_BASE_URL,
+  });
+}
+
+export function createCardType(body: CardTypeModel, bearerToken: string) {
+  return apiRequest<unknown>("/master-data/card-types", {
+    method: "POST",
+    body,
     bearerToken,
     baseUrl: ADMIN_API_BASE_URL,
   });

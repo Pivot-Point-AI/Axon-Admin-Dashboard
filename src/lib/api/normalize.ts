@@ -10,7 +10,7 @@ export function asRecordArray(payload: unknown): Record<string, unknown>[] {
     );
   }
   if (payload && typeof payload === "object") {
-    for (const key of ["items", "data", "results", "banks", "billers", "donations"]) {
+    for (const key of ["items", "data", "results", "banks", "billers", "donations", "biller_types", "biller_categories", "card_types", "types", "categories"]) {
       const candidate = (payload as Record<string, unknown>)[key];
       if (Array.isArray(candidate)) {
         return candidate.filter(

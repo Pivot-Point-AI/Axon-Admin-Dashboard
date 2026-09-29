@@ -53,7 +53,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   const contentClasses = isFullscreen
     ? "w-full h-full"
-    : "relative w-full rounded-3xl bg-white  dark:bg-gray-900";
+    : "relative my-4 w-[calc(100%-2rem)] rounded-3xl bg-white dark:bg-gray-900 sm:w-full";
 
   return (
     <div className="modal fixed inset-0 z-99999 flex items-center justify-center overflow-y-auto">

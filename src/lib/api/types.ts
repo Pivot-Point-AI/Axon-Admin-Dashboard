@@ -85,6 +85,9 @@ export interface ConfigResponse {
   config_value: string;
   description?: string | null;
   updated_at?: string | null;
+  data_type?: string;
+  min_value?: number | null;
+  max_value?: number | null;
 }
 
 export interface ConfigUpdateRequest {
@@ -117,9 +120,24 @@ export interface DonationOrgModel {
   is_active?: boolean;
 }
 
+export interface BillerTypeModel {
+  type_name: string;
+  is_active?: boolean;
+}
+
+export interface CardTypeModel {
+  type_name: string;
+  is_active?: boolean;
+}
+
+export interface BillerCategoryModel {
+  category_name: string;
+  is_active?: boolean;
+}
+
 export interface MessageModel {
   message_key: string;
-  parameters?: unknown[];
+  parameters?: string[] | null;
   is_active?: boolean;
   [key: string]: unknown;
 }

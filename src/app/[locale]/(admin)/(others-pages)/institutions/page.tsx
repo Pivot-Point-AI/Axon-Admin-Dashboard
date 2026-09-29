@@ -1,5 +1,4 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import ApiStatusBadge from "@/components/common/ApiStatusBadge";
 import InstitutionsManager from "@/components/institutions/InstitutionsManager";
 import { Metadata } from "next";
 
@@ -13,7 +12,6 @@ export default function InstitutionsPage() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <PageBreadcrumb pageTitle="Institutions" />
-        <ApiStatusBadge />
       </div>
       <InstitutionsManager />
     </div>

@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Switch from "@/components/form/input/Switch";
+import CreatableSelect from "@/components/form/CreatableSelect";
 import {
   Table,
   TableBody,
@@ -21,25 +22,51 @@ import { asRecordArray } from "@/lib/api/normalize";
 export interface MasterDataField {
   key: string;
   label: string;
-  type: "text" | "checkbox";
+  type: "text" | "checkbox" | "creatable";
   required?: boolean;
+  // Only for type "creatable": a dropdown of existing values that also lets
+  // the user add a new one. `options` may depend on the rest of the form and
+  // the loaded rows (e.g. narrowing categories by the chosen biller type).
+  creatable?: {
+    options: (
+      form: Record<string, unknown>,
+      items: Record<string, unknown>[],
+    ) => string[];
+    allOptions?: (items: Record<string, unknown>[]) => string[];
+    onCreate: (name: string, bearerToken: string) => Promise<void>;
+  };
+}
+
+// A dropdown filter above the table. Filters are ordered: `options` receives
+// the rows already narrowed by the filters before it, so later filters
+// cascade from earlier ones (e.g. category options follow the biller type).
+export interface MasterDataFilter {
+  key: string;
+  label: string;
+  options: (items: Record<string, unknown>[]) => string[];
 }
 
 interface MasterDataSectionProps {
   title: string;
   idField: string;
   fields: MasterDataField[];
+  filters?: MasterDataFilter[];
+  // Record keys that have no form input but must be sent back unchanged on
+  // update, since PUT replaces the record.
+  preserveKeys?: string[];
   fetchItems: (bearerToken: string) => Promise<unknown>;
   createItem: (
     body: Record<string, unknown>,
     bearerToken: string,
   ) => Promise<unknown>;
-  updateItem: (
+  // Update / remove are optional: a section whose API is create + list only
+  // (e.g. card types) simply shows no row actions.
+  updateItem?: (
     id: number,
     body: Record<string, unknown>,
     bearerToken: string,
   ) => Promise<unknown>;
-  removeItem: (id: number, bearerToken: string) => Promise<unknown>;
+  removeItem?: (id: number, bearerToken: string) => Promise<unknown>;
 }
 
 function emptyForm(fields: MasterDataField[]): Record<string, unknown> {
@@ -54,12 +81,15 @@ export default function MasterDataSection({
   title,
   idField,
   fields,
+  filters = [],
+  preserveKeys = [],
   fetchItems,
   createItem,
   updateItem,
   removeItem,
 }: MasterDataSectionProps) {
   const { accessToken } = useAdminAuth();
+  const hasActions = !!updateItem || !!removeItem;
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +109,29 @@ export default function MasterDataSection({
   const [editError, setEditError] = useState<string | null>(null);
 
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+
+  const applyFilters = (
+    rows: Record<string, unknown>[],
+    upTo: number = filters.length,
+  ) =>
+    filters.slice(0, upTo).reduce((acc, filter) => {
+      const selected = filterValues[filter.key];
+      return selected
+        ? acc.filter((row) => String(row[filter.key] ?? "") === selected)
+        : acc;
+    }, rows);
+  const visibleItems = applyFilters(items);
+
+  const changeFilter = (index: number, value: string) => {
+    // Changing a filter invalidates the ones that cascade from it.
+    const next: Record<string, string> = {};
+    filters.forEach((filter, i) => {
+      if (i < index) next[filter.key] = filterValues[filter.key] ?? "";
+      if (i === index) next[filter.key] = value;
+    });
+    setFilterValues(next);
+  };
 
   const load = useCallback(async () => {
     if (!accessToken) return;
@@ -142,7 +195,7 @@ export default function MasterDataSection({
   };
 
   const submitEdit = async () => {
-    if (!editTarget || !accessToken) return;
+    if (!editTarget || !accessToken || !updateItem) return;
     const id = Number(editTarget[idField]);
     if (!Number.isFinite(id)) {
       setEditError(`Missing ${idField} on this record — can't update it.`);
@@ -151,7 +204,11 @@ export default function MasterDataSection({
     setEditSubmitting(true);
     setEditError(null);
     try {
-      await updateItem(id, editForm, accessToken);
+      const preserved: Record<string, unknown> = {};
+      for (const key of preserveKeys) {
+        if (editTarget[key] !== undefined) preserved[key] = editTarget[key];
+      }
+      await updateItem(id, { ...preserved, ...editForm }, accessToken);
       setEditTarget(null);
       await load();
     } catch (err) {
@@ -164,7 +221,7 @@ export default function MasterDataSection({
   };
 
   const handleDelete = async (item: Record<string, unknown>) => {
-    if (!accessToken) return;
+    if (!accessToken || !removeItem) return;
     const id = Number(item[idField]);
     if (!Number.isFinite(id)) {
       setError(`Missing ${idField} on this record — can't delete it.`);
@@ -189,6 +246,25 @@ export default function MasterDataSection({
     form: Record<string, unknown>,
     setForm: (form: Record<string, unknown>) => void,
   ) => {
+    if (field.type === "creatable" && field.creatable) {
+      const { options, allOptions, onCreate } = field.creatable;
+      return (
+        <div key={field.key}>
+          <Label htmlFor={`field-${field.key}`}>
+            {field.label}
+            {field.required ? " *" : ""}
+          </Label>
+          <CreatableSelect
+            id={`field-${field.key}`}
+            value={String(form[field.key] ?? "")}
+            options={options(form, items)}
+            allOptions={allOptions?.(items)}
+            onChange={(value) => setForm({ ...form, [field.key]: value })}
+            onCreate={(name) => onCreate(name, accessToken ?? "")}
+          />
+        </div>
+      );
+    }
     if (field.type === "checkbox") {
       return (
         <Switch
@@ -223,6 +299,37 @@ export default function MasterDataSection({
         </Button>
       </div>
 
+      {filters.length > 0 && (
+        <div className="mb-5 flex flex-wrap items-end gap-3">
+          {filters.map((filter, index) => {
+            const choices = filter.options(applyFilters(items, index));
+            return (
+              <div key={filter.key} className="min-w-44">
+                <Label htmlFor={`filter-${filter.key}`}>{filter.label}</Label>
+                <select
+                  id={`filter-${filter.key}`}
+                  value={filterValues[filter.key] ?? ""}
+                  onChange={(e) => changeFilter(index, e.target.value)}
+                  className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
+                >
+                  <option value="">All</option>
+                  {choices.map((choice) => (
+                    <option key={choice} value={choice}>
+                      {choice}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
+          {Object.values(filterValues).some(Boolean) && (
+            <Button size="sm" variant="outline" onClick={() => setFilterValues({})}>
+              Clear filters
+            </Button>
+          )}
+        </div>
+      )}
+
       {error && (
         <div className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
           {error}
@@ -242,9 +349,11 @@ export default function MasterDataSection({
                   {field.label}
                 </TableCell>
               ))}
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
-                Actions
-              </TableCell>
+              {hasActions && (
+                <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+                  Actions
+                </TableCell>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -254,14 +363,14 @@ export default function MasterDataSection({
                   Loading…
                 </TableCell>
               </TableRow>
-            ) : items.length === 0 ? (
+            ) : visibleItems.length === 0 ? (
               <TableRow>
                 <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  No entries yet.
+                  {items.length === 0 ? "No entries yet." : "No entries match the selected filters."}
                 </TableCell>
               </TableRow>
             ) : (
-              items.map((item, index) => {
+              visibleItems.map((item, index) => {
                 const id = item[idField];
                 return (
                   <TableRow key={id != null ? String(id) : index}>
@@ -277,25 +386,31 @@ export default function MasterDataSection({
                           : String(item[field.key] ?? "—")}
                       </TableCell>
                     ))}
-                    <TableCell className="px-4 py-3 text-sm">
-                      <div className="flex items-center gap-3">
-                        <button
-                          className="text-gray-500 hover:text-brand-500 dark:text-gray-400"
-                          title="Edit"
-                          onClick={() => openEdit(item)}
-                        >
-                          <PencilIcon />
-                        </button>
-                        <button
-                          className="text-gray-500 hover:text-error-500 dark:text-gray-400 disabled:opacity-40"
-                          title="Remove"
-                          disabled={deletingId === Number(id)}
-                          onClick={() => handleDelete(item)}
-                        >
-                          <TrashBinIcon />
-                        </button>
-                      </div>
-                    </TableCell>
+                    {hasActions && (
+                      <TableCell className="px-4 py-3 text-sm">
+                        <div className="flex items-center gap-3">
+                          {updateItem && (
+                            <button
+                              className="text-gray-500 hover:text-brand-500 dark:text-gray-400"
+                              title="Edit"
+                              onClick={() => openEdit(item)}
+                            >
+                              <PencilIcon />
+                            </button>
+                          )}
+                          {removeItem && (
+                            <button
+                              className="text-gray-500 hover:text-error-500 dark:text-gray-400 disabled:opacity-40"
+                              title="Remove"
+                              disabled={deletingId === Number(id)}
+                              onClick={() => handleDelete(item)}
+                            >
+                              <TrashBinIcon />
+                            </button>
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })
