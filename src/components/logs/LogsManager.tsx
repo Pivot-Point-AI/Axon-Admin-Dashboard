@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/utils";
-import LogSessionsList from "./LogSessionsList";
+import LiveLogs from "./LiveLogs";
 import LogHistoryViewer from "./LogHistoryViewer";
 
 const tabs = [
@@ -39,7 +39,7 @@ export default function LogsManager() {
         ))}
       </div>
 
-      {activeTab === "live" ? <LogSessionsList /> : <LogHistoryViewer />}
+      {activeTab === "live" ? <LiveLogs /> : <LogHistoryViewer />}
     </div>
   );
 }

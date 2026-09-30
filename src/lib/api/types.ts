@@ -170,6 +170,19 @@ export interface LogHistoryResponse {
   [key: string]: unknown;
 }
 
+// One structured log event — pushed by the live WebSocket, and returned
+// (JSON-encoded, one per line) by /logs/history. The listed keys are the
+// common ones; individual events may carry extra fields.
+export interface LogEvent {
+  level?: string;
+  event?: string;
+  session_id?: string;
+  user_id?: string;
+  flow_id?: string;
+  timestamp?: string;
+  [key: string]: unknown;
+}
+
 export interface HealthResponse {
   [key: string]: unknown;
 }

@@ -7,8 +7,13 @@ import DateField from "@/components/form/DateField";
 import Input from "@/components/form/input/InputField";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { ApiError } from "@/lib/api/client";
-import { getLogHistory } from "@/lib/api/logs";
-import LogEntryList, { extractLogEntries, type LogEntry } from "./LogEntries";
+import {
+  getLogHistory,
+  logEventsFrom,
+  toLogEntry,
+  type LogEventEntry,
+} from "@/lib/api/logs";
+import LogEventRow from "./LogEventRow";
 
 const toDateInput = (date: Date) => {
   const offsetMs = date.getTimezoneOffset() * 60_000;
@@ -37,6 +42,22 @@ const QUICK_RANGES: { label: string; get: () => { start: string; end: string } }
   },
 ];
 
+// Large ranges are scanned server-side; past this the server is likely stuck,
+// and a spinner that never ends is worse than an error.
+const HISTORY_TIMEOUT_MS = 60_000;
+
+function historyErrorMessage(err: unknown): string {
+  if (err instanceof DOMException && err.name === "TimeoutError") {
+    return "The logs server didn't respond within 60 seconds. Try a shorter date range, or try again later.";
+  }
+  if (err instanceof ApiError) {
+    return err.status >= 500
+      ? `The logs server hit an internal error (${err.status}) while loading these logs. Try a shorter date range, or try again later.`
+      : err.message;
+  }
+  return "Failed to load log history.";
+}
+
 interface LogHistoryViewerProps {
   // When set, the search is pinned to this session and the session / user /
   // flow filters are hidden.
@@ -57,7 +78,7 @@ export default function LogHistoryViewer({
   const [userId, setUserId] = useState("");
   const [flowId, setFlowId] = useState("");
 
-  const [entries, setEntries] = useState<LogEntry[]>([]);
+  const [entries, setEntries] = useState<LogEventEntry[]>([]);
   const [raw, setRaw] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -86,14 +107,13 @@ export default function LogHistoryViewer({
           flowId: flowId.trim(),
         },
         accessToken,
+        AbortSignal.timeout(HISTORY_TIMEOUT_MS),
       );
       setRaw(data);
-      setEntries(extractLogEntries(data));
+      setEntries(logEventsFrom(data).map(toLogEntry));
       setSearched(true);
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Failed to load log history.",
-      );
+      setError(historyErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -205,15 +225,32 @@ export default function LogHistoryViewer({
       {loading ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
       ) : !searched ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Choose a start and end date, then search to load historical logs.
-        </p>
+        !error && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Choose a start and end date, then search to load historical logs.
+          </p>
+        )
       ) : entries.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">
           No log entries found for the selected filters.
         </p>
       ) : (
-        <LogEntryList entries={entries} />
+        <>
+          <p className="mb-2 text-theme-xs text-gray-500 dark:text-gray-400">
+            {entries.length.toLocaleString()}{" "}
+            {entries.length === 1 ? "entry" : "entries"}
+          </p>
+          <ul className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+            {entries.map((entry) => (
+              <LogEventRow
+                key={entry.id}
+                entry={entry}
+                showDate
+                linkToHistory={!sessionId}
+              />
+            ))}
+          </ul>
+        </>
       )}
 
       {searched && raw !== null && (
