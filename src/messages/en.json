@@ -47,6 +47,8 @@
     "backHome": "Back to Home Page"
   },
   "redesign": {
+    "authPanelTitle": "Administration, simplified.",
+    "authPanelSubtitle": "One workspace for your institutions, people and conversations.",
     "welcome": "Welcome Back",
     "signinSubtitle": "Sign in to your Axon admin dashboard to continue.",
     "showPassword": "Show password",
@@ -109,6 +111,7 @@
     "cancel": "Cancel",
     "dismiss": "Dismiss notification",
     "created": "Created successfully.",
+    "signedIn": "Logged in successfully.",
     "saved": "Changes saved successfully.",
     "deleted": "Removed successfully.",
     "actionFailed": "The action failed. Please try again.",

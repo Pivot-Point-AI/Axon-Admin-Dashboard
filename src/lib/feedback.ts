@@ -1,6 +1,7 @@
 export type FeedbackDetail = {
   kind: "success" | "error";
   message?: string;
+  messageKey?: "signedIn";
   operation?: "POST" | "PUT" | "DELETE";
 };
 

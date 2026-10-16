@@ -696,22 +696,18 @@ pre[class*="language-"].line-numbers {
   border-color: var(--color-brand-700);
 }
 .axon-auth-panel {
-  background: linear-gradient(
-    145deg,
-    var(--color-brand-500),
-    var(--color-brand-800)
+  background: radial-gradient(
+    ellipse at 50% 38%,
+    var(--color-brand-700),
+    var(--color-brand-900) 75%
   );
 }
 .dark .axon-auth-panel {
-  background: linear-gradient(
-    145deg,
-    var(--color-brand-700),
-    var(--color-brand-950)
+  background: radial-gradient(
+    ellipse at 50% 38%,
+    var(--color-brand-800),
+    var(--color-brand-950) 75%
   );
-}
-.axon-product-preview {
-  transform: none;
-  border-radius: 1rem;
 }
 .axon-signin {
   background: var(--color-white);

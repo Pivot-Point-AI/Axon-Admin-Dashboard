@@ -40,6 +40,7 @@ interface RequestOptions {
   licenseKey?: string | null;
   baseUrl?: string;
   signal?: AbortSignal;
+  successNotification?: "signedIn" | false;
 }
 
 function buildUrl(
@@ -115,6 +116,7 @@ export async function apiRequest<T>(
     licenseKey,
     baseUrl = API_BASE_URL,
     signal,
+    successNotification,
   } = options;
 
   const headers: Record<string, string> = {
@@ -142,7 +144,9 @@ export async function apiRequest<T>(
       buildUrl(path, query, baseUrl),
       init,
     );
-    if (method !== "GET") notify({ kind: "success", operation: method });
+    if (method !== "GET" && successNotification !== false) {
+      notify({ kind: "success", operation: method, messageKey: successNotification });
+    }
     return result;
   } catch (error) {
     if (!(error instanceof DOMException && error.name === "AbortError")) {

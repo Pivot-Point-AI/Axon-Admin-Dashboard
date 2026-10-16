@@ -19,6 +19,7 @@ export function adminLogin(body: AdminLoginRequest) {
     method: "POST",
     body,
     baseUrl: ADMIN_API_BASE_URL,
+    successNotification: "signedIn",
   });
 }
 
@@ -27,6 +28,7 @@ export function adminRefresh(refreshToken: string) {
     method: "POST",
     body: { refresh_token: refreshToken },
     baseUrl: ADMIN_API_BASE_URL,
+    successNotification: false,
   });
 }
 

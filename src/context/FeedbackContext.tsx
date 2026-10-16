@@ -44,13 +44,13 @@ function Notification({
         <p className="flex-1 text-sm text-gray-800 dark:text-gray-100">
           {detail.message ??
             t(
-              detail.kind === "error"
+              detail.messageKey ?? (detail.kind === "error"
                 ? "actionFailed"
                 : detail.operation === "DELETE"
                   ? "deleted"
                   : detail.operation === "POST"
                     ? "created"
-                    : "saved",
+                    : "saved"),
             )}
         </p>
         <button
