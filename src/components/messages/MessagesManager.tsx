@@ -1,5 +1,7 @@
 "use client";
 
+import Pagination from "@/components/common/Pagination";
+import usePagination from "@/hooks/usePagination";
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import Switch from "@/components/form/input/Switch";
@@ -25,9 +27,10 @@ export default function MessagesManager() {
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
-  const [editMessage, setEditMessage] = useState<Record<string, unknown> | null>(
-    null,
-  );
+  const [editMessage, setEditMessage] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
 
   const load = useCallback(async () => {
     if (!accessToken) return;
@@ -61,7 +64,11 @@ export default function MessagesManager() {
       // Preserve every other field on the record — PUT looks like a full
       // replace keyed by message_key, not a partial patch.
       await updateMessage(
-        { ...message, message_key: messageKey, is_active: active } as MessageModel,
+        {
+          ...message,
+          message_key: messageKey,
+          is_active: active,
+        } as MessageModel,
         accessToken,
       );
       await load();
@@ -90,6 +97,8 @@ export default function MessagesManager() {
     await load();
   };
 
+  const pagination = usePagination(messages, "");
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
@@ -111,16 +120,28 @@ export default function MessagesManager() {
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-gray-800">
             <TableRow>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Message Key
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Parameters
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Active
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Actions
               </TableCell>
             </TableRow>
@@ -139,12 +160,12 @@ export default function MessagesManager() {
                 </TableCell>
               </TableRow>
             ) : (
-              messages.map((message, index) => {
+              pagination.items.map((message, index) => {
                 const messageKey = String(message.message_key ?? index);
                 const parameters = parameterNames(message);
                 return (
                   <TableRow key={messageKey}>
-                    <TableCell className="px-4 py-3 text-sm font-mono font-medium text-gray-800 dark:text-white/90">
+                    <TableCell className="font-mono px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
                       {messageKey}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
@@ -181,6 +202,7 @@ export default function MessagesManager() {
           </TableBody>
         </Table>
       </div>
+      <Pagination pagination={pagination} disabled={loading} />
 
       {editMessage && (
         <EditMessageModal

@@ -8,6 +8,8 @@ import useLogStream from "@/hooks/useLogStream";
 import type { LogEventEntry } from "@/lib/api/logs";
 import RawLogViewer from "./RawLogViewer";
 import LiveLogStatus from "./LiveLogStatus";
+import Pagination from "@/components/common/Pagination";
+import usePagination from "@/hooks/usePagination";
 
 const MAX_ENTRIES = 1000;
 export default function LiveLogs() {
@@ -24,10 +26,11 @@ export default function LiveLogs() {
   const [follow, setFollow] = useState(true);
   const listRef = useRef<HTMLDivElement>(null);
   const shown = paused?.entries ?? entries;
+  const pagination = usePagination(shown, "", 50, follow);
   useLayoutEffect(() => {
     const list = listRef.current;
     if (list && follow) list.scrollTop = list.scrollHeight;
-  }, [shown, follow]);
+  }, [shown, follow, pagination.page, pagination.pageSize]);
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -42,12 +45,13 @@ export default function LiveLogs() {
           const list = listRef.current;
           if (list)
             setFollow(
-              list.scrollHeight - list.scrollTop - list.clientHeight <= 24,
+              pagination.page === pagination.pageCount &&
+                list.scrollHeight - list.scrollTop - list.clientHeight <= 24,
             );
         }}
-        className="custom-scrollbar max-h-128 min-h-80 overflow-auto rounded-lg bg-gray-950 dark:bg-gray-950"
+        className="custom-scrollbar max-h-128 overflow-auto rounded-xl"
       >
-        <RawLogViewer entries={shown} />
+        <RawLogViewer entries={pagination.items} />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-theme-xs text-gray-500 dark:text-gray-400">
@@ -57,7 +61,14 @@ export default function LiveLogs() {
         </span>
         <div className="flex flex-wrap gap-2">
           {!follow && (
-            <Button size="sm" variant="outline" onClick={() => setFollow(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setPaused(null);
+                setFollow(true);
+              }}
+            >
               {t("latest")}
             </Button>
           )}
@@ -89,6 +100,17 @@ export default function LiveLogs() {
           )}
         </div>
       </div>
+      <Pagination
+        pagination={{
+          ...pagination,
+          setPage: (page) => {
+            if (!paused) setPaused({ entries, received });
+            setFollow(false);
+            pagination.setPage(page);
+            if (listRef.current) listRef.current.scrollTop = 0;
+          },
+        }}
+      />
       {(status === "offline" || status === "unauthorized") && (
         <p role="alert" className="text-sm text-error-600 dark:text-error-400">
           {t(status === "unauthorized" ? "unauthorized" : "offline")}

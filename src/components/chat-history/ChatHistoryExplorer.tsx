@@ -1,5 +1,8 @@
 "use client";
 
+import Pagination from "@/components/common/Pagination";
+import usePagination from "@/hooks/usePagination";
+import useRequiredFields from "@/hooks/useRequiredFields";
 import { useConfirm } from "@/context/FeedbackContext";
 import { useState } from "react";
 import Button from "@/components/ui/button/Button";
@@ -40,9 +43,11 @@ export default function ChatHistoryExplorer() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const canQuery = userId.trim().length > 0 && dateFrom && dateTo && token;
+  const required = useRequiredFields();
 
   const runSearch = async () => {
+    setError(null);
+    if (!required.validate([userId, dateFrom, dateTo, token])) return;
     setLoading(true);
     setError(null);
     setNotice(null);
@@ -56,6 +61,7 @@ export default function ChatHistoryExplorer() {
         token,
       );
       setMessages(response.messages);
+      pagination.setPage(1);
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "Failed to load chat history.",
@@ -69,9 +75,9 @@ export default function ChatHistoryExplorer() {
   const runDelete = async () => {
     if (!userId.trim()) return;
     if (
-      !await confirm(
+      !(await confirm(
         `Delete all chat history for user "${userId.trim()}"? This cannot be undone.`,
-      )
+      ))
     ) {
       return;
     }
@@ -84,12 +90,16 @@ export default function ChatHistoryExplorer() {
       setMessages(null);
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "Failed to delete chat history.",
+        err instanceof ApiError
+          ? err.message
+          : "Failed to delete chat history.",
       );
     } finally {
       setDeleting(false);
     }
   };
+
+  const pagination = usePagination(messages ?? [], "");
 
   return (
     <div className="space-y-6">
@@ -108,6 +118,7 @@ export default function ChatHistoryExplorer() {
         <Label htmlFor="access-token">Bearer Token</Label>
         <Input
           id="access-token"
+          error={required.invalid(token)}
           value={token}
           onChange={(e) => setToken(e.target.value)}
           placeholder="Paste access_token here"
@@ -123,6 +134,7 @@ export default function ChatHistoryExplorer() {
             <Label htmlFor="user-id">User ID</Label>
             <Input
               id="user-id"
+              error={required.invalid(userId)}
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               placeholder="e.g. user-123"
@@ -132,6 +144,7 @@ export default function ChatHistoryExplorer() {
             <Label htmlFor="date-from">From</Label>
             <Input
               id="date-from"
+              error={required.invalid(dateFrom)}
               type="datetime-local"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
@@ -141,6 +154,7 @@ export default function ChatHistoryExplorer() {
             <Label htmlFor="date-to">To</Label>
             <Input
               id="date-to"
+              error={required.invalid(dateTo)}
               type="datetime-local"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
@@ -148,14 +162,8 @@ export default function ChatHistoryExplorer() {
           </div>
         </div>
 
-        {!token && (
-          <p className="mt-3 text-sm text-warning-500">
-            Enter a bearer token above before searching.
-          </p>
-        )}
-
         <div className="mt-4 flex flex-wrap gap-3">
-          <Button onClick={runSearch} disabled={!canQuery || loading}>
+          <Button onClick={runSearch} disabled={loading}>
             {loading ? "Searching…" : "Search"}
           </Button>
           <Button
@@ -180,13 +188,22 @@ export default function ChatHistoryExplorer() {
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                 <TableRow>
-                  <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                  >
                     Time
                   </TableCell>
-                  <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                  >
                     Type
                   </TableCell>
-                  <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                  >
                     Content
                   </TableCell>
                 </TableRow>
@@ -199,7 +216,7 @@ export default function ChatHistoryExplorer() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  messages.map((message, index) => (
+                  pagination.items.map((message, index) => (
                     <TableRow key={index}>
                       <TableCell className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                         {new Date(message.created_at).toLocaleString()}
@@ -218,6 +235,7 @@ export default function ChatHistoryExplorer() {
               </TableBody>
             </Table>
           </div>
+          <Pagination pagination={pagination} disabled={loading} />
         </div>
       )}
     </div>

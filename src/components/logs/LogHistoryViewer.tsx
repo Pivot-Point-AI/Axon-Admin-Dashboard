@@ -1,5 +1,8 @@
 "use client";
 
+import Pagination from "@/components/common/Pagination";
+import usePagination from "@/hooks/usePagination";
+import useRequiredFields from "@/hooks/useRequiredFields";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import Button from "@/components/ui/button/Button";
@@ -15,8 +18,6 @@ import {
   type LogEventEntry,
 } from "@/lib/api/logs";
 import RawLogViewer from "./RawLogViewer";
-import LogListHeading from "./LogListHeading";
-import LogEventRow from "./LogEventRow";
 
 const toDateInput = (date: Date) => {
   const offsetMs = date.getTimezoneOffset() * 60_000;
@@ -81,9 +82,7 @@ export default function LogHistoryViewer({
   autoSearch = false,
 }: LogHistoryViewerProps) {
   const f = useTranslations("fixes");
-  const [page, setPage] = useState(1);
   const [fetchLimit, setFetchLimit] = useState(200);
-  const pageSize = 50;
   const t = useTranslations("managementDesign");
   const { accessToken } = useAdminAuth();
   const [startDate, setStartDate] = useState(() => daysAgo(7));
@@ -93,18 +92,17 @@ export default function LogHistoryViewer({
   const [flowId, setFlowId] = useState("");
 
   const [entries, setEntries] = useState<LogEventEntry[]>([]);
-  const [raw, setRaw] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const required = useRequiredFields();
+
   const search = async () => {
     if (!accessToken) return;
     // Both dates are required by the API.
-    if (!startDate || !endDate) {
-      setError("Start date and end date are required.");
-      return;
-    }
+    setError(null);
+    if (!required.validate([startDate, endDate])) return;
     if (startDate > endDate) {
       setError("Start date must be on or before the end date.");
       return;
@@ -124,8 +122,7 @@ export default function LogHistoryViewer({
         accessToken,
         AbortSignal.timeout(HISTORY_TIMEOUT_MS),
       );
-      setRaw(data);
-      setPage(1);
+      pagination.setPage(1);
       setEntries(logEventsFrom(data).map(toLogEntry));
       setSearched(true);
     } catch (err) {
@@ -144,8 +141,8 @@ export default function LogHistoryViewer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSearch, accessToken]);
 
-  const pageCount = Math.max(1, Math.ceil(entries.length / pageSize));
-  const pageEntries = entries.slice((page - 1) * pageSize, page * pageSize);
+  const pagination = usePagination(entries, "", 50);
+  const pageEntries = pagination.items;
 
   return (
     <div className="axon-log-history">
@@ -205,7 +202,10 @@ export default function LogHistoryViewer({
             required
             value={startDate}
             max={endDate || undefined}
-            error={!startDate || (!!endDate && startDate > endDate)}
+            error={
+              required.invalid(startDate) ||
+              (!!startDate && !!endDate && startDate > endDate)
+            }
             onChange={setStartDate}
           />
           <DateField
@@ -214,7 +214,7 @@ export default function LogHistoryViewer({
             required
             value={endDate}
             min={startDate || undefined}
-            error={!endDate}
+            error={required.invalid(endDate)}
             onChange={setEndDate}
           />
           {!sessionId && (
@@ -249,11 +249,7 @@ export default function LogHistoryViewer({
             </>
           )}
           <div className="flex items-end">
-            <Button
-              className="w-full"
-              onClick={search}
-              disabled={loading || !startDate || !endDate}
-            >
+            <Button className="w-full" onClick={search} disabled={loading}>
               {loading ? "Searching…" : "Search"}
             </Button>
           </div>
@@ -284,60 +280,11 @@ export default function LogHistoryViewer({
             {entries.length === 1 ? "entry" : "entries"}
           </p>
           <RawLogViewer entries={pageEntries} />
-          <div className="my-4 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-theme-xs text-gray-500 dark:text-gray-400">
-              {f("page", { page, total: pageCount })}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={loading || page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                {f("previous")}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={loading || page >= pageCount}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {f("next")}
-              </Button>
-            </div>
-          </div>
+          <Pagination pagination={pagination} disabled={loading} />
           <p className="mb-4 text-theme-xs text-gray-500 dark:text-gray-400">
             {f("historyBound", { count: entries.length })}
           </p>
-          <details>
-            <summary className="mb-3 cursor-pointer text-sm text-brand-500 dark:text-brand-400">
-              {f("eventDetails")}
-            </summary>
-            <div className="axon-log-list overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
-              <LogListHeading />
-              <ul>
-                {pageEntries.map((entry) => (
-                  <LogEventRow
-                    key={entry.id}
-                    entry={entry}
-                    showDate
-                    linkToHistory={!sessionId}
-                  />
-                ))}
-              </ul>
-            </div>
-          </details>
         </>
-      )}
-
-      {searched && raw !== null && (
-        <details className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-          <summary className="cursor-pointer">Raw response</summary>
-          <pre className="mt-2 overflow-x-auto rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
-            {JSON.stringify(raw, null, 2)}
-          </pre>
-        </details>
       )}
     </div>
   );

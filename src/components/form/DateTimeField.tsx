@@ -8,19 +8,23 @@ import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import { CalenderIcon } from "@/icons";
+import useRequiredFields from "@/hooks/useRequiredFields";
 
 interface DateTimeFieldProps {
   id: string;
   value: string;
   onChange: (value: string) => void;
+  error?: boolean;
 }
 
 export default function DateTimeField({
   id,
   value,
   onChange,
+  error = false,
 }: DateTimeFieldProps) {
   const t = useTranslations("fixes");
+  const required = useRequiredFields();
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -29,7 +33,11 @@ export default function DateTimeField({
       <button
         id={id}
         type="button"
+        data-invalid={error || undefined}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         onClick={() => {
+          required.reset();
           const [day, clock] = value.split("T");
           setDate(day ?? "");
           setTime(clock || "00:00");
@@ -56,6 +64,7 @@ export default function DateTimeField({
             id={`${id}-date`}
             label={t("date")}
             value={date}
+            error={required.invalid(date)}
             onChange={setDate}
             required
           />
@@ -65,6 +74,7 @@ export default function DateTimeField({
               id={`${id}-time`}
               type="time"
               value={time}
+              error={required.invalid(time)}
               onChange={(e) => setTime(e.target.value)}
               required
             />
@@ -75,8 +85,8 @@ export default function DateTimeField({
             {t("cancel")}
           </Button>
           <Button
-            disabled={!date || !time}
             onClick={() => {
+              if (!required.validate([date, time])) return;
               onChange(`${date}T${time}`);
               setOpen(false);
             }}

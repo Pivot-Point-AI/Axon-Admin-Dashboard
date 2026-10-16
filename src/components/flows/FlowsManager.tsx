@@ -1,5 +1,7 @@
 "use client";
 
+import Pagination from "@/components/common/Pagination";
+import usePagination from "@/hooks/usePagination";
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import Switch from "@/components/form/input/Switch";
@@ -40,7 +42,10 @@ export default function FlowsManager() {
     load();
   }, [load]);
 
-  const handleToggle = async (flow: Record<string, unknown>, enabled: boolean) => {
+  const handleToggle = async (
+    flow: Record<string, unknown>,
+    enabled: boolean,
+  ) => {
     if (!accessToken) return;
     const intentName = String(flow.intent_name ?? "");
     if (!intentName) return;
@@ -52,11 +57,15 @@ export default function FlowsManager() {
       );
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to update flow.");
+      setError(
+        err instanceof ApiError ? err.message : "Failed to update flow.",
+      );
     } finally {
       setBusyIntent(null);
     }
   };
+
+  const pagination = usePagination(flows, "");
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
@@ -79,10 +88,16 @@ export default function FlowsManager() {
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-gray-800">
             <TableRow>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Intent
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Enabled
               </TableCell>
             </TableRow>
@@ -101,7 +116,7 @@ export default function FlowsManager() {
                 </TableCell>
               </TableRow>
             ) : (
-              flows.map((flow, index) => {
+              pagination.items.map((flow, index) => {
                 const intentName = String(flow.intent_name ?? index);
                 return (
                   <TableRow key={intentName}>
@@ -122,6 +137,7 @@ export default function FlowsManager() {
           </TableBody>
         </Table>
       </div>
+      <Pagination pagination={pagination} disabled={loading} />
     </div>
   );
 }

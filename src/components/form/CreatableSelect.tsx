@@ -15,6 +15,7 @@ interface CreatableSelectProps {
   onCreate?: (name: string) => Promise<void>;
   placeholder?: string;
   disabled?: boolean;
+  invalid?: boolean;
 }
 
 /**
@@ -30,6 +31,7 @@ export default function CreatableSelect({
   onCreate,
   placeholder = "Select or type to add…",
   disabled = false,
+  invalid = false,
 }: CreatableSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -95,6 +97,7 @@ export default function CreatableSelect({
         id={id}
         type="text"
         role="combobox"
+        aria-invalid={invalid || undefined}
         aria-expanded={open}
         aria-controls={id ? `${id}-listbox` : undefined}
         autoComplete="off"
@@ -115,7 +118,7 @@ export default function CreatableSelect({
           }
         }}
         placeholder={placeholder}
-        className="h-11 w-full rounded-lg border appearance-none ps-4 pe-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:border-gray-700 dark:focus:border-brand-800"
+        className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent py-2.5 ps-4 pe-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
       />
       {open && (
         <div

@@ -1,4 +1,55 @@
 {
+  "configurationEditor": {
+    "actions": "Actions",
+    "edit": "Edit",
+    "cancelEditing": "Cancel editing",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
+    "save": "Save",
+    "saving": "Saving…",
+    "saveFailed": "Failed to update configuration.",
+    "loadFailed": "Failed to load configurations.",
+    "setting": "Setting",
+    "value": "Value",
+    "type": "Type",
+    "lastUpdated": "Last updated",
+    "loading": "Loading configurations…",
+    "empty": "No configurations found.",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "booleanRequired": "Value must be true or false.",
+    "numberRequired": "Value must be a number.",
+    "integerRequired": "Value must be a whole number.",
+    "minimum": "Minimum: {value}",
+    "maximum": "Maximum: {value}",
+    "range": "Allowed range: {min}–{max}",
+    "types": {
+      "boolean": "Yes / No",
+      "integer": "Whole number",
+      "number": "Number",
+      "string": "Text"
+    }
+  },
+  "logViewer": {
+    "level": "Level",
+    "preview": "Payload preview",
+    "eventCount": "{count, plural, one {# event} other {# events}}",
+    "viewMore": "View more",
+    "viewLess": "View less",
+    "label": "Log events",
+    "event": "Event",
+    "payload": "Details",
+    "emptyTitle": "No activity yet",
+    "emptyDescription": "New log events will appear here as activity is recorded."
+  },
+  "pagination": {
+    "label": "Pagination",
+    "range": "Showing {start}–{end} of {total}",
+    "rowsPerPage": "Rows per page",
+    "previous": "Previous",
+    "next": "Next",
+    "goToPage": "Go to page {page}"
+  },
   "common": {
     "home": "Home",
     "edit": "Edit",

@@ -1,5 +1,7 @@
 "use client";
 
+import Pagination from "@/components/common/Pagination";
+import usePagination from "@/hooks/usePagination";
 import { useConfirm } from "@/context/FeedbackContext";
 import { useCallback, useEffect, useState } from "react";
 import ActionIconButton from "@/components/ui/button/ActionIconButton";
@@ -9,6 +11,7 @@ import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Switch from "@/components/form/input/Switch";
 import LanguagePicker from "@/components/languages/LanguagePicker";
+import useRequiredFields from "@/hooks/useRequiredFields";
 import {
   Table,
   TableBody,
@@ -65,6 +68,8 @@ const LANGUAGE_OPTIONS: { code: string; name: string }[] = [
 ];
 
 export default function LanguagesManager() {
+  const createRequired = useRequiredFields();
+  const editRequired = useRequiredFields();
   const confirm = useConfirm();
   const { accessToken } = useAdminAuth();
   const [languages, setLanguages] = useState<Record<string, unknown>[]>([]);
@@ -126,6 +131,7 @@ export default function LanguagesManager() {
   }));
 
   const openCreate = () => {
+    createRequired.reset();
     setCreateSelection("");
     setCreateEnabled(true);
     setCreateError(null);
@@ -135,8 +141,9 @@ export default function LanguagesManager() {
   const submitCreate = async () => {
     if (!accessToken) return;
     const selected = LANGUAGE_OPTIONS.find((o) => o.code === createSelection);
+    setCreateError(null);
+    if (!createRequired.validate([selected?.code])) return;
     if (!selected) {
-      setCreateError("Please select a language.");
       return;
     }
     setCreateSubmitting(true);
@@ -162,6 +169,7 @@ export default function LanguagesManager() {
   };
 
   const openEdit = (language: Record<string, unknown>) => {
+    editRequired.reset();
     setEditTarget(language);
     const currentName = String(language.language_name ?? "").toLowerCase();
     const currentCode = String(language.language_code ?? "").toLowerCase();
@@ -185,10 +193,8 @@ export default function LanguagesManager() {
     const selected = LANGUAGE_OPTIONS.find((o) => o.code === editSelection);
     const languageName =
       selected?.name ?? String(editTarget.language_name ?? "").trim();
-    if (!languageName) {
-      setEditError("Please select a language.");
-      return;
-    }
+    setEditError(null);
+    if (!editRequired.validate([languageName])) return;
     setEditSubmitting(true);
     setEditError(null);
     try {
@@ -246,6 +252,8 @@ export default function LanguagesManager() {
       setBusyCode(null);
     }
   };
+
+  const pagination = usePagination(languages, "");
 
   return (
     <div className="axon-management-panel w-full rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
@@ -314,7 +322,7 @@ export default function LanguagesManager() {
                 </TableCell>
               </TableRow>
             ) : (
-              languages.map((language, index) => {
+              pagination.items.map((language, index) => {
                 const code = String(language.language_code ?? index);
                 return (
                   <TableRow key={code}>
@@ -361,6 +369,7 @@ export default function LanguagesManager() {
           </TableBody>
         </Table>
       </div>
+      <Pagination pagination={pagination} disabled={loading} />
 
       <Modal
         isOpen={createOpen}
@@ -375,6 +384,7 @@ export default function LanguagesManager() {
             <Label htmlFor="create-lang-select">Language</Label>
             <LanguagePicker
               id="create-lang-select"
+              invalid={createRequired.invalid(createSelection)}
               options={languagePickerOptions}
               value={createSelection}
               onChange={setCreateSelection}
@@ -398,7 +408,7 @@ export default function LanguagesManager() {
           <Button
             className="w-full"
             onClick={submitCreate}
-            disabled={createSubmitting || !createSelection}
+            disabled={createSubmitting}
           >
             {createSubmitting ? "Creating…" : "Create Language"}
           </Button>
@@ -418,6 +428,9 @@ export default function LanguagesManager() {
             <Label htmlFor="edit-lang-name">Language</Label>
             <LanguagePicker
               id="edit-lang-name"
+              invalid={editRequired.invalid(
+                editSelection || editTarget?.language_name,
+              )}
               options={editPickerOptions}
               value={editSelection}
               onChange={setEditSelection}

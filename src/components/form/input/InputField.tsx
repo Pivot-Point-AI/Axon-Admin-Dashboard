@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type React from "react";
 import type { FC } from "react";
 
@@ -27,8 +30,11 @@ const Input: FC<InputProps> = ({
   success = false,
   error = false,
   hint,
+  onInvalid,
   ...props
 }) => {
+  const [nativeInvalid, setNativeInvalid] = useState(false);
+  error = error || nativeInvalid;
   let inputClasses = ` h-11 w-full rounded-lg border appearance-none ps-4 pe-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
 
   if (disabled) {
@@ -50,13 +56,23 @@ const Input: FC<InputProps> = ({
         placeholder={placeholder}
         defaultValue={defaultValue}
         value={value}
-        onChange={onChange}
+        onChange={(event) => {
+          if (nativeInvalid)
+            setNativeInvalid(!event.currentTarget.validity.valid);
+          onChange?.(event);
+        }}
+        onInvalid={(event) => {
+          event.preventDefault();
+          setNativeInvalid(true);
+          onInvalid?.(event);
+        }}
         min={min}
         max={max}
         step={step}
         disabled={disabled}
         className={inputClasses}
         {...props}
+        aria-invalid={error || props["aria-invalid"] || undefined}
       />
 
       {hint && (

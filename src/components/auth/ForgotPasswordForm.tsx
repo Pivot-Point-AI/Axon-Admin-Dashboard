@@ -1,5 +1,6 @@
 "use client";
 
+import useRequiredFields from "@/hooks/useRequiredFields";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
@@ -14,9 +15,12 @@ export default function ForgotPasswordForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const required = useRequiredFields();
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!required.validate([email])) return;
     setIsSubmitting(true);
     try {
       await adminForgotPassword(email.trim());
@@ -41,8 +45,8 @@ export default function ForgotPasswordForm() {
               Forgot Password
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter the email associated with your account and we&apos;ll
-              send you a link to reset your password.
+              Enter the email associated with your account and we&apos;ll send
+              you a link to reset your password.
             </p>
           </div>
 
@@ -68,6 +72,7 @@ export default function ForgotPasswordForm() {
                   </Label>
                   <Input
                     id="email"
+                    error={required.invalid(email)}
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}

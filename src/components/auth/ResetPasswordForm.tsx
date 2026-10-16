@@ -1,6 +1,7 @@
 "use client";
 
 import Input from "@/components/form/input/InputField";
+import useRequiredFields from "@/hooks/useRequiredFields";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -21,10 +22,12 @@ export default function ResetPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const required = useRequiredFields();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!required.validate([newPassword, confirmPassword])) return;
 
     if (!token) {
       setError("This reset link is missing its token. Request a new one.");
@@ -70,10 +73,14 @@ export default function ResetPasswordForm() {
           {submitted ? (
             <div className="space-y-6">
               <p className="rounded-lg border border-success-500 bg-success-50 px-4 py-3 text-sm text-success-600 dark:border-success-500/30 dark:bg-success-500/15 dark:text-success-400">
-                Your password has been reset. You can now sign in with your
-                new password.
+                Your password has been reset. You can now sign in with your new
+                password.
               </p>
-              <Button className="w-full" size="sm" onClick={() => router.push("/signin")}>
+              <Button
+                className="w-full"
+                size="sm"
+                onClick={() => router.push("/signin")}
+              >
                 Go to Sign In
               </Button>
             </div>
@@ -82,8 +89,8 @@ export default function ResetPasswordForm() {
               <div className="space-y-6">
                 {!token && (
                   <p className="rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
-                    This link is missing its reset token. Use the link from
-                    your email, or{" "}
+                    This link is missing its reset token. Use the link from your
+                    email, or{" "}
                     <Link href="/forgot-password" className="underline">
                       request a new one
                     </Link>
@@ -97,6 +104,7 @@ export default function ResetPasswordForm() {
                   <div className="relative">
                     <Input
                       id="new-password"
+                      error={required.invalid(newPassword)}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       type={showPassword ? "text" : "password"}
@@ -106,7 +114,7 @@ export default function ResetPasswordForm() {
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
-                      className="inset-e-4 absolute top-1/2 z-30 -translate-y-1/2 cursor-pointer"
+                      className="absolute inset-e-4 top-1/2 z-30 -translate-y-1/2 cursor-pointer"
                     >
                       {showPassword ? (
                         <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
@@ -122,6 +130,7 @@ export default function ResetPasswordForm() {
                   </Label>
                   <Input
                     id="confirm-password"
+                    error={required.invalid(confirmPassword)}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     type={showPassword ? "text" : "password"}
@@ -137,7 +146,10 @@ export default function ResetPasswordForm() {
                   </Button>
                 </div>
                 <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                  <Link href="/signin" className="text-brand-500 hover:underline">
+                  <Link
+                    href="/signin"
+                    className="text-brand-500 hover:underline"
+                  >
                     Back to sign in
                   </Link>
                 </p>

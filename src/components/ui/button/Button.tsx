@@ -55,7 +55,7 @@ const Button: React.FC<ButtonProps> = ({
       disabled={disabled}
     >
       {startIcon && (
-        <span className="flex shrink-0 items-center justify-center">
+        <span className="inline-flex shrink-0 items-center justify-center leading-none">
           {startIcon}
         </span>
       )}

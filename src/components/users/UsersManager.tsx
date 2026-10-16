@@ -1,6 +1,9 @@
 "use client";
 
+import Pagination from "@/components/common/Pagination";
+import usePagination from "@/hooks/usePagination";
 import { useConfirm } from "@/context/FeedbackContext";
+import useRequiredFields from "@/hooks/useRequiredFields";
 import { useTranslations } from "next-intl";
 import ManagementMetrics from "@/components/common/ManagementMetrics";
 import { GroupIcon, UserCircleIcon, UserIcon, CheckCircleIcon } from "@/icons";
@@ -74,7 +77,10 @@ export default function UsersManager() {
     load();
   }, [load]);
 
+  const createRequired = useRequiredFields();
+
   const openCreate = () => {
+    createRequired.reset();
     setCreateUsername("");
     setCreateEmail("");
     setCreateRole("MANAGER");
@@ -88,10 +94,9 @@ export default function UsersManager() {
       setCreateError(f("editRoleInvalid"));
       return;
     }
-    if (!createUsername.trim() || !createEmail.trim() || !createRole.trim()) {
-      setCreateError("Username, email, and role are required.");
+    setCreateError(null);
+    if (!createRequired.validate([createUsername, createEmail, createRole]))
       return;
-    }
     setCreateSubmitting(true);
     setCreateError(null);
     try {
@@ -141,6 +146,11 @@ export default function UsersManager() {
   );
   const roleCount = (role: string) =>
     users.filter((user) => user.role.toUpperCase() === role).length;
+
+  const pagination = usePagination(
+    visibleUsers,
+    JSON.stringify([query, roleFilter]),
+  );
 
   return (
     <div className="space-y-5">
@@ -267,7 +277,7 @@ export default function UsersManager() {
                   </TableCell>
                 </TableRow>
               ) : (
-                visibleUsers.map((user, index) => (
+                pagination.items.map((user, index) => (
                   <TableRow key={user.user_id}>
                     <TableCell className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
                       <div className="flex items-center gap-3">
@@ -321,9 +331,7 @@ export default function UsersManager() {
           </Table>
         </div>
 
-        <p className="mt-5 border-t border-gray-100 pt-4 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
-          {t("results", { count: visibleUsers.length })}
-        </p>
+        <Pagination pagination={pagination} disabled={loading} />
         <Modal
           isOpen={createOpen}
           onClose={() => setCreateOpen(false)}
@@ -345,6 +353,7 @@ export default function UsersManager() {
               </Label>
               <Input
                 id="create-username"
+                error={createRequired.invalid(createUsername)}
                 required
                 value={createUsername}
                 onChange={(e) => setCreateUsername(e.target.value)}
@@ -357,6 +366,7 @@ export default function UsersManager() {
               </Label>
               <Input
                 id="create-email"
+                error={createRequired.invalid(createEmail)}
                 required
                 type="email"
                 value={createEmail}

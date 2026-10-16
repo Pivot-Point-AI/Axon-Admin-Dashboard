@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDownIcon } from "@/icons/index";
 
 export interface LanguageOption {
@@ -15,6 +15,7 @@ interface LanguagePickerProps {
   value: string;
   onChange: (code: string) => void;
   placeholder?: string;
+  invalid?: boolean;
 }
 
 export default function LanguagePicker({
@@ -22,9 +23,11 @@ export default function LanguagePicker({
   options,
   value,
   onChange,
+  invalid = false,
   placeholder = "Search languages…",
 }: LanguagePickerProps) {
   const [open, setOpen] = useState(false);
+  const listId = useId();
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -32,7 +35,10 @@ export default function LanguagePicker({
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
         setQuery("");
       }
@@ -53,7 +59,9 @@ export default function LanguagePicker({
         id={id}
         type="text"
         role="combobox"
+        aria-invalid={invalid || undefined}
         aria-expanded={open}
+        aria-controls={listId}
         autoComplete="off"
         value={open ? query : (selected?.name ?? "")}
         onFocus={() => {
@@ -62,7 +70,7 @@ export default function LanguagePicker({
         }}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
-        className="h-11 w-full cursor-pointer rounded-lg border appearance-none ps-4 pe-10 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:border-gray-700 dark:focus:border-brand-800"
+        className="h-11 w-full cursor-pointer appearance-none rounded-lg border border-gray-300 bg-transparent py-2.5 ps-4 pe-10 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
       />
       <ChevronDownIcon
         aria-hidden="true"
@@ -71,7 +79,10 @@ export default function LanguagePicker({
         }`}
       />
       {open && (
-        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-theme-lg dark:border-gray-700 dark:bg-gray-900">
+        <div
+          id={listId}
+          className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-theme-lg dark:border-gray-700 dark:bg-gray-900"
+        >
           {filtered.length === 0 ? (
             <p className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
               No languages found.

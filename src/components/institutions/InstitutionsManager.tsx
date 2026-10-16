@@ -1,5 +1,8 @@
 "use client";
 
+import Pagination from "@/components/common/Pagination";
+import usePagination from "@/hooks/usePagination";
+import useRequiredFields from "@/hooks/useRequiredFields";
 import { useTranslations } from "next-intl";
 import { notify } from "@/lib/feedback";
 import DateTimeField from "@/components/form/DateTimeField";
@@ -54,6 +57,9 @@ function isExpired(iso: string | null): boolean {
 }
 
 export default function InstitutionsManager() {
+  const createRequired = useRequiredFields();
+  const editRequired = useRequiredFields();
+  const renewRequired = useRequiredFields();
   const t = useTranslations("fixes");
   const [credentialsCopied, setCredentialsCopied] = useState(false);
   const [copying, setCopying] = useState(false);
@@ -106,6 +112,7 @@ export default function InstitutionsManager() {
   }, [loadInstitutions]);
 
   const openCreate = () => {
+    createRequired.reset();
     setCreateName("");
     setCreateExpiry("");
     setCreateError(null);
@@ -139,10 +146,9 @@ export default function InstitutionsManager() {
   };
 
   const submitCreate = async () => {
-    if (!createName.trim() || !createExpiry || !accessToken) {
-      setCreateError("Institution name and license expiry are required.");
+    setCreateError(null);
+    if (!createRequired.validate([createName, createExpiry]) || !accessToken)
       return;
-    }
     setCreateSubmitting(true);
     setCreateError(null);
     try {
@@ -168,6 +174,7 @@ export default function InstitutionsManager() {
   };
 
   const openEdit = (institution: InstitutionItem) => {
+    editRequired.reset();
     setEditTarget(institution);
     setEditName(institution.institution_name);
     setEditError(null);
@@ -175,10 +182,8 @@ export default function InstitutionsManager() {
 
   const submitEdit = async () => {
     if (!editTarget || !accessToken) return;
-    if (!editName.trim()) {
-      setEditError("Institution name is required.");
-      return;
-    }
+    setEditError(null);
+    if (!editRequired.validate([editName])) return;
     setEditSubmitting(true);
     setEditError(null);
     try {
@@ -199,6 +204,7 @@ export default function InstitutionsManager() {
   };
 
   const openRenew = (institution: InstitutionItem) => {
+    renewRequired.reset();
     setRenewTarget(institution);
     setRenewExpiry(toDateTimeLocalValue(institution.license_expires_at));
     setRenewError(null);
@@ -206,10 +212,8 @@ export default function InstitutionsManager() {
 
   const submitRenew = async () => {
     if (!renewTarget || !accessToken) return;
-    if (!renewExpiry) {
-      setRenewError("New license expiry is required.");
-      return;
-    }
+    setRenewError(null);
+    if (!renewRequired.validate([renewExpiry])) return;
     setRenewSubmitting(true);
     setRenewError(null);
     try {
@@ -250,6 +254,8 @@ export default function InstitutionsManager() {
       setDeletingId(null);
     }
   };
+
+  const pagination = usePagination(institutions, "");
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
@@ -318,7 +324,7 @@ export default function InstitutionsManager() {
                 </TableCell>
               </TableRow>
             ) : (
-              institutions.map((institution) => (
+              pagination.items.map((institution) => (
                 <TableRow key={institution.institution_id}>
                   <TableCell className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
                     {institution.institution_name}
@@ -391,6 +397,7 @@ export default function InstitutionsManager() {
           </TableBody>
         </Table>
       </div>
+      <Pagination pagination={pagination} disabled={loading} />
 
       {/* Create institution */}
       <Modal isOpen={createOpen} onClose={closeCreate} className="max-w-md p-6">
@@ -441,6 +448,7 @@ export default function InstitutionsManager() {
               </Label>
               <Input
                 id="create-name"
+                error={createRequired.invalid(createName)}
                 value={createName}
                 onChange={(e) => setCreateName(e.target.value)}
                 placeholder="e.g. First National Bank"
@@ -452,6 +460,7 @@ export default function InstitutionsManager() {
               </Label>
               <DateTimeField
                 id="create-expiry"
+                error={createRequired.invalid(createExpiry)}
                 value={createExpiry}
                 onChange={setCreateExpiry}
               />
@@ -484,6 +493,7 @@ export default function InstitutionsManager() {
             <Label htmlFor="edit-name">Institution Name</Label>
             <Input
               id="edit-name"
+              error={editRequired.invalid(editName)}
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
             />
@@ -515,6 +525,7 @@ export default function InstitutionsManager() {
             </Label>
             <DateTimeField
               id="renew-expiry"
+              error={renewRequired.invalid(renewExpiry)}
               value={renewExpiry}
               onChange={setRenewExpiry}
             />

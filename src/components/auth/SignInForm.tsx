@@ -1,5 +1,6 @@
 "use client";
 
+import useRequiredFields from "@/hooks/useRequiredFields";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
@@ -28,9 +29,12 @@ export default function SignInForm() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const required = useRequiredFields();
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!required.validate([username, password])) return;
     setIsSubmitting(true);
     try {
       await login(username.trim(), password);
@@ -92,6 +96,7 @@ export default function SignInForm() {
                     <Input
                       className="h-14 ps-12"
                       id="username"
+                      error={required.invalid(username)}
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="Enter your email or username"
@@ -117,6 +122,7 @@ export default function SignInForm() {
                     <Input
                       className="h-14 ps-12 pe-12"
                       id="password"
+                      error={required.invalid(password)}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       type={showPassword ? "text" : "password"}

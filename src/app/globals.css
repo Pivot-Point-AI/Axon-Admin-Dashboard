@@ -956,3 +956,10 @@ a.menu-item > svg,
   line-height: 1;
   overflow: visible;
 }
+
+/* Keep validation visible on inputs, selects, and custom date pickers. */
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+button[data-invalid="true"] {
+  @apply border-error-500 focus:border-error-500 focus:ring-error-500/20 dark:border-error-500 dark:focus:border-error-400;
+}

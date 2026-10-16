@@ -1,5 +1,8 @@
 "use client";
 
+import Pagination from "@/components/common/Pagination";
+import usePagination from "@/hooks/usePagination";
+import useRequiredFields from "@/hooks/useRequiredFields";
 import { asBoolean } from "@/utils/boolean";
 import { useTranslations } from "next-intl";
 import { useConfirm } from "@/context/FeedbackContext";
@@ -92,6 +95,8 @@ export default function MasterDataSection({
   updateItem,
   removeItem,
 }: MasterDataSectionProps) {
+  const createRequired = useRequiredFields();
+  const editRequired = useRequiredFields();
   const t = useTranslations("fixes");
   const confirm = useConfirm();
   const { accessToken } = useAdminAuth();
@@ -163,6 +168,7 @@ export default function MasterDataSection({
   }, [load]);
 
   const openCreate = () => {
+    createRequired.reset();
     setCreateForm(emptyForm(fields));
     setCreateError(null);
     setCreateOpen(true);
@@ -170,12 +176,15 @@ export default function MasterDataSection({
 
   const submitCreate = async () => {
     if (!accessToken) return;
-    for (const field of fields) {
-      if (field.required && !String(createForm[field.key] ?? "").trim()) {
-        setCreateError(`${field.label} is required.`);
-        return;
-      }
-    }
+    setCreateError(null);
+    if (
+      !createRequired.validate(
+        fields
+          .filter((field) => field.required)
+          .map((field) => createForm[field.key]),
+      )
+    )
+      return;
     setCreateSubmitting(true);
     setCreateError(null);
     try {
@@ -194,6 +203,7 @@ export default function MasterDataSection({
   };
 
   const openEdit = (item: Record<string, unknown>) => {
+    editRequired.reset();
     setEditTarget(item);
     const form: Record<string, unknown> = {};
     for (const field of fields) {
@@ -213,12 +223,15 @@ export default function MasterDataSection({
       setEditError(t("missingRecordId", { field: idField }));
       return;
     }
-    for (const field of fields) {
-      if (field.required && !String(editForm[field.key] ?? "").trim()) {
-        setEditError(`${field.label} is required.`);
-        return;
-      }
-    }
+    setEditError(null);
+    if (
+      !editRequired.validate(
+        fields
+          .filter((field) => field.required)
+          .map((field) => editForm[field.key]),
+      )
+    )
+      return;
     setEditSubmitting(true);
     setEditError(null);
     try {
@@ -267,6 +280,7 @@ export default function MasterDataSection({
     field: MasterDataField,
     form: Record<string, unknown>,
     setForm: (form: Record<string, unknown>) => void,
+    invalid: (value: unknown) => boolean,
   ) => {
     if (field.type === "creatable" && field.creatable) {
       const { options, allOptions, onCreate } = field.creatable;
@@ -278,6 +292,7 @@ export default function MasterDataSection({
           </Label>
           <CreatableSelect
             id={`field-${field.key}`}
+            invalid={!!field.required && invalid(form[field.key])}
             value={String(form[field.key] ?? "")}
             options={options(form, items)}
             allOptions={allOptions?.(items)}
@@ -310,6 +325,7 @@ export default function MasterDataSection({
         </Label>
         <Input
           id={`field-${field.key}`}
+          error={!!field.required && invalid(form[field.key])}
           required={field.required}
           value={String(form[field.key] ?? "")}
           onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
@@ -318,57 +334,62 @@ export default function MasterDataSection({
     );
   };
 
+  const pagination = usePagination(visibleItems, JSON.stringify(filterValues));
+
   return (
     <div>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h4 className="text-base font-semibold text-gray-800 dark:text-white/90">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <h4 className="me-auto self-center text-base font-semibold text-gray-800 dark:text-white/90">
           {title}
         </h4>
+        {filters.length > 0 && (
+          <div className="flex flex-1 flex-wrap items-end gap-3 lg:justify-end">
+            {filters.map((filter, index) => {
+              const choices = filter.options(applyFilters(items, index));
+              return (
+                <div key={filter.key} className="min-w-44">
+                  <Label htmlFor={`filter-${filter.key}`}>{filter.label}</Label>
+                  <select
+                    id={`filter-${filter.key}`}
+                    value={filterValues[filter.key] ?? ""}
+                    onChange={(e) => changeFilter(index, e.target.value)}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
+                  >
+                    <option value="">All</option>
+                    {choices.map((choice) => (
+                      <option key={choice} value={choice}>
+                        {choice}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })}
+            {Object.values(filterValues).some(Boolean) && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setFilterValues({})}
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+        )}
+
         <Button
           size="sm"
           startIcon={
-            <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
+            <PlusIcon
+              aria-hidden="true"
+              className="block size-5 text-white dark:text-white"
+            />
           }
           onClick={openCreate}
         >
           Add {title.replace(/s$/, "")}
         </Button>
       </div>
-
-      {filters.length > 0 && (
-        <div className="mb-5 flex flex-wrap items-end gap-3">
-          {filters.map((filter, index) => {
-            const choices = filter.options(applyFilters(items, index));
-            return (
-              <div key={filter.key} className="min-w-44">
-                <Label htmlFor={`filter-${filter.key}`}>{filter.label}</Label>
-                <select
-                  id={`filter-${filter.key}`}
-                  value={filterValues[filter.key] ?? ""}
-                  onChange={(e) => changeFilter(index, e.target.value)}
-                  className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
-                >
-                  <option value="">All</option>
-                  {choices.map((choice) => (
-                    <option key={choice} value={choice}>
-                      {choice}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            );
-          })}
-          {Object.values(filterValues).some(Boolean) && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setFilterValues({})}
-            >
-              Clear filters
-            </Button>
-          )}
-        </div>
-      )}
 
       {error && (
         <div className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
@@ -415,7 +436,7 @@ export default function MasterDataSection({
                 </TableCell>
               </TableRow>
             ) : (
-              visibleItems.map((item, index) => {
+              pagination.items.map((item, index) => {
                 const id = recordId(item, idField);
                 return (
                   <TableRow key={id != null ? String(id) : index}>
@@ -463,6 +484,7 @@ export default function MasterDataSection({
           </TableBody>
         </Table>
       </div>
+      <Pagination pagination={pagination} disabled={loading} />
 
       <Modal
         isOpen={createOpen}
@@ -474,7 +496,12 @@ export default function MasterDataSection({
         </h4>
         <div className="space-y-4">
           {fields.map((field) =>
-            renderFormField(field, createForm, setCreateForm),
+            renderFormField(
+              field,
+              createForm,
+              setCreateForm,
+              createRequired.invalid,
+            ),
           )}
           {createError && (
             <p className="text-sm text-error-500">{createError}</p>
@@ -498,7 +525,9 @@ export default function MasterDataSection({
           Edit {title.replace(/s$/, "")}
         </h4>
         <div className="space-y-4">
-          {fields.map((field) => renderFormField(field, editForm, setEditForm))}
+          {fields.map((field) =>
+            renderFormField(field, editForm, setEditForm, editRequired.invalid),
+          )}
           {editError && <p className="text-sm text-error-500">{editError}</p>}
           <Button
             className="w-full"

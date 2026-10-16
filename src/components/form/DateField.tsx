@@ -59,7 +59,7 @@ export default function DateField({
           onClick={openPicker}
           className={`h-11 w-full min-w-0 cursor-pointer rounded-lg border bg-transparent ps-4 pe-11 text-sm text-gray-800 shadow-theme-xs focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:scheme-dark ${
             error
-              ? "border-error-500 focus:border-error-300 focus:ring-error-500/20"
+              ? "border-error-500 focus:border-error-300 focus:ring-error-500/20 dark:border-error-500 dark:focus:border-error-400"
               : "border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:focus:border-brand-800"
           }`}
         />

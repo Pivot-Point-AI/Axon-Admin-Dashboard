@@ -22,6 +22,9 @@ function load(relative) {
     if (name === "@/lib/feedback")
       return { notify: (detail) => notifications.push(detail) };
     if (name === "next-intl") return { useTranslations: () => (key) => key };
+    if (name === "@/icons") {
+      return { TableIcon: () => null, ChevronDownIcon: () => null };
+    }
     if (name.startsWith("@/") || name.startsWith(".")) {
       const stem = name.startsWith("@/")
         ? path.resolve(__dirname, "../src", name.slice(2))
