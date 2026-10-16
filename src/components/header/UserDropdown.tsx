@@ -5,7 +5,7 @@ import { useClickOutside } from "@/hooks/useClickOutside";
 import { getLanguage, languages } from "@/i18n/languages";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
-import { ChevronDownIcon } from "@/icons";
+import { ChevronDownIcon, GlobeIcon, UserCircleIcon } from "@/icons";
 import { cn } from "@/utils";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
@@ -51,10 +51,13 @@ export default function UserDropdown() {
   return (
     <div className="relative">
       <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
         onClick={toggleDropdown}
-        className="dropdown-toggle flex items-center text-gray-700 dark:text-gray-400"
+        className="dropdown-toggle flex items-center rounded-xl px-2 py-1 text-gray-800 transition-colors hover:bg-brand-50 dark:text-gray-200 dark:hover:bg-brand-500/10"
       >
-        <span className="me-3 h-11 w-11 overflow-hidden rounded-full">
+        <span className="me-3 h-11 w-11 shrink-0 overflow-hidden rounded-full ring-2 ring-brand-100 dark:ring-brand-800">
           <Image
             width={44}
             height={44}
@@ -68,7 +71,7 @@ export default function UserDropdown() {
         </span>
 
         <ChevronDownIcon
-          className={`size-5 text-gray-500 transition-transform duration-200 dark:text-gray-400 ${
+          className={`size-5 shrink-0 text-brand-500 transition-transform duration-200 dark:text-brand-300 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
@@ -98,21 +101,7 @@ export default function UserDropdown() {
               href="/profile"
               className="group flex items-center gap-3 rounded-lg px-3! py-2 text-theme-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
-              <svg
-                className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M12 3.5C7.30558 3.5 3.5 7.30558 3.5 12C3.5 14.1526 4.3002 16.1184 5.61936 17.616C6.17279 15.3096 8.24852 13.5955 10.7246 13.5955H13.2746C15.7509 13.5955 17.8268 15.31 18.38 17.6167C19.6996 16.119 20.5 14.153 20.5 12C20.5 7.30558 16.6944 3.5 12 3.5ZM17.0246 18.8566V18.8455C17.0246 16.7744 15.3457 15.0955 13.2746 15.0955H10.7246C8.65354 15.0955 6.97461 16.7744 6.97461 18.8455V18.856C8.38223 19.8895 10.1198 20.5 12 20.5C13.8798 20.5 15.6171 19.8898 17.0246 18.8566ZM2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12ZM11.9991 7.25C10.8847 7.25 9.98126 8.15342 9.98126 9.26784C9.98126 10.3823 10.8847 11.2857 11.9991 11.2857C13.1135 11.2857 14.0169 10.3823 14.0169 9.26784C14.0169 8.15342 13.1135 7.25 11.9991 7.25ZM8.48126 9.26784C8.48126 7.32499 10.0563 5.75 11.9991 5.75C13.9419 5.75 15.5169 7.32499 15.5169 9.26784C15.5169 11.2107 13.9419 12.7857 11.9991 12.7857C10.0563 12.7857 8.48126 11.2107 8.48126 9.26784Z"
-                  fill=""
-                />
-              </svg>
+              <UserCircleIcon className="size-6 shrink-0 text-brand-500 dark:text-brand-300" />
               {t("editProfile")}
             </DropdownItem>
           </li>
@@ -128,21 +117,7 @@ export default function UserDropdown() {
               )}
             >
               <span className="flex items-center gap-3 text-theme-sm">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <path
-                    d="M12.001 2.75C17.1091 2.75 21.2501 6.89178 21.2501 11.9999C21.2501 17.108 17.1091 21.2498 12.001 21.2498M12.001 2.75C6.89289 2.75 2.75195 6.89178 2.75195 11.9999C2.75195 17.108 6.8929 21.2498 12.001 21.2498M12.001 2.75C14.2097 2.75 16.0005 6.8914 16.0005 11.9993C16.0005 17.1073 14.2098 21.2498 12.001 21.2498M12.001 2.75C9.79226 2.75 8.00195 6.89141 8.00195 11.9994C8.00195 17.1073 9.79226 21.2498 12.001 21.2498M3.24561 8.99976H20.7544M3.24561 14.9998H20.7544"
-                    stroke="#667085"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <GlobeIcon className="size-6 shrink-0 text-theme-purple-500 dark:text-theme-purple-500" />
 
                 <span>{t("language")}</span>
               </span>

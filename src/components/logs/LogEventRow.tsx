@@ -92,7 +92,7 @@ export default function LogEventRow({
       >
         <time
           dateTime={timestamp ?? undefined}
-          className="shrink-0 pt-0.5 font-mono text-theme-xs text-gray-400 tabular-nums dark:text-gray-500"
+          className="font-mono shrink-0 pt-0.5 text-theme-xs text-gray-400 tabular-nums dark:text-gray-500"
         >
           {formatTimestamp(timestamp, showDate)}
         </time>
@@ -106,12 +106,12 @@ export default function LogEventRow({
         </span>
         <span className="hidden shrink-0 items-center gap-1.5 lg:flex">
           {flowId && (
-            <span className="rounded-md bg-gray-100 px-2 py-0.5 font-mono text-theme-xs text-gray-600 dark:bg-white/5 dark:text-gray-400">
+            <span className="font-mono rounded-md bg-gray-100 px-2 py-0.5 text-theme-xs text-gray-600 dark:bg-white/5 dark:text-gray-400">
               {flowId}
             </span>
           )}
           {sessionId && (
-            <span className="max-w-40 truncate rounded-md bg-gray-100 px-2 py-0.5 font-mono text-theme-xs text-gray-600 dark:bg-white/5 dark:text-gray-400">
+            <span className="font-mono max-w-40 truncate rounded-md bg-gray-100 px-2 py-0.5 text-theme-xs text-gray-600 dark:bg-white/5 dark:text-gray-400">
               {sessionId}
             </span>
           )}
@@ -159,7 +159,7 @@ export default function LogEventRow({
               </Link>
             )}
             <button type="button" onClick={copyJson} className={actionClasses}>
-              <CopyIcon className="size-3.5" />
+              <CopyIcon className="size-3.5 text-theme-purple-500 dark:text-theme-purple-500" />
               {copied ? "Copied" : "Copy JSON"}
             </button>
           </div>

@@ -1,3 +1,4 @@
+import { notify } from "@/lib/feedback";
 import type { HTTPValidationError } from "./types";
 
 // The backend is only served over plain HTTP. Browsers block that as mixed
@@ -136,5 +137,20 @@ export async function apiRequest<T>(
     signal,
   };
 
-  return performRequest<T>(buildUrl(path, query, baseUrl), init);
+  try {
+    const result = await performRequest<T>(
+      buildUrl(path, query, baseUrl),
+      init,
+    );
+    if (method !== "GET") notify({ kind: "success", operation: method });
+    return result;
+  } catch (error) {
+    if (!(error instanceof DOMException && error.name === "AbortError")) {
+      notify({
+        kind: "error",
+        message: error instanceof ApiError ? error.message : undefined,
+      });
+    }
+    throw error;
+  }
 }

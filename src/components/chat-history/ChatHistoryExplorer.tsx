@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirm } from "@/context/FeedbackContext";
 import { useState } from "react";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
@@ -27,6 +28,7 @@ function defaultDateRange() {
 }
 
 export default function ChatHistoryExplorer() {
+  const confirm = useConfirm();
   const { token, setToken } = useAccessToken();
   const [userId, setUserId] = useState("");
   const [dateFrom, setDateFrom] = useState(defaultDateRange().from);
@@ -67,7 +69,7 @@ export default function ChatHistoryExplorer() {
   const runDelete = async () => {
     if (!userId.trim()) return;
     if (
-      !window.confirm(
+      !await confirm(
         `Delete all chat history for user "${userId.trim()}"? This cannot be undone.`,
       )
     ) {

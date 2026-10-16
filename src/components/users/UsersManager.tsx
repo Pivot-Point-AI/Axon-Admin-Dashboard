@@ -1,6 +1,11 @@
 "use client";
 
+import { useConfirm } from "@/context/FeedbackContext";
+import { useTranslations } from "next-intl";
+import ManagementMetrics from "@/components/common/ManagementMetrics";
+import { GroupIcon, UserCircleIcon, UserIcon, CheckCircleIcon } from "@/icons";
 import { useCallback, useEffect, useState } from "react";
+import ActionIconButton from "@/components/ui/button/ActionIconButton";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
@@ -13,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAdminAuth } from "@/context/AdminAuthContext";
-import { PlusIcon, TrashBinIcon } from "@/icons/index";
+import { PencilIcon, PlusIcon, TrashBinIcon } from "@/icons/index";
 import { ApiError } from "@/lib/api/client";
 import {
   createDashboardUser,
@@ -22,7 +27,7 @@ import {
 } from "@/lib/api/adminUsers";
 import type { DashboardUserResponse } from "@/lib/api/types";
 
-const USER_ROLES = ["SUPER_ADMIN", "MANAGER", "VIEWER"];
+const USER_ROLES = ["MANAGER", "VIEWER"];
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -32,6 +37,11 @@ function formatDate(iso: string | null | undefined): string {
 }
 
 export default function UsersManager() {
+  const f = useTranslations("fixes");
+  const confirm = useConfirm();
+  const t = useTranslations("managementDesign");
+  const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
   const { accessToken } = useAdminAuth();
   const [users, setUsers] = useState<DashboardUserResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +50,7 @@ export default function UsersManager() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createUsername, setCreateUsername] = useState("");
   const [createEmail, setCreateEmail] = useState("");
-  const [createRole, setCreateRole] = useState("SUPER_ADMIN");
+  const [createRole, setCreateRole] = useState("MANAGER");
   const [createSubmitting, setCreateSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -67,13 +77,17 @@ export default function UsersManager() {
   const openCreate = () => {
     setCreateUsername("");
     setCreateEmail("");
-    setCreateRole("admin");
+    setCreateRole("MANAGER");
     setCreateError(null);
     setCreateOpen(true);
   };
 
   const submitCreate = async () => {
     if (!accessToken) return;
+    if (!USER_ROLES.includes(createRole)) {
+      setCreateError(f("editRoleInvalid"));
+      return;
+    }
     if (!createUsername.trim() || !createEmail.trim() || !createRole.trim()) {
       setCreateError("Username, email, and role are required.");
       return;
@@ -102,7 +116,7 @@ export default function UsersManager() {
 
   const handleDelete = async (user: DashboardUserResponse) => {
     if (!accessToken) return;
-    if (!window.confirm(`Remove "${user.username}"? This cannot be undone.`)) {
+    if (!(await confirm(`Remove "${user.username}"? This cannot be undone.`))) {
       return;
     }
     setDeletingId(user.user_id);
@@ -110,148 +124,277 @@ export default function UsersManager() {
       await deleteDashboardUser(user.user_id, accessToken);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to delete user.");
+      setError(
+        err instanceof ApiError ? err.message : "Failed to delete user.",
+      );
     } finally {
       setDeletingId(null);
     }
   };
 
+  const visibleUsers = users.filter(
+    (user) =>
+      (!roleFilter || user.role === roleFilter) &&
+      `${user.username} ${user.email} ${user.role}`
+        .toLowerCase()
+        .includes(query.trim().toLowerCase()),
+  );
+  const roleCount = (role: string) =>
+    users.filter((user) => user.role.toUpperCase() === role).length;
+
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Dashboard Users
-        </h3>
-        <Button size="sm" startIcon={<PlusIcon />} onClick={openCreate}>
-          New User
-        </Button>
-      </div>
-
-      {error && (
-        <div className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
-          {error}
-        </div>
-      )}
-
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader className="border-b border-gray-100 dark:border-gray-800">
-            <TableRow>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
-                Username
-              </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
-                Email
-              </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
-                Role
-              </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
-                Created
-              </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
-                Actions
-              </TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {loading ? (
-              <TableRow>
-                <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  Loading users…
-                </TableCell>
-              </TableRow>
-            ) : users.length === 0 ? (
-              <TableRow>
-                <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  No dashboard users yet.
-                </TableCell>
-              </TableRow>
-            ) : (
-              users.map((user) => (
-                <TableRow key={user.user_id}>
-                  <TableCell className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
-                    {user.username}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                    {user.email}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm">
-                    <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-theme-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
-                      {user.role}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(user.created_at)}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm">
-                    <button
-                      className="text-gray-500 hover:text-error-500 dark:text-gray-400 disabled:opacity-40"
-                      title="Remove user"
-                      disabled={deletingId === user.user_id}
-                      onClick={() => handleDelete(user)}
-                    >
-                      <TrashBinIcon />
-                    </button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} className="max-w-md p-6">
-        <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
-          New Dashboard User
-        </h4>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="create-username">Username</Label>
+    <div className="space-y-5">
+      <ManagementMetrics
+        loading={loading || !!error}
+        items={[
+          {
+            label: t("totalUsers"),
+            value: users.length,
+            icon: <GroupIcon />,
+            tone: "brand",
+          },
+          {
+            label: t("administrators"),
+            value: roleCount("SUPER_ADMIN"),
+            icon: <CheckCircleIcon />,
+            tone: "success",
+          },
+          {
+            label: t("managers"),
+            value: roleCount("MANAGER"),
+            icon: <UserCircleIcon />,
+            tone: "warning",
+          },
+          {
+            label: t("viewers"),
+            value: roleCount("VIEWER"),
+            icon: <UserIcon />,
+            tone: "purple",
+          },
+        ]}
+      />
+      <div className="axon-management-panel rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
+          <div className="flex flex-1 flex-wrap gap-3">
             <Input
-              id="create-username"
-              value={createUsername}
-              onChange={(e) => setCreateUsername(e.target.value)}
-              placeholder="e.g. jane.doe"
+              type="search"
+              aria-label={t("searchUsers")}
+              placeholder={t("searchUsers")}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="min-w-60 bg-gray-50 dark:bg-gray-900"
             />
-          </div>
-          <div>
-            <Label htmlFor="create-email">Email</Label>
-            <Input
-              id="create-email"
-              type="email"
-              value={createEmail}
-              onChange={(e) => setCreateEmail(e.target.value)}
-              placeholder="jane@example.com"
-            />
-          </div>
-          <div>
-            <Label htmlFor="create-role">Role</Label>
             <select
-              id="create-role"
-              value={createRole}
-              onChange={(e) => setCreateRole(e.target.value)}
-              className="h-11 w-full rounded-lg border appearance-none ps-4 pe-4 py-2.5 text-sm shadow-theme-xs focus:outline-hidden focus:ring-3 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:bg-gray-900 dark:text-white/90 dark:border-gray-700 dark:focus:border-brand-800"
+              aria-label={t("allRoles")}
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
             >
-              {USER_ROLES.map((role) => (
+              <option value="">{t("allRoles")}</option>
+              {Array.from(
+                new Set([...USER_ROLES, ...users.map((user) => user.role)]),
+              ).map((role) => (
                 <option key={role} value={role}>
                   {role}
                 </option>
               ))}
             </select>
           </div>
-          {createError && (
-            <p className="text-sm text-error-500">{createError}</p>
-          )}
           <Button
-            className="w-full"
-            onClick={submitCreate}
-            disabled={createSubmitting}
+            size="sm"
+            startIcon={
+              <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
+            }
+            onClick={openCreate}
           >
-            {createSubmitting ? "Creating…" : "Create User"}
+            New User
           </Button>
         </div>
-      </Modal>
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
+            {error}
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="border-b border-gray-100 dark:border-gray-800">
+              <TableRow>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  Username
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  Email
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  Role
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  Created
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  Actions
+                </TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {loading ? (
+                <TableRow>
+                  <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    Loading users…
+                  </TableCell>
+                </TableRow>
+              ) : visibleUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {users.length ? t("noMatches") : "No dashboard users yet."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                visibleUsers.map((user, index) => (
+                  <TableRow key={user.user_id}>
+                    <TableCell className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`axon-user-avatar axon-user-avatar-${index % 4} flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white dark:text-white`}
+                        >
+                          {user.username.slice(0, 1).toUpperCase()}
+                        </span>
+                        {user.username}
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                      {user.email}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
+                      <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-theme-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
+                        {user.role}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                      {formatDate(user.created_at)}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span title={f("editUnavailable")}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-brand-600 ring-brand-100 dark:text-brand-300 dark:ring-brand-800"
+                            title={f("editUnavailable")}
+                            disabled
+                          >
+                            <PencilIcon className="size-4 text-brand-500 dark:text-brand-300" />
+                            {f("editUser")}
+                          </Button>
+                        </span>
+                        <ActionIconButton
+                          tone="delete"
+                          title="Remove user"
+                          disabled={deletingId === user.user_id}
+                          onClick={() => handleDelete(user)}
+                        >
+                          <TrashBinIcon />
+                        </ActionIconButton>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <p className="mt-5 border-t border-gray-100 pt-4 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
+          {t("results", { count: visibleUsers.length })}
+        </p>
+        <Modal
+          isOpen={createOpen}
+          onClose={() => setCreateOpen(false)}
+          className="max-w-md p-6"
+        >
+          <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
+            New Dashboard User
+          </h4>
+          <form
+            className="space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submitCreate();
+            }}
+          >
+            <div>
+              <Label htmlFor="create-username">
+                Username <span className="text-error-500">*</span>
+              </Label>
+              <Input
+                id="create-username"
+                required
+                value={createUsername}
+                onChange={(e) => setCreateUsername(e.target.value)}
+                placeholder="e.g. jane.doe"
+              />
+            </div>
+            <div>
+              <Label htmlFor="create-email">
+                Email <span className="text-error-500">*</span>
+              </Label>
+              <Input
+                id="create-email"
+                required
+                type="email"
+                value={createEmail}
+                onChange={(e) => setCreateEmail(e.target.value)}
+                placeholder="jane@example.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="create-role">
+                Role <span className="text-error-500">*</span>
+              </Label>
+              <select
+                id="create-role"
+                required
+                value={createRole}
+                onChange={(e) => setCreateRole(e.target.value)}
+                className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent py-2.5 ps-4 pe-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
+              >
+                {USER_ROLES.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {createError && (
+              <p className="text-sm text-error-500">{createError}</p>
+            )}
+            <Button
+              className="w-full"
+              type="submit"
+              disabled={createSubmitting}
+            >
+              {createSubmitting ? "Creating…" : "Create User"}
+            </Button>
+          </form>
+        </Modal>
+      </div>
     </div>
   );
 }

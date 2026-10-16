@@ -1,4 +1,5 @@
 import React, { ReactNode } from "react";
+import { cn } from "@/utils";
 
 // Props for Table
 interface TableProps {
@@ -33,7 +34,13 @@ interface TableCellProps {
 
 // Table Component
 const Table: React.FC<TableProps> = ({ children, className }) => {
-  return <table className={`min-w-full  ${className}`}>{children}</table>;
+  return (
+    <table
+      className={cn("w-full min-w-full table-auto border-collapse", className)}
+    >
+      {children}
+    </table>
+  );
 };
 
 // TableHeader Component

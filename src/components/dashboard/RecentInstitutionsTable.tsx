@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import Badge from "@/components/ui/badge/Badge";
@@ -29,6 +30,7 @@ function licenseStatus(iso: string | null): {
 }
 
 export default function RecentInstitutionsTable() {
+  const t = useTranslations("redesign");
   const { accessToken } = useAdminAuth();
   const [institutions, setInstitutions] = useState<InstitutionItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +46,9 @@ export default function RecentInstitutionsTable() {
       .catch((err) => {
         if (!cancelled) {
           setError(
-            err instanceof ApiError ? err.message : "Failed to load institutions.",
+            err instanceof ApiError
+              ? err.message
+              : "Failed to load institutions.",
           );
         }
       })
@@ -59,10 +63,18 @@ export default function RecentInstitutionsTable() {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
       <div className="mb-5 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Institutions
-        </h3>
-        <Link className="text-sm text-brand-500 hover:underline" href="/institutions">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+            Institutions
+          </h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {t("institutionsSubtitle")}
+          </p>
+        </div>
+        <Link
+          className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+          href="/institutions"
+        >
           Manage all
         </Link>
       </div>
@@ -71,15 +83,24 @@ export default function RecentInstitutionsTable() {
 
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader className="border-b border-gray-100 dark:border-gray-800">
+          <TableHeader className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
             <TableRow>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Institution
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 License Expiry
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Status
               </TableCell>
             </TableRow>

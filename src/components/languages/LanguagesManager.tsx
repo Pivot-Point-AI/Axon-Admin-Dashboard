@@ -1,6 +1,8 @@
 "use client";
 
+import { useConfirm } from "@/context/FeedbackContext";
 import { useCallback, useEffect, useState } from "react";
+import ActionIconButton from "@/components/ui/button/ActionIconButton";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
@@ -63,6 +65,7 @@ const LANGUAGE_OPTIONS: { code: string; name: string }[] = [
 ];
 
 export default function LanguagesManager() {
+  const confirm = useConfirm();
   const { accessToken } = useAdminAuth();
   const [languages, setLanguages] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,9 +122,7 @@ export default function LanguagesManager() {
   const editingCode = String(editTarget?.language_code ?? "").toLowerCase();
   const editPickerOptions = LANGUAGE_OPTIONS.map((option) => ({
     ...option,
-    disabled:
-      existingCodes.has(option.code) &&
-      option.code !== editingCode,
+    disabled: existingCodes.has(option.code) && option.code !== editingCode,
   }));
 
   const openCreate = () => {
@@ -217,7 +218,9 @@ export default function LanguagesManager() {
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "Failed to set primary language.",
+        err instanceof ApiError
+          ? err.message
+          : "Failed to set primary language.",
       );
     } finally {
       setBusyCode(null);
@@ -228,7 +231,7 @@ export default function LanguagesManager() {
     if (!accessToken) return;
     const code = String(language.language_code ?? "");
     if (!code) return;
-    if (!window.confirm(`Remove language "${code}"? This cannot be undone.`)) {
+    if (!(await confirm(`Remove language "${code}"? This cannot be undone.`))) {
       return;
     }
     setBusyCode(code);
@@ -245,12 +248,18 @@ export default function LanguagesManager() {
   };
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+    <div className="axon-management-panel w-full rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Languages
         </h3>
-        <Button size="sm" startIcon={<PlusIcon />} onClick={openCreate}>
+        <Button
+          size="sm"
+          startIcon={
+            <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
+          }
+          onClick={openCreate}
+        >
           New Language
         </Button>
       </div>
@@ -261,20 +270,32 @@ export default function LanguagesManager() {
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <Table>
+      <div className="w-full overflow-x-auto">
+        <Table className="w-full">
           <TableHeader className="border-b border-gray-100 dark:border-gray-800">
             <TableRow>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Code
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Name
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Enabled
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Actions
               </TableCell>
             </TableRow>
@@ -297,7 +318,7 @@ export default function LanguagesManager() {
                 const code = String(language.language_code ?? index);
                 return (
                   <TableRow key={code}>
-                    <TableCell className="px-4 py-3 text-sm font-mono font-medium text-gray-800 dark:text-white/90">
+                    <TableCell className="font-mono px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
                       {code}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
@@ -309,28 +330,28 @@ export default function LanguagesManager() {
                     <TableCell className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-3">
                         <button
-                          className="text-theme-xs font-medium text-gray-500 hover:text-brand-500 dark:text-gray-400 disabled:opacity-40"
+                          className="text-theme-xs font-medium text-gray-500 hover:text-brand-500 disabled:opacity-40 dark:text-gray-400"
                           title="Set as primary language"
                           disabled={busyCode === code}
                           onClick={() => handleSetPrimary(language)}
                         >
                           Set Primary
                         </button>
-                        <button
-                          className="text-gray-500 hover:text-brand-500 dark:text-gray-400"
+                        <ActionIconButton
+                          tone="edit"
                           title="Edit language"
                           onClick={() => openEdit(language)}
                         >
                           <PencilIcon />
-                        </button>
-                        <button
-                          className="text-gray-500 hover:text-error-500 dark:text-gray-400 disabled:opacity-40"
+                        </ActionIconButton>
+                        <ActionIconButton
+                          tone="delete"
                           title="Remove language"
                           disabled={busyCode === code}
                           onClick={() => handleDelete(language)}
                         >
                           <TrashBinIcon />
-                        </button>
+                        </ActionIconButton>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -341,7 +362,11 @@ export default function LanguagesManager() {
         </Table>
       </div>
 
-      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} className="max-w-md p-6">
+      <Modal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        className="max-w-md p-6"
+      >
         <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
           New Language
         </h4>
@@ -380,7 +405,11 @@ export default function LanguagesManager() {
         </div>
       </Modal>
 
-      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} className="max-w-md p-6">
+      <Modal
+        isOpen={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        className="max-w-md p-6"
+      >
         <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
           Edit {String(editTarget?.language_code ?? "")}
         </h4>
@@ -392,7 +421,9 @@ export default function LanguagesManager() {
               options={editPickerOptions}
               value={editSelection}
               onChange={setEditSelection}
-              placeholder={String(editTarget?.language_name ?? "Search languages…")}
+              placeholder={String(
+                editTarget?.language_name ?? "Search languages…",
+              )}
             />
             <p className="mt-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
               Choose from the languages available in the system. Languages

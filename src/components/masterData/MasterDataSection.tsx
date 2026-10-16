@@ -1,6 +1,10 @@
 "use client";
 
+import { asBoolean } from "@/utils/boolean";
+import { useTranslations } from "next-intl";
+import { useConfirm } from "@/context/FeedbackContext";
 import { useCallback, useEffect, useState } from "react";
+import ActionIconButton from "@/components/ui/button/ActionIconButton";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
@@ -17,7 +21,7 @@ import {
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { PencilIcon, PlusIcon, TrashBinIcon } from "@/icons/index";
 import { ApiError } from "@/lib/api/client";
-import { asRecordArray } from "@/lib/api/normalize";
+import { asRecordArray, recordId } from "@/lib/api/normalize";
 
 export interface MasterDataField {
   key: string;
@@ -88,6 +92,8 @@ export default function MasterDataSection({
   updateItem,
   removeItem,
 }: MasterDataSectionProps) {
+  const t = useTranslations("fixes");
+  const confirm = useConfirm();
   const { accessToken } = useAdminAuth();
   const hasActions = !!updateItem || !!removeItem;
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
@@ -141,7 +147,11 @@ export default function MasterDataSection({
       const data = await fetchItems(accessToken);
       setItems(asRecordArray(data));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : `Failed to load ${title.toLowerCase()}.`);
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : `Failed to load ${title.toLowerCase()}.`,
+      );
     } finally {
       setLoading(false);
     }
@@ -174,7 +184,9 @@ export default function MasterDataSection({
       await load();
     } catch (err) {
       setCreateError(
-        err instanceof ApiError ? err.message : `Failed to create ${title.toLowerCase()} entry.`,
+        err instanceof ApiError
+          ? err.message
+          : `Failed to create ${title.toLowerCase()} entry.`,
       );
     } finally {
       setCreateSubmitting(false);
@@ -187,7 +199,7 @@ export default function MasterDataSection({
     for (const field of fields) {
       form[field.key] =
         field.type === "checkbox"
-          ? Boolean(item[field.key] ?? true)
+          ? asBoolean(item[field.key], true)
           : String(item[field.key] ?? "");
     }
     setEditForm(form);
@@ -196,10 +208,16 @@ export default function MasterDataSection({
 
   const submitEdit = async () => {
     if (!editTarget || !accessToken || !updateItem) return;
-    const id = Number(editTarget[idField]);
-    if (!Number.isFinite(id)) {
-      setEditError(`Missing ${idField} on this record — can't update it.`);
+    const id = recordId(editTarget, idField);
+    if (id === null) {
+      setEditError(t("missingRecordId", { field: idField }));
       return;
+    }
+    for (const field of fields) {
+      if (field.required && !String(editForm[field.key] ?? "").trim()) {
+        setEditError(`${field.label} is required.`);
+        return;
+      }
     }
     setEditSubmitting(true);
     setEditError(null);
@@ -213,7 +231,9 @@ export default function MasterDataSection({
       await load();
     } catch (err) {
       setEditError(
-        err instanceof ApiError ? err.message : `Failed to update ${title.toLowerCase()} entry.`,
+        err instanceof ApiError
+          ? err.message
+          : `Failed to update ${title.toLowerCase()} entry.`,
       );
     } finally {
       setEditSubmitting(false);
@@ -222,19 +242,21 @@ export default function MasterDataSection({
 
   const handleDelete = async (item: Record<string, unknown>) => {
     if (!accessToken || !removeItem) return;
-    const id = Number(item[idField]);
-    if (!Number.isFinite(id)) {
-      setError(`Missing ${idField} on this record — can't delete it.`);
+    const id = recordId(item, idField);
+    if (id === null) {
+      setError(t("missingRecordId", { field: idField }));
       return;
     }
-    if (!window.confirm("Remove this entry? This cannot be undone.")) return;
+    if (!(await confirm("Remove this entry? This cannot be undone."))) return;
     setDeletingId(id);
     try {
       await removeItem(id, accessToken);
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : `Failed to delete ${title.toLowerCase()} entry.`,
+        err instanceof ApiError
+          ? err.message
+          : `Failed to delete ${title.toLowerCase()} entry.`,
       );
     } finally {
       setDeletingId(null);
@@ -270,17 +292,25 @@ export default function MasterDataSection({
         <Switch
           key={field.key}
           id={`field-${field.key}`}
-          label={field.label}
-          checked={Boolean(form[field.key])}
+          label={
+            field.key === "is_active"
+              ? t(asBoolean(form[field.key]) ? "active" : "inactive")
+              : field.label
+          }
+          checked={asBoolean(form[field.key])}
           onChange={(checked) => setForm({ ...form, [field.key]: checked })}
         />
       );
     }
     return (
       <div key={field.key}>
-        <Label htmlFor={`field-${field.key}`}>{field.label}</Label>
+        <Label htmlFor={`field-${field.key}`}>
+          {field.label}
+          {field.required && <span className="text-error-500"> *</span>}
+        </Label>
         <Input
           id={`field-${field.key}`}
+          required={field.required}
           value={String(form[field.key] ?? "")}
           onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
         />
@@ -294,7 +324,13 @@ export default function MasterDataSection({
         <h4 className="text-base font-semibold text-gray-800 dark:text-white/90">
           {title}
         </h4>
-        <Button size="sm" startIcon={<PlusIcon />} onClick={openCreate}>
+        <Button
+          size="sm"
+          startIcon={
+            <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
+          }
+          onClick={openCreate}
+        >
           Add {title.replace(/s$/, "")}
         </Button>
       </div>
@@ -310,7 +346,7 @@ export default function MasterDataSection({
                   id={`filter-${filter.key}`}
                   value={filterValues[filter.key] ?? ""}
                   onChange={(e) => changeFilter(index, e.target.value)}
-                  className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
+                  className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
                 >
                   <option value="">All</option>
                   {choices.map((choice) => (
@@ -323,7 +359,11 @@ export default function MasterDataSection({
             );
           })}
           {Object.values(filterValues).some(Boolean) && (
-            <Button size="sm" variant="outline" onClick={() => setFilterValues({})}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setFilterValues({})}
+            >
               Clear filters
             </Button>
           )}
@@ -350,7 +390,10 @@ export default function MasterDataSection({
                 </TableCell>
               ))}
               {hasActions && (
-                <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                >
                   Actions
                 </TableCell>
               )}
@@ -366,12 +409,14 @@ export default function MasterDataSection({
             ) : visibleItems.length === 0 ? (
               <TableRow>
                 <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  {items.length === 0 ? "No entries yet." : "No entries match the selected filters."}
+                  {items.length === 0
+                    ? "No entries yet."
+                    : "No entries match the selected filters."}
                 </TableCell>
               </TableRow>
             ) : (
               visibleItems.map((item, index) => {
-                const id = item[idField];
+                const id = recordId(item, idField);
                 return (
                   <TableRow key={id != null ? String(id) : index}>
                     {fields.map((field) => (
@@ -380,7 +425,7 @@ export default function MasterDataSection({
                         className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300"
                       >
                         {field.type === "checkbox"
-                          ? item[field.key]
+                          ? asBoolean(item[field.key])
                             ? "Yes"
                             : "No"
                           : String(item[field.key] ?? "—")}
@@ -390,23 +435,23 @@ export default function MasterDataSection({
                       <TableCell className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-3">
                           {updateItem && (
-                            <button
-                              className="text-gray-500 hover:text-brand-500 dark:text-gray-400"
+                            <ActionIconButton
+                              tone="edit"
                               title="Edit"
                               onClick={() => openEdit(item)}
                             >
                               <PencilIcon />
-                            </button>
+                            </ActionIconButton>
                           )}
                           {removeItem && (
-                            <button
-                              className="text-gray-500 hover:text-error-500 dark:text-gray-400 disabled:opacity-40"
+                            <ActionIconButton
+                              tone="delete"
                               title="Remove"
                               disabled={deletingId === Number(id)}
                               onClick={() => handleDelete(item)}
                             >
                               <TrashBinIcon />
-                            </button>
+                            </ActionIconButton>
                           )}
                         </div>
                       </TableCell>
@@ -419,27 +464,47 @@ export default function MasterDataSection({
         </Table>
       </div>
 
-      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} className="max-w-md p-6">
+      <Modal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        className="max-w-md p-6"
+      >
         <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
           Add {title.replace(/s$/, "")}
         </h4>
         <div className="space-y-4">
-          {fields.map((field) => renderFormField(field, createForm, setCreateForm))}
-          {createError && <p className="text-sm text-error-500">{createError}</p>}
-          <Button className="w-full" onClick={submitCreate} disabled={createSubmitting}>
+          {fields.map((field) =>
+            renderFormField(field, createForm, setCreateForm),
+          )}
+          {createError && (
+            <p className="text-sm text-error-500">{createError}</p>
+          )}
+          <Button
+            className="w-full"
+            onClick={submitCreate}
+            disabled={createSubmitting}
+          >
             {createSubmitting ? "Saving…" : "Save"}
           </Button>
         </div>
       </Modal>
 
-      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} className="max-w-md p-6">
+      <Modal
+        isOpen={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        className="max-w-md p-6"
+      >
         <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
           Edit {title.replace(/s$/, "")}
         </h4>
         <div className="space-y-4">
           {fields.map((field) => renderFormField(field, editForm, setEditForm))}
           {editError && <p className="text-sm text-error-500">{editError}</p>}
-          <Button className="w-full" onClick={submitEdit} disabled={editSubmitting}>
+          <Button
+            className="w-full"
+            onClick={submitEdit}
+            disabled={editSubmitting}
+          >
             {editSubmitting ? "Saving…" : "Save Changes"}
           </Button>
         </div>

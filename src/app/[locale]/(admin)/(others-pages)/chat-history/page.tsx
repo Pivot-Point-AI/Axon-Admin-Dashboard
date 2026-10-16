@@ -1,19 +1,11 @@
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import ChatHistoryExplorer from "@/components/chat-history/ChatHistoryExplorer";
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Chat History | Axon Dashboard",
-  description: "Search and manage a user's stored chat history.",
-};
-
-export default function ChatHistoryPage() {
-  return (
-    <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <PageBreadcrumb pageTitle="Chat History" />
-      </div>
-      <ChatHistoryExplorer />
-    </div>
-  );
+import { redirect } from "@/i18n/navigation";
+import { setRequestLocale } from "next-intl/server";
+export default async function RemovedChatHistory({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  redirect({ href: "/logs", locale });
 }

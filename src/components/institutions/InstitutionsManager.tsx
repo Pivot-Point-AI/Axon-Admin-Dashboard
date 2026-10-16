@@ -1,6 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { notify } from "@/lib/feedback";
+import DateTimeField from "@/components/form/DateTimeField";
+import { CopyIcon } from "@/icons";
+import { useConfirm } from "@/context/FeedbackContext";
 import { useCallback, useEffect, useState } from "react";
+import ActionIconButton from "@/components/ui/button/ActionIconButton";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
@@ -48,6 +54,10 @@ function isExpired(iso: string | null): boolean {
 }
 
 export default function InstitutionsManager() {
+  const t = useTranslations("fixes");
+  const [credentialsCopied, setCredentialsCopied] = useState(false);
+  const [copying, setCopying] = useState(false);
+  const confirm = useConfirm();
   const { accessToken } = useAdminAuth();
   const [institutions, setInstitutions] = useState<InstitutionItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,9 +78,7 @@ export default function InstitutionsManager() {
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  const [renewTarget, setRenewTarget] = useState<InstitutionItem | null>(
-    null,
-  );
+  const [renewTarget, setRenewTarget] = useState<InstitutionItem | null>(null);
   const [renewExpiry, setRenewExpiry] = useState("");
   const [renewSubmitting, setRenewSubmitting] = useState(false);
   const [renewError, setRenewError] = useState<string | null>(null);
@@ -85,7 +93,9 @@ export default function InstitutionsManager() {
       const data = await getAllInstitutions(accessToken);
       setInstitutions(data);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load institutions.");
+      setError(
+        err instanceof ApiError ? err.message : "Failed to load institutions.",
+      );
     } finally {
       setLoading(false);
     }
@@ -100,7 +110,32 @@ export default function InstitutionsManager() {
     setCreateExpiry("");
     setCreateError(null);
     setCreateResult(null);
+    setCredentialsCopied(false);
     setCreateOpen(true);
+  };
+
+  const closeCreate = () => {
+    if (createSubmitting || copying) return;
+    if (createResult && !credentialsCopied) {
+      notify({ kind: "error", message: t("copyRequired") });
+      return;
+    }
+    setCreateOpen(false);
+  };
+  const copyCredentials = async () => {
+    if (!createResult) return;
+    setCopying(true);
+    try {
+      await navigator.clipboard.writeText(
+        `Institution ID: ${createResult.institutionId}\nLicense Key: ${createResult.licenseKey}`,
+      );
+      setCredentialsCopied(true);
+      notify({ kind: "success", message: t("copied") });
+    } catch {
+      notify({ kind: "error", message: t("copyFailed") });
+    } finally {
+      setCopying(false);
+    }
   };
 
   const submitCreate = async () => {
@@ -197,9 +232,9 @@ export default function InstitutionsManager() {
   const handleDelete = async (institution: InstitutionItem) => {
     if (!accessToken) return;
     if (
-      !window.confirm(
+      !(await confirm(
         `Remove "${institution.institution_name}"? This cannot be undone.`,
-      )
+      ))
     ) {
       return;
     }
@@ -222,7 +257,13 @@ export default function InstitutionsManager() {
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Institutions
         </h3>
-        <Button size="sm" startIcon={<PlusIcon />} onClick={openCreate}>
+        <Button
+          size="sm"
+          startIcon={
+            <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
+          }
+          onClick={openCreate}
+        >
           New Institution
         </Button>
       </div>
@@ -237,16 +278,28 @@ export default function InstitutionsManager() {
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-gray-800">
             <TableRow>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Institution
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Institution ID
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 License Expiry
               </TableCell>
-              <TableCell isHeader className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 Actions
               </TableCell>
             </TableRow>
@@ -271,7 +324,29 @@ export default function InstitutionsManager() {
                     {institution.institution_name}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                    {institution.institution_id}
+                    <div className="flex items-center gap-2">
+                      <span className="break-all">
+                        {institution.institution_id}
+                      </span>
+                      <ActionIconButton
+                        type="button"
+                        aria-label={t("copy")}
+                        title={t("copy")}
+                        tone="copy"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(
+                              institution.institution_id,
+                            );
+                            notify({ kind: "success", message: t("copied") });
+                          } catch {
+                            notify({ kind: "error", message: t("copyFailed") });
+                          }
+                        }}
+                      >
+                        <CopyIcon className="size-4" />
+                      </ActionIconButton>
+                    </div>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-sm">
                     <span
@@ -286,28 +361,28 @@ export default function InstitutionsManager() {
                   </TableCell>
                   <TableCell className="px-4 py-3 text-sm">
                     <div className="flex items-center gap-3">
-                      <button
-                        className="text-gray-500 hover:text-brand-500 dark:text-gray-400"
+                      <ActionIconButton
+                        tone="edit"
                         title="Edit name"
                         onClick={() => openEdit(institution)}
                       >
                         <PencilIcon />
-                      </button>
-                      <button
-                        className="text-gray-500 hover:text-brand-500 dark:text-gray-400"
+                      </ActionIconButton>
+                      <ActionIconButton
+                        tone="renew"
                         title="Renew license"
                         onClick={() => openRenew(institution)}
                       >
                         <TimeIcon />
-                      </button>
-                      <button
-                        className="text-gray-500 hover:text-error-500 dark:text-gray-400 disabled:opacity-40"
+                      </ActionIconButton>
+                      <ActionIconButton
+                        tone="delete"
                         title="Remove institution"
                         disabled={deletingId === institution.institution_id}
                         onClick={() => handleDelete(institution)}
                       >
                         <TrashBinIcon />
-                      </button>
+                      </ActionIconButton>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -318,34 +393,52 @@ export default function InstitutionsManager() {
       </div>
 
       {/* Create institution */}
-      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} className="max-w-md p-6">
+      <Modal isOpen={createOpen} onClose={closeCreate} className="max-w-md p-6">
         <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
           New Institution
         </h4>
         {createResult ? (
           <div className="space-y-3">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Institution created. Save this license key now — it won&apos;t
-              be shown again.
+              Institution created. Save this license key now — it won&apos;t be
+              shown again.
             </p>
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-800 dark:bg-gray-900">
-              <div className="text-gray-500 dark:text-gray-400">Institution ID</div>
-              <div className="mb-2 break-all font-mono text-gray-800 dark:text-white/90">
+              <div className="text-gray-500 dark:text-gray-400">
+                Institution ID
+              </div>
+              <div className="font-mono mb-2 break-all text-gray-800 dark:text-white/90">
                 {createResult.institutionId}
               </div>
-              <div className="text-gray-500 dark:text-gray-400">License Key</div>
-              <div className="break-all font-mono text-gray-800 dark:text-white/90">
+              <div className="text-gray-500 dark:text-gray-400">
+                License Key
+              </div>
+              <div className="font-mono break-all text-gray-800 dark:text-white/90">
                 {createResult.licenseKey}
               </div>
             </div>
-            <Button className="w-full" onClick={() => setCreateOpen(false)}>
-              Done
+            <Button
+              className="w-full"
+              startIcon={
+                <CopyIcon className="size-5 text-brand-100 dark:text-white" />
+              }
+              onClick={copyCredentials}
+              disabled={copying}
+            >
+              {t("copyBoth")}
             </Button>
+            {credentialsCopied && (
+              <Button className="w-full" onClick={closeCreate}>
+                {t("done")}
+              </Button>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
             <div>
-              <Label htmlFor="create-name">Institution Name</Label>
+              <Label htmlFor="create-name">
+                Institution Name <span className="text-error-500">*</span>
+              </Label>
               <Input
                 id="create-name"
                 value={createName}
@@ -354,12 +447,13 @@ export default function InstitutionsManager() {
               />
             </div>
             <div>
-              <Label htmlFor="create-expiry">License Expires At</Label>
-              <Input
+              <Label htmlFor="create-expiry">
+                License Expires At <span className="text-error-500">*</span>
+              </Label>
+              <DateTimeField
                 id="create-expiry"
-                type="datetime-local"
                 value={createExpiry}
-                onChange={(e) => setCreateExpiry(e.target.value)}
+                onChange={setCreateExpiry}
               />
             </div>
             {createError && (
@@ -377,7 +471,11 @@ export default function InstitutionsManager() {
       </Modal>
 
       {/* Edit institution name */}
-      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} className="max-w-md p-6">
+      <Modal
+        isOpen={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        className="max-w-md p-6"
+      >
         <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
           Rename Institution
         </h4>
@@ -402,18 +500,23 @@ export default function InstitutionsManager() {
       </Modal>
 
       {/* Renew license */}
-      <Modal isOpen={!!renewTarget} onClose={() => setRenewTarget(null)} className="max-w-md p-6">
+      <Modal
+        isOpen={!!renewTarget}
+        onClose={() => setRenewTarget(null)}
+        className="max-w-md p-6"
+      >
         <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
           Renew License
         </h4>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="renew-expiry">New License Expiry</Label>
-            <Input
+            <Label htmlFor="renew-expiry">
+              New License Expiry <span className="text-error-500">*</span>
+            </Label>
+            <DateTimeField
               id="renew-expiry"
-              type="datetime-local"
               value={renewExpiry}
-              onChange={(e) => setRenewExpiry(e.target.value)}
+              onChange={setRenewExpiry}
             />
           </div>
           {renewError && <p className="text-sm text-error-500">{renewError}</p>}

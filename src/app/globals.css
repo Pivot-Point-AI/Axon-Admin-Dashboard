@@ -4,7 +4,7 @@
 
 @theme {
   --font-*: initial;
-  --font-outfit: Outfit, sans-serif;
+  --font-outfit: var(--font-dashboard), Inter, sans-serif;
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -38,18 +38,18 @@
   --color-white: #ffffff;
   --color-black: #101828;
 
-  --color-brand-25: #f2f7ff;
-  --color-brand-50: #ecf3ff;
-  --color-brand-100: #dde9ff;
-  --color-brand-200: #c2d6ff;
-  --color-brand-300: #9cb9ff;
-  --color-brand-400: #7592ff;
-  --color-brand-500: #465fff;
-  --color-brand-600: #3641f5;
-  --color-brand-700: #2a31d8;
-  --color-brand-800: #252dae;
-  --color-brand-900: #262e89;
-  --color-brand-950: #161950;
+  --color-brand-25: #f5f9fd;
+  --color-brand-50: #eaf3fb;
+  --color-brand-100: #d5e7f6;
+  --color-brand-200: #adceed;
+  --color-brand-300: #7bafdc;
+  --color-brand-400: #3d87c5;
+  --color-brand-500: #005099;
+  --color-brand-600: #004480;
+  --color-brand-700: #00366a;
+  --color-brand-800: #002b55;
+  --color-brand-900: #002044;
+  --color-brand-950: #00162f;
 
   --color-blue-light-25: #f5fbff;
   --color-blue-light-50: #f0f9ff;
@@ -595,4 +595,368 @@ pre[class*="language-"].line-numbers {
   border: 2px solid #465fff;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* Axon uses the banking reference's blue shell with its own data and identity. */
+.axon-admin {
+  background: var(--color-gray-100);
+}
+.dark .axon-admin {
+  background: var(--color-gray-950);
+}
+.axon-sidebar {
+  background: var(--color-brand-500);
+  border-color: var(--color-brand-600);
+  box-shadow: var(--shadow-theme-sm);
+}
+.dark .axon-sidebar {
+  background: var(--color-brand-800);
+  border-color: var(--color-brand-700);
+}
+.axon-sidebar .menu-item {
+  min-height: 3rem;
+  margin-block: 0.25rem;
+  border-radius: 0.5rem;
+}
+.axon-sidebar .menu-item-inactive,
+.axon-sidebar .menu-item-icon-inactive {
+  color: var(--color-white);
+}
+.axon-sidebar .menu-item-active {
+  background: color-mix(in srgb, var(--color-white) 8%, transparent);
+  color: var(--color-success-300);
+  box-shadow: none;
+}
+.axon-sidebar .menu-item-icon-active {
+  color: var(--color-success-300);
+}
+.axon-sidebar .menu-item-inactive:hover {
+  color: var(--color-white);
+  background: color-mix(in srgb, var(--color-white) 12%, transparent);
+}
+.axon-header {
+  min-height: 5rem;
+  background: var(--color-white);
+}
+.dark .axon-header {
+  background: var(--color-gray-900);
+}
+.axon-header > div > div:first-child > button:first-child {
+  background: var(--color-brand-500);
+  color: var(--color-white);
+  border-color: var(--color-brand-500);
+}
+.dark .axon-header > div > div:first-child > button:first-child {
+  background: var(--color-brand-600);
+}
+.axon-stat {
+  min-height: 8rem;
+  border: 0;
+  box-shadow: none;
+}
+.axon-stat-icon {
+  order: 1;
+  margin-inline-start: auto;
+  background: transparent;
+}
+.axon-stat:nth-child(2) .axon-stat-icon {
+  color: var(--color-success-500);
+  background: transparent;
+}
+.axon-stat:nth-child(3) .axon-stat-icon {
+  color: var(--color-warning-500);
+  background: transparent;
+}
+.axon-stat:nth-child(4) .axon-stat-icon {
+  color: var(--color-error-500);
+  background: transparent;
+}
+.dark .axon-stat-icon {
+  background: transparent;
+}
+.axon-shortcut {
+  background: var(--color-white);
+  border-color: var(--color-gray-200);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+.dark .axon-shortcut {
+  background: var(--color-gray-900);
+  border-color: var(--color-gray-800);
+}
+.axon-shortcut:hover {
+  background: var(--color-brand-50);
+  border-color: var(--color-brand-200);
+  box-shadow: var(--shadow-theme-xs);
+}
+.dark .axon-shortcut:hover {
+  background: var(--color-brand-950);
+  border-color: var(--color-brand-700);
+}
+.axon-auth-panel {
+  background: linear-gradient(
+    145deg,
+    var(--color-brand-500),
+    var(--color-brand-800)
+  );
+}
+.dark .axon-auth-panel {
+  background: linear-gradient(
+    145deg,
+    var(--color-brand-700),
+    var(--color-brand-950)
+  );
+}
+.axon-product-preview {
+  transform: none;
+  border-radius: 1rem;
+}
+.axon-signin {
+  background: var(--color-white);
+}
+.dark .axon-signin {
+  background: var(--color-gray-950);
+}
+.axon-login-card {
+  margin-block: 2rem;
+}
+.axon-login-card h1 {
+  font-size: var(--text-title-sm);
+  line-height: var(--text-title-sm--line-height);
+  text-align: center;
+}
+.axon-login-card input {
+  border-radius: 0;
+  border-width: 0 0 1px;
+  box-shadow: none;
+}
+.axon-login-card input:focus {
+  border-color: var(--color-brand-500);
+  outline: none;
+}
+.axon-management-heading > div {
+  margin-block-end: 0;
+}
+.axon-management-heading h2 {
+  font-size: var(--text-title-sm);
+  line-height: var(--text-title-sm--line-height);
+  color: var(--color-gray-900);
+  font-weight: 500;
+}
+.dark .axon-management-heading h2 {
+  color: var(--color-white);
+}
+.axon-management-panel {
+  box-shadow: none;
+  border-color: transparent;
+}
+.dark .axon-management-panel {
+  border-color: var(--color-gray-800);
+}
+.axon-management-panel table {
+  min-width: 46rem;
+}
+.axon-management-panel thead {
+  background: transparent;
+  border-block-end: 1px solid var(--color-gray-300);
+}
+.dark .axon-management-panel thead {
+  background: transparent;
+  border-color: var(--color-gray-700);
+}
+.axon-management-panel thead th {
+  padding-block: 1rem;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: var(--text-theme-sm);
+  color: var(--color-brand-700);
+}
+.dark .axon-management-panel thead th {
+  color: var(--color-brand-200);
+}
+.axon-management-panel tbody td {
+  padding-block: 1rem;
+}
+.axon-management-panel tbody tr:hover {
+  background: var(--color-gray-50);
+}
+.dark .axon-management-panel tbody tr:hover {
+  background: var(--color-gray-800);
+}
+.axon-user-avatar-0 {
+  background: var(--color-brand-400);
+}
+.axon-user-avatar-1 {
+  background: var(--color-theme-purple-500);
+}
+.axon-user-avatar-2 {
+  background: var(--color-theme-pink-500);
+}
+.axon-user-avatar-3 {
+  background: var(--color-success-500);
+}
+.axon-log-history > div:nth-child(2) {
+  margin-block-end: 1.5rem;
+}
+.axon-log-list-heading {
+  grid-template-columns: 9rem 4rem minmax(8rem, 1fr) minmax(10rem, 16rem) 1rem;
+}
+input,
+select,
+textarea {
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+input:not(:disabled):hover,
+select:not(:disabled):hover,
+textarea:not(:disabled):hover {
+  border-color: var(--color-brand-400);
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-brand-400);
+  outline-offset: 2px;
+}
+.dark input,
+.dark select,
+.dark textarea {
+  color-scheme: dark;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-brand-400);
+  outline-offset: 3px;
+}
+input[role="switch"] {
+  background-image: none;
+}
+input[role="switch"]:checked {
+  background-color: var(--color-brand-500);
+  border-color: var(--color-brand-500);
+}
+.dark input[role="switch"]:checked {
+  background-color: var(--color-brand-400);
+  border-color: var(--color-brand-400);
+}
+.axon-notification {
+  animation: axon-slide-in 180ms ease-out;
+}
+.axon-notification-timer {
+  animation: axon-notification-countdown 5s linear forwards;
+  transform-origin: center;
+}
+@keyframes axon-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes axon-notification-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (min-width: 1024px) {
+  .axon-log-list ul > li > button {
+    display: grid;
+    grid-template-columns: 9rem 4rem minmax(8rem, 1fr) minmax(10rem, 16rem) 1rem;
+    align-items: center;
+  }
+}
+
+/* Compact typography and consistent, distinct action colors. */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.axon-admin {
+  font-size: var(--text-theme-sm);
+  line-height: 1.6;
+}
+.axon-admin h2,
+.axon-admin h3,
+.axon-admin h4 {
+  letter-spacing: -0.025em;
+}
+.axon-admin table {
+  font-variant-numeric: tabular-nums;
+}
+.axon-management-panel thead th {
+  font-size: var(--text-theme-xs);
+  font-weight: 600;
+  color: var(--color-gray-600);
+}
+.dark .axon-management-panel thead th {
+  color: var(--color-gray-300);
+}
+.axon-management-panel tbody td {
+  padding-block: 0.875rem;
+}
+.axon-sidebar nav {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.axon-sidebar nav::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.axon-sidebar .menu-item {
+  font-size: var(--text-theme-sm);
+  font-weight: 500;
+}
+.axon-action {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+.axon-action svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.axon-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* Keep SVG viewboxes intact inside compact flex controls. */
+button > svg,
+button > span > svg,
+a.menu-item > svg,
+.axon-action svg {
+  flex-shrink: 0;
+  overflow: visible;
+}
+.axon-action {
+  padding: 0.5rem;
+  line-height: 1;
+  overflow: visible;
 }

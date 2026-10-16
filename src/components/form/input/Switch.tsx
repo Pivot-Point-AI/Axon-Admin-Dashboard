@@ -29,12 +29,12 @@ const Switch: React.FC<SwitchProps> = ({
           type="checkbox"
           role="switch"
           aria-checked={checked}
-          className={`peer absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-full border border-gray-300 bg-gray-200 transition-colors checked:border-brand-500 checked:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-700 ${className}`}
+          className={`peer absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-full border border-gray-300 bg-gray-200 transition-colors checked:border-brand-500 checked:bg-brand-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-700 dark:checked:border-brand-500 dark:checked:bg-brand-500 ${className}`}
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
           disabled={disabled}
         />
-        <span className="pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-theme-xs transition-transform peer-checked:translate-x-5" />
+        <span className="pointer-events-none absolute start-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-theme-xs transition-transform peer-checked:translate-x-5 rtl:peer-checked:-translate-x-5" />
       </span>
       {label && (
         <span className="text-sm font-medium text-gray-800 dark:text-gray-200">

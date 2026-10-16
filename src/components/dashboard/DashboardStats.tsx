@@ -1,5 +1,6 @@
 "use client";
 
+import LicenseOverview from "./LicenseOverview";
 import { useEffect, useState } from "react";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { BoxCubeIcon, ChatIcon, GroupIcon, TableIcon } from "@/icons/index";
@@ -88,7 +89,9 @@ export default function DashboardStats() {
       } catch (err) {
         if (!cancelled) {
           setError(
-            err instanceof ApiError ? err.message : "Failed to load dashboard stats.",
+            err instanceof ApiError
+              ? err.message
+              : "Failed to load dashboard stats.",
           );
         }
       }
@@ -144,33 +147,41 @@ export default function DashboardStats() {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-5">
-      {cards.map((card) => (
-        <div
-          key={card.key}
-          className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3"
-        >
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-white/90">
-            {card.icon}
+    <>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-5">
+        {cards.map((card) => (
+          <div
+            key={card.key}
+            className="axon-stat relative flex items-center gap-4 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-white/3"
+          >
+            <div className="axon-stat-icon flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400">
+              {card.icon}
+            </div>
+            <div className="relative">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {card.label}
+              </span>
+              <h4
+                className={`mt-1 text-title-sm font-bold ${
+                  card.danger
+                    ? "text-error-500"
+                    : card.warn
+                      ? "text-warning-500"
+                      : "text-gray-800 dark:text-white/90"
+                }`}
+              >
+                {card.value ?? "—"}
+              </h4>
+            </div>
           </div>
-          <div className="mt-4">
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {card.label}
-            </span>
-            <h4
-              className={`mt-1 text-title-sm font-bold ${
-                card.danger
-                  ? "text-error-500"
-                  : card.warn
-                    ? "text-warning-500"
-                    : "text-gray-800 dark:text-white/90"
-              }`}
-            >
-              {card.value ?? "—"}
-            </h4>
-          </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+      <LicenseOverview
+        active={stats?.active ?? 0}
+        expiringSoon={stats?.expiringSoon ?? 0}
+        expired={stats?.expired ?? 0}
+        loading={!stats}
+      />
+    </>
   );
 }

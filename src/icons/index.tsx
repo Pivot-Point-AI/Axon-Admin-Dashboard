@@ -55,3 +55,6 @@ export { default as UploadIcon } from "./upload.svg";
 export { default as UserCircleIcon } from "./user-circle.svg";
 export { default as UserIcon } from "./user-line.svg";
 export { default as VideoIcon } from "./videos.svg";
+export { default as SunIcon } from "./sun.svg";
+export { default as MoonIcon } from "./moon.svg";
+export { default as GlobeIcon } from "./globe.svg";

@@ -1,8 +1,15 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { CloseIcon } from "@/icons";
+import { createPortal } from "react-dom";
 import { useEffect, useRef } from "react";
 
+const modalStack: symbol[] = [];
+let previousOverflow = "";
+
 interface ModalProps {
+  ariaLabel?: string;
   isOpen: boolean;
   onClose: () => void;
   className?: string;
@@ -12,6 +19,7 @@ interface ModalProps {
 }
 
 export const Modal: React.FC<ModalProps> = ({
+  ariaLabel,
   isOpen,
   onClose,
   children,
@@ -19,33 +27,60 @@ export const Modal: React.FC<ModalProps> = ({
   showCloseButton = true, // Default to true for backwards compatibility
   isFullscreen = false,
 }) => {
+  const t = useTranslations("fixes");
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
+    if (!isOpen) return;
+    const token = Symbol("modal");
+    const previousFocus = document.activeElement as HTMLElement | null;
+    if (!modalStack.length) {
+      previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+    }
+    modalStack.push(token);
+    const focusable = () =>
+      Array.from(
+        modalRef.current?.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]',
+        ) ?? [],
+      ).filter((el) => el.getClientRects().length > 0);
+    const frame = requestAnimationFrame(() =>
+      (focusable()[0] ?? modalRef.current)?.focus(),
+    );
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (modalStack.at(-1) !== token) return;
       if (event.key === "Escape") {
-        onClose();
+        event.preventDefault();
+        event.stopPropagation();
+        closeRef.current();
+      }
+      if (event.key === "Tab") {
+        const elements = focusable();
+        const first = elements[0];
+        const last = elements.at(-1);
+        if (!first) {
+          event.preventDefault();
+          modalRef.current?.focus();
+        } else if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-    }
-
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isOpen, onClose]);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    return () => {
-      document.body.style.overflow = "unset";
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", handleKeyDown);
+      const index = modalStack.indexOf(token);
+      if (index >= 0) modalStack.splice(index, 1);
+      if (!modalStack.length) document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
     };
   }, [isOpen]);
 
@@ -55,42 +90,36 @@ export const Modal: React.FC<ModalProps> = ({
     ? "w-full h-full"
     : "relative my-4 w-[calc(100%-2rem)] rounded-3xl bg-white dark:bg-gray-900 sm:w-full";
 
-  return (
+  return createPortal(
     <div className="modal fixed inset-0 z-99999 flex items-center justify-center overflow-y-auto">
       {!isFullscreen && (
         <div
-          className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
+          className="fixed inset-0 h-full w-full bg-gray-950/50 backdrop-blur-sm dark:bg-gray-950/70"
           onClick={onClose}
         ></div>
       )}
       <div
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel}
         ref={modalRef}
         className={`${contentClasses} ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (
           <button
+            type="button"
+            aria-label={t("close")}
             onClick={onClose}
-            className="inset-e-3 sm:inset-e-6 absolute top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700 sm:top-6 sm:h-11 sm:w-11 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+            className="absolute end-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-colors hover:bg-gray-200 hover:text-gray-700 sm:end-6 sm:top-6 sm:h-11 sm:w-11 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white"
           >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M6.04289 16.5413C5.65237 16.9318 5.65237 17.565 6.04289 17.9555C6.43342 18.346 7.06658 18.346 7.45711 17.9555L11.9987 13.4139L16.5408 17.956C16.9313 18.3466 17.5645 18.3466 17.955 17.956C18.3455 17.5655 18.3455 16.9323 17.955 16.5418L13.4129 11.9997L17.955 7.4576C18.3455 7.06707 18.3455 6.43391 17.955 6.04338C17.5645 5.65286 16.9313 5.65286 16.5408 6.04338L11.9987 10.5855L7.45711 6.0439C7.06658 5.65338 6.43342 5.65338 6.04289 6.0439C5.65237 6.43442 5.65237 7.06759 6.04289 7.45811L10.5845 11.9997L6.04289 16.5413Z"
-                fill="currentColor"
-              />
-            </svg>
+            <CloseIcon className="block size-5 shrink-0" />
           </button>
         )}
         <div>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
