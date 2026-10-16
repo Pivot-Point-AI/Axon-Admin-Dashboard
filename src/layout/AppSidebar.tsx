@@ -40,18 +40,15 @@ export default function AppSidebar() {
     >
       <Link
         href="/"
-        className={`flex h-24 shrink-0 items-center ${showLabels ? "justify-start" : "justify-center"}`}
+        className="flex h-24 shrink-0 items-center justify-center"
       >
         <Image
-          src={
-            showLabels
-              ? "/images/logo/logo-dark.png"
-              : "/images/logo/logo-icon.png"
-          }
+          src="/images/logo/logo-icon.png"
           alt="Axon"
-          width={showLabels ? 140 : 32}
-          height={showLabels ? 50 : 32}
-          priority
+          width={showLabels ? 72 : 40}
+          height={showLabels ? 72 : 40}
+          className={`h-auto shrink-0 object-contain dark:opacity-100 ${showLabels ? "w-18" : "w-10"}`}
+          preload
         />
       </Link>
       <nav className="no-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-6">
