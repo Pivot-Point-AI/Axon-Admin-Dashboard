@@ -40,7 +40,7 @@ export default function AppSidebar() {
     >
       <Link
         href="/"
-        className={`flex h-20 shrink-0 items-center ${showLabels ? "justify-start ps-2" : "justify-center"}`}
+        className={`flex h-16 shrink-0 items-center ${showLabels ? "justify-start ps-2" : "justify-center"}`}
       >
         <Image
           src="/images/logo/logo-icon.png"

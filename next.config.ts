@@ -47,7 +47,7 @@ const nextConfig: NextConfig = {
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
-      use: ["@svgr/webpack"],
+      use: [{ loader: "@svgr/webpack", options: { svgo: false } }],
     });
     return config;
   },
@@ -62,7 +62,7 @@ const nextConfig: NextConfig = {
     root: __dirname,
     rules: {
       "*.svg": {
-        loaders: ["@svgr/webpack"],
+        loaders: [{ loader: "@svgr/webpack", options: { svgo: false } }],
         as: "*.js",
       },
     },

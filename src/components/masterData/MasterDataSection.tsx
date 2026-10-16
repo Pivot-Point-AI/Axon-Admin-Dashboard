@@ -531,14 +531,6 @@ export default function MasterDataSection({
             renderFormField(field, editForm, setEditForm, editRequired.invalid),
           )}
           {editError && <p className="text-sm text-error-500">{editError}</p>}
-          {editPending && (
-            <p
-              role="status"
-              className="text-sm text-gray-500 dark:text-gray-400"
-            >
-              {t("cardEditPending")}
-            </p>
-          )}
           <Button
             className="w-full"
             onClick={submitEdit}

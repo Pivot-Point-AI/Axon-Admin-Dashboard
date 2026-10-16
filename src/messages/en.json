@@ -86,7 +86,7 @@
     }
   },
   "header": {
-    "searchPlaceholder": "Search or type command...",
+    "searchPlaceholder": "Search institutions, licenses, settings...",
     "toggleSidebar": "Toggle Sidebar"
   },
   "userDropdown": {
