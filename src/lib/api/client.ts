@@ -14,7 +14,6 @@ const BACKEND_ORIGIN =
 export const API_BASE_URL =
   typeof window !== "undefined" ? "/backend" : BACKEND_ORIGIN;
 
-  
 // The Admin Dashboard API (auth/login, institutions, logs — all bearer-protected)
 // is served under a separate /admin prefix on the same host.
 export const ADMIN_API_BASE_URL =
