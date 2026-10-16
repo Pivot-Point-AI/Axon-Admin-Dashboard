@@ -217,6 +217,7 @@ export default function MasterDataManager() {
       {activeTab === "cards" && (
         <MasterDataSection
           title="Card Types"
+          editPending
           idField="card_type_id"
           fields={cardFields}
           fetchItems={getCardTypes}

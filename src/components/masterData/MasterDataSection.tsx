@@ -61,6 +61,7 @@ interface MasterDataSectionProps {
   // Record keys that have no form input but must be sent back unchanged on
   // update, since PUT replaces the record.
   preserveKeys?: string[];
+  editPending?: boolean;
   fetchItems: (bearerToken: string) => Promise<unknown>;
   createItem: (
     body: Record<string, unknown>,
@@ -90,6 +91,7 @@ export default function MasterDataSection({
   fields,
   filters = [],
   preserveKeys = [],
+  editPending = false,
   fetchItems,
   createItem,
   updateItem,
@@ -100,7 +102,7 @@ export default function MasterDataSection({
   const t = useTranslations("fixes");
   const confirm = useConfirm();
   const { accessToken } = useAdminAuth();
-  const hasActions = !!updateItem || !!removeItem;
+  const hasActions = !!updateItem || !!removeItem || editPending;
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -455,7 +457,7 @@ export default function MasterDataSection({
                     {hasActions && (
                       <TableCell className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-3">
-                          {updateItem && (
+                          {(updateItem || editPending) && (
                             <ActionIconButton
                               tone="edit"
                               title="Edit"
@@ -529,10 +531,18 @@ export default function MasterDataSection({
             renderFormField(field, editForm, setEditForm, editRequired.invalid),
           )}
           {editError && <p className="text-sm text-error-500">{editError}</p>}
+          {editPending && (
+            <p
+              role="status"
+              className="text-sm text-gray-500 dark:text-gray-400"
+            >
+              {t("cardEditPending")}
+            </p>
+          )}
           <Button
             className="w-full"
             onClick={submitEdit}
-            disabled={editSubmitting}
+            disabled={editSubmitting || editPending}
           >
             {editSubmitting ? "Saving…" : "Save Changes"}
           </Button>

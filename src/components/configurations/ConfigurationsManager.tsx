@@ -3,14 +3,8 @@
 import Pagination from "@/components/common/Pagination";
 import usePagination from "@/hooks/usePagination";
 import { useTranslations } from "next-intl";
-import ManagementMetrics from "@/components/common/ManagementMetrics";
-import {
-  ListIcon,
-  CheckCircleIcon,
-  TableIcon,
-  TimeIcon,
-  PencilIcon,
-} from "@/icons";
+
+import { PencilIcon } from "@/icons";
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
@@ -112,10 +106,6 @@ export default function ConfigurationsManager() {
         .toLowerCase()
         .includes(query.trim().toLowerCase()),
   );
-  const latestUpdate = configs
-    .map((config) => new Date(config.updated_at ?? "").getTime())
-    .filter(Number.isFinite)
-    .sort((a, b) => b - a)[0];
 
   const pagination = usePagination(
     visibleConfigs,
@@ -124,41 +114,6 @@ export default function ConfigurationsManager() {
 
   return (
     <div className="space-y-5">
-      <ManagementMetrics
-        loading={loading || !!error}
-        items={[
-          {
-            label: t("totalSettings"),
-            value: configs.length,
-            icon: <ListIcon />,
-            tone: "brand",
-          },
-          {
-            label: t("booleanSettings"),
-            value: configs.filter((config) => configKind(config) === "boolean")
-              .length,
-            icon: <CheckCircleIcon />,
-            tone: "success",
-          },
-          {
-            label: t("numericSettings"),
-            value: configs.filter((config) =>
-              ["integer", "number"].includes(configKind(config)),
-            ).length,
-            icon: <TableIcon />,
-            tone: "warning",
-          },
-          {
-            label: t("lastUpdated"),
-            value:
-              latestUpdate !== undefined
-                ? new Date(latestUpdate).toLocaleDateString()
-                : t("never"),
-            icon: <TimeIcon />,
-            tone: "purple",
-          },
-        ]}
-      />
       <div className="axon-management-panel rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
           <div className="flex flex-1 flex-wrap gap-3">

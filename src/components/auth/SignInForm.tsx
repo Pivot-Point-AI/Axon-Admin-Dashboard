@@ -19,7 +19,6 @@ import { ApiError } from "@/lib/api/client";
 import { FormEvent, useState } from "react";
 
 export default function SignInForm() {
-  const f = useTranslations("fixes");
   const t = useTranslations("redesign");
   const router = useRouter();
   const { login } = useAdminAuth();
@@ -54,7 +53,7 @@ export default function SignInForm() {
     <div className="axon-signin relative flex w-full flex-1 flex-col px-6 py-12 sm:px-12 lg:w-1/2 lg:px-16">
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center">
         <div className="axon-login-card rounded-2xl border border-gray-200 bg-white p-7 shadow-theme-xl sm:p-10 dark:border-gray-700 dark:bg-gray-900">
-          <Link href="/" className="mb-7 inline-block">
+          <Link href="/" className="mb-7 inline-block lg:hidden">
             <Image
               src="/images/logo/logo.png"
               alt="Axon"
@@ -74,11 +73,7 @@ export default function SignInForm() {
           </Link>
           <div className="mb-8 sm:mb-10">
             <h1 className="mb-2 text-title-sm font-semibold text-gray-800 sm:text-title-md dark:text-white/90">
-              {f("loginTitle")}
-              <br />
-              <span className="text-brand-500 dark:text-brand-300">
-                {f("loginBrand")}
-              </span>
+              {t("adminPortal")}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {t("signinSubtitle")}

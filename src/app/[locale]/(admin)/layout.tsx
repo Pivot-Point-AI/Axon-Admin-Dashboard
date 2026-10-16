@@ -27,7 +27,7 @@ export default function AdminLayout({
   const mainContentMargin = isMobileOpen
     ? "ms-0"
     : isExpanded || isHovered
-      ? "xl:ms-72.5"
+      ? "xl:ms-64"
       : "xl:ms-22.5";
 
   if (isLoading || !isAuthenticated) {

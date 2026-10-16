@@ -62,6 +62,8 @@
   },
   "sidebar": {
     "groups": {
+      "overview": "OVERVIEW",
+      "administration": "ADMINISTRATION",
       "menu": "Menu"
     },
     "badges": {
@@ -98,6 +100,8 @@
     "backHome": "Back to Home Page"
   },
   "redesign": {
+    "enterpriseWorkspace": "ENTERPRISE WORKSPACE",
+    "adminPortal": "Admin Portal",
     "authPanelTitle": "Administration, simplified.",
     "authPanelSubtitle": "One workspace for your institutions, people and conversations.",
     "welcome": "Welcome Back",
@@ -157,6 +161,7 @@
     "context": "Flow / Session"
   },
   "fixes": {
+    "cardEditPending": "Card editing is ready. Saving will be enabled when the update endpoint is connected.",
     "confirmTitle": "Confirm action",
     "confirm": "Confirm",
     "cancel": "Cancel",

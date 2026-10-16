@@ -36,22 +36,27 @@ export default function AppSidebar() {
   const showLabels = isExpanded || isMobileOpen;
   return (
     <aside
-      className={`axon-sidebar fixed start-0 top-0 z-50 flex h-dvh flex-col overflow-hidden border-e px-5 transition-all duration-300 ease-in-out dark:border-brand-700 ${showLabels ? "w-72.5" : "w-22.5"} ${isMobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"} xl:translate-x-0 xl:rtl:translate-x-0`}
+      className={`axon-sidebar fixed start-0 top-0 z-50 flex h-dvh flex-col overflow-hidden border-e px-3 transition-all duration-300 ease-in-out dark:border-brand-700 ${showLabels ? "w-64" : "w-22.5"} ${isMobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"} xl:translate-x-0 xl:rtl:translate-x-0`}
     >
       <Link
         href="/"
-        className="flex h-24 shrink-0 items-center justify-center"
+        className={`flex h-20 shrink-0 items-center ${showLabels ? "justify-start ps-2" : "justify-center"}`}
       >
         <Image
           src="/images/logo/logo-icon.png"
           alt="Axon"
-          width={showLabels ? 72 : 40}
-          height={showLabels ? 72 : 40}
-          className={`h-auto shrink-0 object-contain dark:opacity-100 ${showLabels ? "w-18" : "w-10"}`}
+          width={40}
+          height={40}
+          className="h-auto w-10 shrink-0 object-contain dark:opacity-100"
           preload
         />
       </Link>
       <nav className="no-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-6">
+        {showLabels && (
+          <p className="mb-2 px-3 text-theme-xs font-medium tracking-wide text-brand-300 dark:text-brand-300">
+            {t("groups.overview")}
+          </p>
+        )}
         <ul className="flex flex-col gap-1">
           {items.map(({ key, path, icon: Icon }) => {
             const active =
@@ -59,7 +64,19 @@ export default function AppSidebar() {
                 ? pathname === "/"
                 : pathname === path || pathname.startsWith(`${path}/`);
             return (
-              <li key={key}>
+              <li
+                key={key}
+                className={
+                  key === "users" || key === "userProfile"
+                    ? "mt-4 border-t border-white/15 pt-4 dark:border-white/15"
+                    : undefined
+                }
+              >
+                {showLabels && key === "users" && (
+                  <p className="mb-3 px-3 text-theme-xs font-medium tracking-wide text-brand-300 dark:text-brand-300">
+                    {t("groups.administration")}
+                  </p>
+                )}
                 <Link
                   href={path}
                   aria-current={active ? "page" : undefined}
