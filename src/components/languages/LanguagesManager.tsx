@@ -527,5 +527,6 @@ export default function LanguagesManager() {
       </Modal>
     </div>
   );
-  
+
 }
+
