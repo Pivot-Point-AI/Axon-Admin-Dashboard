@@ -1,3 +1,4 @@
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import LogSessionDetail from "@/components/logs/LogSessionDetail";
 import { Metadata } from "next";
@@ -10,12 +11,17 @@ export const metadata: Metadata = {
 export default async function LogSessionPage({
   params,
 }: {
-  params: Promise<{ sessionId: string }>;
+  params: Promise<{ locale: string; sessionId: string }>;
 }) {
-  const { sessionId } = await params;
+  const { locale, sessionId } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("managementDesign");
   return (
-    <div>
-      <PageBreadcrumb pageTitle="Session Log" />
+    <div className="axon-management">
+      <PageBreadcrumb
+        pageTitle="Session Log"
+        description={t("sessionLogSubtitle")}
+      />
       <LogSessionDetail sessionId={decodeURIComponent(sessionId)} />
     </div>
   );

@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { RefreshIcon } from "@/icons";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { ApiError } from "@/lib/api/client";
 import { getFlows, updateFlow } from "@/lib/api/flows";
@@ -76,7 +77,17 @@ export default function FlowsManager() {
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Conversation Flows
         </h3>
-        <Button size="sm" variant="outline" onClick={load} disabled={loading}>
+        <Button
+          size="sm"
+          variant="primary"
+          onClick={load}
+          disabled={loading}
+          startIcon={
+            <RefreshIcon
+              className={`size-4 ${loading ? "motion-safe:animate-spin" : ""}`}
+            />
+          }
+        >
           Refresh
         </Button>
       </div>

@@ -167,7 +167,7 @@ export default function ChatHistoryExplorer() {
             {loading ? "Searching…" : "Search"}
           </Button>
           <Button
-            variant="outline"
+            variant="danger"
             onClick={runDelete}
             disabled={!userId.trim() || !token || deleting}
           >

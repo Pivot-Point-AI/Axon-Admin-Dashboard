@@ -135,7 +135,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
             {t("cancel")}
           </Button>
           <Button
-            className="bg-error-500 hover:bg-error-600 dark:bg-error-500 dark:hover:bg-error-600"
+            variant="danger"
             onClick={() => settle(true)}
           >
             {t("confirm")}

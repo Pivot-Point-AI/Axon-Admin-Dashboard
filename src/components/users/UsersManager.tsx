@@ -304,7 +304,7 @@ export default function UsersManager() {
                       {user.email}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm">
-                      <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-theme-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
+                      <span className="text-theme-xs font-medium text-gray-700 dark:text-gray-300">
                         {user.role}
                       </span>
                     </TableCell>

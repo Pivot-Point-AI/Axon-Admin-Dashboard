@@ -22,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAdminAuth } from "@/context/AdminAuthContext";
-import { PencilIcon, PlusIcon, TrashBinIcon } from "@/icons/index";
+import { CheckCircleIcon, PencilIcon, PlusIcon, TrashBinIcon } from "@/icons/index";
 import { ApiError } from "@/lib/api/client";
 import {
   createLanguage,
@@ -75,6 +75,7 @@ export default function LanguagesManager() {
   const confirm = useConfirm();
   const { accessToken } = useAdminAuth();
   const [languages, setLanguages] = useState<Record<string, unknown>[]>([]);
+  const [primaryCode, setPrimaryCode] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,8 +107,17 @@ export default function LanguagesManager() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getLanguages(accessToken);
-      setLanguages(asRecordArray(data));
+      const data = asRecordArray(await getLanguages(accessToken));
+      setLanguages(data);
+      const primary = data.find(
+        (l) =>
+          l.is_primary === true ||
+          l.primary === true ||
+          l.is_default === true,
+      );
+      if (primary?.language_code) {
+        setPrimaryCode(String(primary.language_code).toLowerCase());
+      }
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "Failed to load languages.",
@@ -229,6 +239,7 @@ export default function LanguagesManager() {
     setBusyCode(code);
     try {
       await updatePrimaryLanguage({ language_code: code }, accessToken);
+      setPrimaryCode(code.toLowerCase());
       await load();
     } catch (err) {
       setError(
@@ -287,31 +298,37 @@ export default function LanguagesManager() {
       )}
 
       <Pagination variant="header" pagination={pagination} disabled={loading} />
-      <div className="w-full overflow-x-auto">
+      <div className="w-full overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
         <Table className="w-full">
-          <TableHeader className="border-b border-gray-100 dark:border-gray-800">
+          <TableHeader className="border-b border-gray-100 bg-gray-50/70 dark:border-gray-800 dark:bg-white/2">
             <TableRow>
               <TableCell
                 isHeader
-                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                className="px-4 py-3 text-start text-theme-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
               >
                 Code
               </TableCell>
               <TableCell
                 isHeader
-                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                className="px-4 py-3 text-start text-theme-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
               >
                 Name
               </TableCell>
               <TableCell
                 isHeader
-                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                className="px-4 py-3 text-start text-theme-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
               >
                 Enabled
               </TableCell>
               <TableCell
                 isHeader
-                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                className="px-4 py-3 text-start text-theme-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
+              >
+                Primary
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-end text-theme-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
               >
                 Actions
               </TableCell>
@@ -320,43 +337,76 @@ export default function LanguagesManager() {
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
             {loading ? (
               <TableRow>
-                <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                <TableCell
+                  colSpan={5}
+                  className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400"
+                >
                   Loading languages…
                 </TableCell>
               </TableRow>
             ) : languages.length === 0 ? (
               <TableRow>
-                <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                <TableCell
+                  colSpan={5}
+                  className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400"
+                >
                   No languages found.
                 </TableCell>
               </TableRow>
             ) : (
               pagination.items.map((language, index) => {
                 const code = String(language.language_code ?? index);
+                const isPrimary =
+                  primaryCode
+                    ? code.toLowerCase() === primaryCode.toLowerCase()
+                    : Boolean(
+                        language.is_primary ||
+                          language.primary ||
+                          language.is_default,
+                      );
                 return (
                   <TableRow key={code}>
-                    <TableCell className="font-mono px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
-                      {code}
+                    <TableCell className="px-4 py-3 text-sm font-medium">
+                      <span className="inline-block rounded-md bg-gray-100 px-2.5 py-1 font-mono text-theme-xs font-semibold text-gray-800 dark:bg-white/5 dark:text-gray-200">
+                        {code}
+                      </span>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                    <TableCell className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
                       {String(language.language_name ?? "—")}
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                    <TableCell className="px-4 py-3 text-sm">
                       <StatusBadge
                         active={asBoolean(language.is_enabled)}
                         kind="enabled"
                       />
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm">
-                      <div className="flex items-center gap-3">
-                        <button
-                          className="text-theme-xs font-medium text-gray-500 hover:text-brand-500 disabled:opacity-40 dark:text-gray-400"
-                          title="Set as primary language"
-                          disabled={busyCode === code}
+                      {isPrimary ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-theme-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
+                          <CheckCircleIcon className="size-3.5" />
+                          Primary Language
+                        </span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={
+                            busyCode === code || !asBoolean(language.is_enabled)
+                          }
                           onClick={() => handleSetPrimary(language)}
+                          title={
+                            !asBoolean(language.is_enabled)
+                              ? "Enable this language to set as primary"
+                              : `Set ${language.language_name || code} as primary language`
+                          }
+                          className="py-1.5 text-theme-xs"
                         >
-                          Set Primary
-                        </button>
+                          {busyCode === code ? "Setting…" : "Set as Primary"}
+                        </Button>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-end text-sm">
+                      <div className="flex items-center justify-end gap-2">
                         <ActionIconButton
                           tone="edit"
                           title="Edit language"
@@ -366,8 +416,12 @@ export default function LanguagesManager() {
                         </ActionIconButton>
                         <ActionIconButton
                           tone="delete"
-                          title="Remove language"
-                          disabled={busyCode === code}
+                          title={
+                            isPrimary
+                              ? "Cannot remove primary language"
+                              : "Remove language"
+                          }
+                          disabled={busyCode === code || isPrimary}
                           onClick={() => handleDelete(language)}
                         >
                           <TrashBinIcon />

@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/table";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import usePagination from "@/hooks/usePagination";
-import { PencilIcon } from "@/icons";
+import { PencilIcon, RefreshIcon } from "@/icons";
 import { ApiError } from "@/lib/api/client";
+import { getLanguages } from "@/lib/api/languages";
 import { getMessages, updateMessage } from "@/lib/api/messages";
 import { asRecordArray } from "@/lib/api/normalize";
 import type { MessageModel } from "@/lib/api/types";
@@ -22,6 +23,7 @@ import MessageRow from "./MessageRow";
 import {
   messageDraft,
   messageChanged,
+  messageTextFields,
   messageUpdate,
   type MessageDraft,
 } from "./messageFields";
@@ -30,6 +32,7 @@ export default function MessagesManager() {
   const t = useTranslations("messageEditor");
   const { accessToken } = useAdminAuth();
   const [messages, setMessages] = useState<Record<string, unknown>[]>([]);
+  const [languages, setLanguages] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -43,6 +46,9 @@ export default function MessagesManager() {
     setError(null);
     try {
       setMessages(asRecordArray(await getMessages(accessToken)));
+      void getLanguages(accessToken)
+        .then((data) => setLanguages(asRecordArray(data)))
+        .catch(() => {});
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t("loadFailed"));
     } finally {
@@ -53,6 +59,8 @@ export default function MessagesManager() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const fields = messageTextFields(languages);
 
   const toggleEditing = () => {
     if (savingKey !== null) return;
@@ -71,13 +79,13 @@ export default function MessagesManager() {
       !editing ||
       savingKey !== null ||
       !messageKey ||
-      !messageChanged(message, draft)
+      !messageChanged(message, draft, fields)
     )
       return;
     setSavingKey(messageKey);
     try {
       const updated = {
-        ...messageUpdate(message, draft),
+        ...messageUpdate(message, draft, fields),
         message_key: messageKey,
       };
       await updateMessage(updated as MessageModel, accessToken);
@@ -108,7 +116,7 @@ export default function MessagesManager() {
   ];
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+    <div className="axon-management-panel rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           {t("title")}
@@ -116,7 +124,7 @@ export default function MessagesManager() {
         <div className="flex items-center gap-3">
           <Button
             size="sm"
-            variant="outline"
+            variant={editing ? "outline" : "primary"}
             onClick={toggleEditing}
             disabled={loading || savingKey !== null || messages.length === 0}
             startIcon={<PencilIcon className="size-4" />}
@@ -125,9 +133,14 @@ export default function MessagesManager() {
           </Button>
           <Button
             size="sm"
-            variant="outline"
+            variant="primary"
             onClick={load}
             disabled={loading || editing}
+            startIcon={
+              <RefreshIcon
+                className={`size-4 ${loading ? "motion-safe:animate-spin" : ""}`}
+              />
+            }
           >
             {t(loading ? "refreshing" : "refresh")}
           </Button>
@@ -147,27 +160,27 @@ export default function MessagesManager() {
         </div>
       )}
       <Pagination variant="header" pagination={pagination} disabled={loading} />
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
         <Table>
-          <TableHeader className="border-b border-gray-100 dark:border-gray-800">
+          <TableHeader className="border-b border-gray-100 bg-gray-50/70 dark:border-gray-800 dark:bg-white/2">
             <TableRow>
               {headings.map((heading) => (
                 <TableCell
                   key={heading}
                   isHeader
-                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                  className="px-4 py-3 text-start text-theme-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
                 >
                   {heading}
                 </TableCell>
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+          <TableBody>
             {loading || messages.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={headings.length}
-                  className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400"
+                  className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400"
                 >
                   {t(loading ? "loading" : "empty")}
                 </TableCell>
@@ -179,10 +192,11 @@ export default function MessagesManager() {
                   <MessageRow
                     key={`${messageKey || index}:${editSession}`}
                     message={message}
+                    fields={fields}
                     draft={
                       editing
-                        ? (drafts[messageKey] ?? messageDraft(message))
-                        : messageDraft(message)
+                        ? (drafts[messageKey] ?? messageDraft(message, fields))
+                        : messageDraft(message, fields)
                     }
                     editing={editing}
                     saving={savingKey === messageKey}

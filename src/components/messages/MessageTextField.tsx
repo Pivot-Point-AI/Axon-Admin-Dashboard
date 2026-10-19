@@ -4,6 +4,7 @@ import { useId, useRef } from "react";
 import { useTranslations } from "next-intl";
 import ParameterTag from "./ParameterTag";
 import {
+  fieldLanguageLabel,
   insertMessageParameter,
   type MessageTextFieldDefinition,
 } from "./messageFields";
@@ -29,6 +30,7 @@ export default function MessageTextField({
   const id = useId();
   const input = useRef<HTMLTextAreaElement>(null);
   const focused = useRef(false);
+  const language = fieldLanguageLabel(field, t);
   const missing = parameters.filter((name) => !value.includes(`{${name}}`));
   const insert = (name: string) => {
     if (disabled) return;
@@ -52,9 +54,9 @@ export default function MessageTextField({
         id={id}
         ref={input}
         dir={field.dir}
-        rows={3}
+        rows={2}
         aria-label={t("fieldLabel", {
-          language: t(field.label),
+          language,
           key: messageKey,
         })}
         aria-describedby={missing.length ? `${id}-missing` : undefined}
@@ -73,7 +75,7 @@ export default function MessageTextField({
               key={name}
               name={name}
               disabled={disabled}
-              title={t("insertParameter", { name, language: t(field.label) })}
+              title={t("insertParameter", { name, language })}
               onClick={() => insert(name)}
             />
           ))}

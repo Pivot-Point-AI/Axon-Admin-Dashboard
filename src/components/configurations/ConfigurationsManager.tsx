@@ -4,7 +4,7 @@ import Pagination from "@/components/common/Pagination";
 import usePagination from "@/hooks/usePagination";
 import { useTranslations } from "next-intl";
 
-import { PencilIcon } from "@/icons";
+import { PencilIcon, RefreshIcon } from "@/icons";
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
@@ -151,7 +151,7 @@ export default function ConfigurationsManager() {
           <div className="flex items-center gap-3">
             <Button
               size="sm"
-              variant="outline"
+              variant={editing ? "outline" : "primary"}
               onClick={toggleEditing}
               disabled={loading || savingKey !== null}
               startIcon={<PencilIcon className="size-4" />}
@@ -163,6 +163,11 @@ export default function ConfigurationsManager() {
               variant="primary"
               onClick={load}
               disabled={loading || editing}
+              startIcon={
+                <RefreshIcon
+                  className={`size-4 ${loading ? "motion-safe:animate-spin" : ""}`}
+                />
+              }
             >
               {e(loading ? "refreshing" : "refresh")}
             </Button>
