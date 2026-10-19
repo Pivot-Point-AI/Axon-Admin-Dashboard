@@ -184,6 +184,11 @@ export default function ChatHistoryExplorer() {
           <h3 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
             Messages ({messages.length})
           </h3>
+          <Pagination
+            variant="header"
+            pagination={pagination}
+            disabled={loading}
+          />
           <div className="overflow-x-auto">
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-gray-800">
@@ -235,7 +240,11 @@ export default function ChatHistoryExplorer() {
               </TableBody>
             </Table>
           </div>
-          <Pagination pagination={pagination} disabled={loading} />
+          <Pagination
+            variant="footer"
+            pagination={pagination}
+            disabled={loading}
+          />
         </div>
       )}
     </div>

@@ -83,6 +83,8 @@ export default function InstitutionsManager() {
   const [editName, setEditName] = useState("");
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const editChanged =
+    !!editTarget && editName.trim() !== editTarget.institution_name.trim();
 
   const [renewTarget, setRenewTarget] = useState<InstitutionItem | null>(null);
   const [renewExpiry, setRenewExpiry] = useState("");
@@ -181,7 +183,7 @@ export default function InstitutionsManager() {
   };
 
   const submitEdit = async () => {
-    if (!editTarget || !accessToken) return;
+    if (!editTarget || !accessToken || editSubmitting || !editChanged) return;
     setEditError(null);
     if (!editRequired.validate([editName])) return;
     setEditSubmitting(true);
@@ -280,6 +282,7 @@ export default function InstitutionsManager() {
         </div>
       )}
 
+      <Pagination variant="header" pagination={pagination} disabled={loading} />
       <div className="overflow-x-auto">
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-gray-800">
@@ -397,7 +400,7 @@ export default function InstitutionsManager() {
           </TableBody>
         </Table>
       </div>
-      <Pagination pagination={pagination} disabled={loading} />
+      <Pagination variant="footer" pagination={pagination} disabled={loading} />
 
       {/* Create institution */}
       <Modal isOpen={createOpen} onClose={closeCreate} className="max-w-md p-6">
@@ -502,7 +505,7 @@ export default function InstitutionsManager() {
           <Button
             className="w-full"
             onClick={submitEdit}
-            disabled={editSubmitting}
+            disabled={editSubmitting || !editChanged}
           >
             {editSubmitting ? "Saving…" : "Save Changes"}
           </Button>

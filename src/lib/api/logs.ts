@@ -1,4 +1,10 @@
-import { ADMIN_API_BASE_URL, API_BASE_URL, apiRequest } from "./client";
+import {
+  ADMIN_API_BASE_URL,
+  API_BASE_URL,
+  ApiError,
+  apiRequest,
+  getApiErrorMessage,
+} from "./client";
 import type {
   LogEvent,
   LogHistoryResponse,
@@ -114,7 +120,14 @@ export interface LogHistoryQuery {
 }
 
 export function getLogHistory(
-  { startDate, endDate, sessionId, userId, flowId, limit = 500 }: LogHistoryQuery,
+  {
+    startDate,
+    endDate,
+    sessionId,
+    userId,
+    flowId,
+    limit = 500,
+  }: LogHistoryQuery,
   bearerToken: string,
   signal?: AbortSignal,
 ) {
@@ -144,7 +157,10 @@ export async function fetchAudioObjectUrl(
     { headers: { Authorization: `Bearer ${bearerToken}` } },
   );
   if (!response.ok) {
-    throw new Error(`Failed to load audio file (status ${response.status})`);
+    throw new ApiError(
+      getApiErrorMessage(response.status, null),
+      response.status,
+    );
   }
   const blob = await response.blob();
   return URL.createObjectURL(blob);

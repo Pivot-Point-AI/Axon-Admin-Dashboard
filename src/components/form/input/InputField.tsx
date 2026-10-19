@@ -11,7 +11,7 @@ interface InputProps extends Omit<
   success?: boolean;
   error?: boolean;
   hint?: string;
-  step?: number;
+  step?: string | number;
 }
 
 const Input: FC<InputProps> = ({

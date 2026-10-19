@@ -7,7 +7,7 @@ type Translate = (
 ) => string;
 
 export function configKind(config: ConfigResponse): ConfigKind {
-  switch ((config.data_type ?? "string").toLowerCase()) {
+  switch ((config.data_type ?? "string").trim().toLowerCase()) {
     case "bool":
     case "boolean":
       return "boolean";
@@ -28,6 +28,16 @@ export function typeLabel(config: ConfigResponse, t: Translate): string {
   return t(`types.${configKind(config)}`);
 }
 
+// Allow incomplete numeric drafts while typing (for example "-" or "0.").
+// The complete value and its bounds are checked before saving.
+export function isConfigDraft(config: ConfigResponse, value: string): boolean {
+  const kind = configKind(config);
+  if (kind === "integer") return /^-?\d*$/.test(value);
+  if (kind === "number") return /^-?(?:\d+(?:\.\d*)?|\.\d*)?$/.test(value);
+  if (kind === "boolean") return ["true", "false"].includes(value);
+  return true;
+}
+
 export function validateConfigValue(
   config: ConfigResponse,
   value: string,
@@ -39,9 +49,15 @@ export function validateConfigValue(
       ? null
       : t("booleanRequired");
   if (kind === "integer" || kind === "number") {
-    const number = Number(value);
+    const trimmed = value.trim();
+    if (!/^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(trimmed))
+      return t("numberRequired");
+    const number = Number(trimmed);
     if (!Number.isFinite(number)) return t("numberRequired");
-    if (kind === "integer" && !Number.isInteger(number))
+    if (
+      kind === "integer" &&
+      (!/^-?\d+$/.test(trimmed) || !Number.isInteger(number))
+    )
       return t("integerRequired");
     if (config.min_value != null && number < config.min_value)
       return t("minimum", { value: config.min_value });

@@ -1,187 +1,112 @@
 "use client";
 
-import LicenseOverview from "./LicenseOverview";
 import { useEffect, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
 import { useAdminAuth } from "@/context/AdminAuthContext";
-import { BoxCubeIcon, ChatIcon, GroupIcon, TableIcon } from "@/icons/index";
+import { RefreshIcon } from "@/icons";
+import Button from "@/components/ui/button/Button";
 import { ApiError } from "@/lib/api/client";
-import { getAllInstitutions } from "@/lib/api/institutions";
-import { listLogSessions } from "@/lib/api/logs";
-import type { InstitutionItem } from "@/lib/api/types";
-
-interface Stats {
-  total: number;
-  active: number;
-  expiringSoon: number;
-  expired: number;
-  logSessions: number | null;
-}
-
-function countLogSessions(payload: Record<string, unknown>): number | null {
-  const candidate =
-    (Array.isArray(payload.sessions) && payload.sessions) ||
-    (Array.isArray(payload.session_ids) && payload.session_ids) ||
-    (Array.isArray(payload.items) && payload.items) ||
-    (Array.isArray(payload.data) && payload.data) ||
-    null;
-  if (candidate) return candidate.length;
-  return Object.keys(payload).length || null;
-}
-
-function classifyInstitutions(institutions: InstitutionItem[]) {
-  const now = Date.now();
-  const soonThreshold = 30 * 24 * 60 * 60 * 1000;
-  let active = 0;
-  let expiringSoon = 0;
-  let expired = 0;
-
-  for (const inst of institutions) {
-    if (!inst.license_expires_at) {
-      active += 1;
-      continue;
-    }
-    const expiry = new Date(inst.license_expires_at).getTime();
-    if (Number.isNaN(expiry) || expiry >= now) {
-      active += 1;
-      if (!Number.isNaN(expiry) && expiry - now <= soonThreshold) {
-        expiringSoon += 1;
-      }
-    } else {
-      expired += 1;
-    }
-  }
-
-  return { active, expiringSoon, expired };
-}
+import { getDashboardOverview } from "@/lib/api/dashboardAnalytics";
+import type { DashboardOverviewResponse } from "@/lib/api/types";
+import AnalyticsKpiCards from "./AnalyticsKpiCards";
+import EngagementOverview from "./EngagementOverview";
+import FlowOutcomes from "./FlowOutcomes";
 
 export default function DashboardStats() {
   const { accessToken } = useAdminAuth();
-  const [stats, setStats] = useState<Stats | null>(null);
+  const t = useTranslations("dashboardAnalytics");
+  const format = useFormatter();
+  const [overview, setOverview] = useState<DashboardOverviewResponse | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!accessToken) return;
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const institutions = await getAllInstitutions(accessToken!);
-        const { active, expiringSoon, expired } =
-          classifyInstitutions(institutions);
-
-        let logSessions: number | null = null;
-        try {
-          const logsPayload = await listLogSessions(accessToken!);
-          logSessions = countLogSessions(logsPayload);
-        } catch {
-          logSessions = null;
+    const controller = new AbortController();
+    getDashboardOverview(accessToken, controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setOverview(data);
+          setUpdatedAt(new Date());
+          setError(null);
         }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted)
+          setError(err instanceof ApiError ? err.message : t("loadFailed"));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [accessToken, t, revision]);
 
-        if (!cancelled) {
-          setStats({
-            total: institutions.length,
-            active,
-            expiringSoon,
-            expired,
-            logSessions,
-          });
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof ApiError
-              ? err.message
-              : "Failed to load dashboard stats.",
-          );
-        }
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [accessToken]);
-
-  if (error) {
-    return (
-      <div className="rounded-2xl border border-error-500 bg-error-50 p-4 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
-        {error}
-      </div>
-    );
-  }
-
-  const cards = [
-    {
-      key: "total",
-      label: "Institutions",
-      value: stats?.total,
-      icon: <BoxCubeIcon />,
-    },
-    {
-      key: "active",
-      label: "Active Licenses",
-      value: stats?.active,
-      icon: <GroupIcon />,
-    },
-    {
-      key: "expiringSoon",
-      label: "Expiring ≤30 Days",
-      value: stats?.expiringSoon,
-      icon: <TableIcon />,
-      warn: (stats?.expiringSoon ?? 0) > 0,
-    },
-    {
-      key: "expired",
-      label: "Expired Licenses",
-      value: stats?.expired,
-      icon: <TableIcon />,
-      danger: (stats?.expired ?? 0) > 0,
-    },
-    {
-      key: "logSessions",
-      label: "Log Sessions",
-      value: stats?.logSessions,
-      icon: <ChatIcon />,
-    },
-  ];
+  const refresh = () => {
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+    setRevision((value) => value + 1);
+  };
 
   return (
-    <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-5">
-        {cards.map((card) => (
-          <div
-            key={card.key}
-            className="axon-stat relative flex items-center gap-4 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-white/3"
+    <section aria-label={t("title")} className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-theme-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+          {t("snapshot")}
+        </h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <p
+            role="status"
+            className="text-theme-xs text-gray-400 dark:text-gray-500"
           >
-            <div className="axon-stat-icon flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400">
-              {card.icon}
-            </div>
-            <div className="relative">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {card.label}
-              </span>
-              <h4
-                className={`mt-1 text-title-sm font-bold ${
-                  card.danger
-                    ? "text-error-500"
-                    : card.warn
-                      ? "text-warning-500"
-                      : "text-gray-800 dark:text-white/90"
-                }`}
-              >
-                {card.value ?? "—"}
-              </h4>
-            </div>
-          </div>
-        ))}
+            {loading
+              ? t("updating")
+              : updatedAt
+                ? t("updatedAt", {
+                    time: format.dateTime(updatedAt, {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    }),
+                  })
+                : t("unavailable")}
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 px-3 py-2 text-theme-xs"
+            onClick={refresh}
+            disabled={loading}
+            startIcon={
+              <RefreshIcon
+                aria-hidden="true"
+                className={`size-3.5 ${loading ? "motion-safe:animate-spin" : ""}`}
+              />
+            }
+          >
+            {t(error ? "retry" : "refresh")}
+          </Button>
+        </div>
       </div>
-      <LicenseOverview
-        active={stats?.active ?? 0}
-        expiringSoon={stats?.expiringSoon ?? 0}
-        expired={stats?.expired ?? 0}
-        loading={!stats}
-      />
-    </>
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-400"
+        >
+          {error}
+        </div>
+      )}
+      <div aria-busy={loading} className="space-y-4">
+        <AnalyticsKpiCards overview={overview} />
+        <div className="space-y-4">
+          <EngagementOverview overview={overview} />
+          <FlowOutcomes overview={overview} />
+        </div>
+      </div>
+    </section>
   );
 }

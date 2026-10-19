@@ -21,14 +21,27 @@ function load(relative) {
   const localRequire = (name) => {
     if (name === "@/lib/feedback")
       return { notify: (detail) => notifications.push(detail) };
-    if (name === "next-intl") return { useTranslations: () => (key) => key };
+    if (name === "next-intl")
+      return {
+        useTranslations: () => (key) => key,
+        useFormatter: () => ({
+          dateTime: (date, options) =>
+            new Intl.DateTimeFormat("en-US", options).format(date),
+        }),
+      };
     if (name === "@/icons") {
-      return { TableIcon: () => null, ChevronDownIcon: () => null };
+      return {
+        TableIcon: () => null,
+        ChevronDownIcon: () => null,
+        CalenderIcon: () => null,
+      };
     }
     if (name.startsWith("@/") || name.startsWith(".")) {
       const stem = name.startsWith("@/")
         ? path.resolve(__dirname, "../src", name.slice(2))
         : path.resolve(path.dirname(filename), name);
+      if (stem.endsWith(".json") && fs.existsSync(stem))
+        return JSON.parse(fs.readFileSync(stem, "utf8"));
       const candidate = [".ts", ".tsx", "/index.ts"]
         .map((ext) => stem + ext)
         .find(fs.existsSync);
@@ -242,6 +255,129 @@ test("bank edit submits the selected record ID even after its name changes", asy
       bank_name: "Al Baraka Bank Updated",
       is_active: false,
     });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("new analytics, user update, and card update requests use authenticated admin endpoints", async () => {
+  const { getDashboardOverview } = load("src/lib/api/dashboardAnalytics.ts");
+  const { updateDashboardUser } = load("src/lib/api/adminUsers.ts");
+  const { updateCardType } = load("src/lib/api/masterData.ts");
+  const { recordId } = load("src/lib/api/normalize.ts");
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (url, init) => {
+    calls.push({ url, init });
+    return new Response("{}", {
+      headers: { "content-type": "application/json" },
+    });
+  };
+  try {
+    const controller = new AbortController();
+    await getDashboardOverview("test-token", controller.signal);
+    await updateDashboardUser(
+      "user/17",
+      { username: "jane", is_active: false },
+      "test-token",
+    );
+    await updateCardType(
+      recordId({ card_type_id: 7 }, "type_id"),
+      { type_name: "credit", is_active: false },
+      "test-token",
+    );
+    assert.ok(calls[0].url.endsWith("/admin/dashboard-analytics/overview"));
+    assert.equal(calls[0].init.method, "GET");
+    assert.equal(calls[0].init.signal, controller.signal);
+    assert.ok(calls[1].url.endsWith("/admin/management/user%2F17"));
+    assert.equal(calls[1].init.method, "PUT");
+    assert.deepEqual(JSON.parse(calls[1].init.body), {
+      username: "jane",
+      is_active: false,
+    });
+    assert.ok(calls[2].url.endsWith("/admin/master-data/card-types/7"));
+    assert.equal(calls[2].init.method, "PUT");
+    assert.deepEqual(JSON.parse(calls[2].init.body), {
+      type_name: "credit",
+      is_active: false,
+    });
+    for (const call of calls)
+      assert.equal(call.init.headers.Authorization, "Bearer test-token");
+    for (const key of ["type_id", "typeId", "card_type_id", "cardTypeId", "id"])
+      assert.equal(recordId({ [key]: 7 }, "type_id"), 7);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("server errors show friendly copy in both page errors and notifications while preserving diagnostics", async () => {
+  const { apiRequest, ApiError, getApiErrorMessage } = load(
+    "src/lib/api/client.ts",
+  );
+  const originalFetch = global.fetch;
+  const friendly =
+    "Something went wrong on our side. Please try again in a few moments.";
+  const diagnostic = {
+    detail: "Database connection failed: internal stack trace",
+  };
+  try {
+    for (const status of [500, 502, 503, 504]) {
+      for (const payload of [null, diagnostic]) {
+        global.fetch = async () =>
+          new Response(
+            payload ? JSON.stringify(payload) : "Internal Server Error",
+            {
+              status,
+              headers: {
+                "content-type": payload ? "application/json" : "text/plain",
+              },
+            },
+          );
+        await assert.rejects(apiRequest("/test"), (error) => {
+          assert.ok(error instanceof ApiError);
+          assert.equal(error.status, status);
+          assert.equal(error.message, friendly);
+          assert.deepEqual(error.detail, payload);
+          return true;
+        });
+        assert.equal(notifications.at(-1).message, friendly);
+        assert.equal(notifications.at(-1).kind, "error");
+      }
+    }
+    assert.equal(
+      getApiErrorMessage(400, {
+        detail: "This email address is already in use.",
+      }),
+      "This email address is already in use.",
+    );
+    for (const status of [401, 403, 404, 408, 409, 422, 429, 418]) {
+      const message = getApiErrorMessage(status, null);
+      assert.ok(message.length > 15);
+      assert.ok(!message.includes(String(status)));
+      assert.ok(!message.includes("Request failed"));
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("audio failures use the same friendly server-error message", async () => {
+  const { fetchAudioObjectUrl } = load("src/lib/api/logs.ts");
+  const originalFetch = global.fetch;
+  global.fetch = async () =>
+    new Response("Internal Server Error", { status: 500 });
+  try {
+    await assert.rejects(
+      fetchAudioObjectUrl("recording.wav", "test-token"),
+      (error) => {
+        assert.equal(error.status, 500);
+        assert.equal(
+          error.message,
+          "Something went wrong on our side. Please try again in a few moments.",
+        );
+        return true;
+      },
+    );
   } finally {
     global.fetch = originalFetch;
   }

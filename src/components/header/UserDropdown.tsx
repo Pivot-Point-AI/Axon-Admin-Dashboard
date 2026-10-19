@@ -29,10 +29,11 @@ export default function UserDropdown() {
         type="button"
         aria-expanded={isOpen}
         aria-haspopup="menu"
+        aria-label={t("accountMenu", { name: displayName })}
         onClick={toggleDropdown}
         className="dropdown-toggle flex items-center rounded-xl px-2 py-1 text-gray-800 transition-colors hover:bg-brand-50 dark:text-gray-200 dark:hover:bg-brand-500/10"
       >
-        <span className="me-2 size-8 shrink-0 overflow-hidden rounded-full ring-1 ring-gray-200 dark:ring-gray-700">
+        <span className="size-8 shrink-0 overflow-hidden rounded-full ring-1 ring-gray-200 md:me-2 dark:ring-gray-700">
           <Image
             width={32}
             height={32}
@@ -41,12 +42,12 @@ export default function UserDropdown() {
           />
         </span>
 
-        <span className="me-1 block text-theme-sm font-medium">
+        <span className="me-1 hidden max-w-32 truncate text-theme-sm font-medium md:block">
           {displayName}
         </span>
 
         <ChevronDownIcon
-          className={`size-4 shrink-0 text-gray-500 transition-transform duration-200 dark:text-gray-400 ${
+          className={`hidden size-4 shrink-0 text-gray-500 transition-transform duration-200 md:block dark:text-gray-400 ${
             isOpen ? "rotate-180" : ""
           }`}
         />

@@ -1,6 +1,7 @@
 export { default as AlertIcon } from "./alert.svg";
 export { default as HomeOutlineIcon } from "./home-outline.svg";
 export { default as SearchOutlineIcon } from "./search-outline.svg";
+export { default as RefreshIcon } from "./refresh.svg";
 export { default as MenuOutlineIcon } from "./menu-outline.svg";
 export { default as AngleDownIcon } from "./angle-down.svg";
 export { default as AngleUpIcon } from "./angle-up.svg";

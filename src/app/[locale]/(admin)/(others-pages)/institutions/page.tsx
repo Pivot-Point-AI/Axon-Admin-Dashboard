@@ -1,3 +1,4 @@
+import { setRequestLocale } from "next-intl/server";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import InstitutionsManager from "@/components/institutions/InstitutionsManager";
 import { Metadata } from "next";
@@ -7,12 +8,16 @@ export const metadata: Metadata = {
   description: "Create, update, and manage institution licenses.",
 };
 
-export default function InstitutionsPage() {
+export default async function InstitutionsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <PageBreadcrumb pageTitle="Institutions" />
-      </div>
+      <PageBreadcrumb pageTitle="Institutions" />
       <InstitutionsManager />
     </div>
   );

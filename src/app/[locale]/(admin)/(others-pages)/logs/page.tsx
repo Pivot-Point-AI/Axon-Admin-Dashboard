@@ -17,13 +17,8 @@ export default async function LogsPage({
   setRequestLocale(locale);
   const t = await getTranslations("managementDesign");
   return (
-    <div className="axon-management space-y-5">
-      <div className="axon-management-heading">
-        <PageBreadcrumb pageTitle="Logs" />
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t("logsSubtitle")}
-        </p>
-      </div>
+    <div className="axon-management">
+      <PageBreadcrumb pageTitle="Logs" description={t("logsSubtitle")} />
       <LogsManager />
     </div>
   );

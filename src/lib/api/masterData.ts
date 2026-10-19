@@ -174,3 +174,16 @@ export function createCardType(body: CardTypeModel, bearerToken: string) {
     baseUrl: ADMIN_API_BASE_URL,
   });
 }
+
+export function updateCardType(
+  typeId: number,
+  body: CardTypeModel,
+  bearerToken: string,
+) {
+  return apiRequest<unknown>(`/master-data/card-types/${typeId}`, {
+    method: "PUT",
+    body,
+    bearerToken,
+    baseUrl: ADMIN_API_BASE_URL,
+  });
+}

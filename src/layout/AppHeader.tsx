@@ -6,7 +6,12 @@ import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
 import { Link, usePathname } from "@/i18n/navigation";
-import { HomeOutlineIcon, SearchOutlineIcon, MenuOutlineIcon } from "@/icons";
+import {
+  ChevronLeftIcon,
+  HomeOutlineIcon,
+  SearchOutlineIcon,
+  MenuOutlineIcon,
+} from "@/icons";
 
 const pageKeys: Record<string, string> = {
   institutions: "institutions",
@@ -23,12 +28,15 @@ const pageKeys: Record<string, string> = {
 
 export default function AppHeader() {
   const t = useTranslations("header");
+  const common = useTranslations("common");
   const navigation = useTranslations("sidebar.items");
   const pathname = usePathname();
   const inputRef = useRef<HTMLInputElement>(null);
   const { toggleSidebar, toggleMobileSidebar } = useSidebar();
   const pageKey =
     pageKeys[pathname.split("/").filter(Boolean)[0]] ?? "overview";
+  const isSessionLog =
+    pageKey === "logs" && pathname.split("/").filter(Boolean).length > 1;
 
   useEffect(() => {
     const focusSearch = (event: KeyboardEvent) => {
@@ -43,24 +51,59 @@ export default function AppHeader() {
 
   return (
     <header className="axon-header axon-header-reference sticky top-0 z-99999 flex min-h-16 w-full items-center gap-4 border-b border-gray-200 bg-white px-4 sm:px-6 dark:border-gray-700 dark:bg-gray-900">
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           aria-label={t("toggleSidebar")}
           onClick={() =>
             window.innerWidth >= 1280 ? toggleSidebar() : toggleMobileSidebar()
           }
-          className="flex size-8 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 xl:hidden dark:text-gray-400 dark:hover:bg-gray-800"
+          className="flex size-8 shrink-0 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 xl:hidden dark:text-gray-400 dark:hover:bg-gray-800"
         >
           <MenuOutlineIcon className="size-5" />
         </button>
-        <Link
-          href={pathname}
-          className="flex items-center gap-3 text-sm font-medium text-brand-700 dark:text-gray-200"
+        <nav
+          aria-label={common("breadcrumb")}
+          className="min-w-0 rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 dark:border-brand-800 dark:bg-brand-500/10"
         >
-          <HomeOutlineIcon className="size-5 shrink-0 text-brand-500 dark:text-gray-300" />
-          <span className="hidden sm:inline">{navigation(pageKey)}</span>
-        </Link>
+          <ol className="flex min-w-0 items-center gap-2 text-sm">
+            <li className="shrink-0">
+              <Link
+                href="/"
+                aria-label={common("home")}
+                className="flex items-center gap-1.5 rounded text-gray-500 hover:text-brand-600 focus-visible:outline-2 focus-visible:outline-brand-400 dark:text-gray-400 dark:hover:text-brand-300"
+              >
+                <HomeOutlineIcon aria-hidden="true" className="size-4" />
+                <span className="hidden sm:inline">{common("home")}</span>
+              </Link>
+            </li>
+            <li aria-hidden="true" className="shrink-0">
+              <ChevronLeftIcon className="size-4 rotate-180 text-gray-400 rtl:rotate-0 dark:text-gray-500" />
+            </li>
+            {isSessionLog && (
+              <>
+                <li className="hidden shrink-0 sm:block">
+                  <Link
+                    href="/logs"
+                    className="text-gray-500 hover:text-brand-600 dark:text-gray-400 dark:hover:text-brand-300"
+                  >
+                    {navigation("logs")}
+                  </Link>
+                </li>
+                <li aria-hidden="true" className="hidden shrink-0 sm:block">
+                  <ChevronLeftIcon className="size-4 rotate-180 text-gray-400 rtl:rotate-0 dark:text-gray-500" />
+                </li>
+              </>
+            )}
+            <li
+              aria-current="page"
+              className="min-w-0 truncate font-semibold text-brand-700 dark:text-brand-200"
+              title={isSessionLog ? t("sessionLog") : navigation(pageKey)}
+            >
+              {isSessionLog ? t("sessionLog") : navigation(pageKey)}
+            </li>
+          </ol>
+        </nav>
       </div>
       <div className="mx-auto hidden w-full max-w-lg px-4 md:block">
         <div className="relative">

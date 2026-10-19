@@ -47,7 +47,8 @@ export function recordId(
   const camelCase = idField.replace(/_([a-z])/g, (_, letter: string) =>
     letter.toUpperCase(),
   );
-  for (const key of new Set([idField, camelCase, "id"])) {
+  const aliases = idField === "type_id" ? ["card_type_id", "cardTypeId"] : [];
+  for (const key of new Set([idField, camelCase, ...aliases, "id"])) {
     const value = record[key];
     if (typeof value !== "number" && typeof value !== "string") continue;
     if (typeof value === "string" && !/^\d+$/.test(value.trim())) continue;

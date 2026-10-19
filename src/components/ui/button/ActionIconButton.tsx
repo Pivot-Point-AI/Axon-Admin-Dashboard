@@ -29,7 +29,7 @@ export default function ActionIconButton({
       title={title}
       aria-label={props["aria-label"] ?? title}
       className={cn(
-        "axon-action inline-flex size-10 shrink-0 items-center justify-center rounded-xl p-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 disabled:cursor-not-allowed disabled:opacity-40",
+        "axon-action inline-flex size-8 shrink-0 items-center justify-center rounded-lg p-1.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 disabled:cursor-not-allowed disabled:opacity-40",
         tones[tone],
         className,
       )}

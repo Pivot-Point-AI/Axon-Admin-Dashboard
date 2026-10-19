@@ -56,16 +56,17 @@ const QUICK_RANGES: {
 // and a spinner that never ends is worse than an error.
 const HISTORY_TIMEOUT_MS = 60_000;
 
-function historyErrorMessage(err: unknown): string {
+function historyErrorMessage(
+  err: unknown,
+  t: (key: "historyTimeout" | "historyLoadFailed") => string,
+): string {
   if (err instanceof DOMException && err.name === "TimeoutError") {
-    return "The logs server didn't respond within 60 seconds. Try a shorter date range, or try again later.";
+    return t("historyTimeout");
   }
   if (err instanceof ApiError) {
-    return err.status >= 500
-      ? `The logs server hit an internal error (${err.status}) while loading these logs. Try a shorter date range, or try again later.`
-      : err.message;
+    return err.message;
   }
-  return "Failed to load log history.";
+  return t("historyLoadFailed");
 }
 
 interface LogHistoryViewerProps {
@@ -82,6 +83,7 @@ export default function LogHistoryViewer({
   autoSearch = false,
 }: LogHistoryViewerProps) {
   const f = useTranslations("fixes");
+  const errors = useTranslations("apiErrors");
   const [fetchLimit, setFetchLimit] = useState(200);
   const t = useTranslations("managementDesign");
   const { accessToken } = useAdminAuth();
@@ -126,7 +128,7 @@ export default function LogHistoryViewer({
       setEntries(logEventsFrom(data).map(toLogEntry));
       setSearched(true);
     } catch (err) {
-      setError(historyErrorMessage(err));
+      setError(historyErrorMessage(err, errors));
     } finally {
       setLoading(false);
     }
@@ -279,8 +281,17 @@ export default function LogHistoryViewer({
             {entries.length.toLocaleString()}{" "}
             {entries.length === 1 ? "entry" : "entries"}
           </p>
+          <Pagination
+            variant="header"
+            pagination={pagination}
+            disabled={loading}
+          />
           <RawLogViewer entries={pageEntries} />
-          <Pagination pagination={pagination} disabled={loading} />
+          <Pagination
+            variant="footer"
+            pagination={pagination}
+            disabled={loading}
+          />
           <p className="mb-4 text-theme-xs text-gray-500 dark:text-gray-400">
             {f("historyBound", { count: entries.length })}
           </p>

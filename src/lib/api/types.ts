@@ -71,6 +71,7 @@ export interface DashboardUserResponse {
   username: string;
   email: string;
   role: string;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -78,6 +79,31 @@ export interface CreateDashboardUserRequest {
   username: string;
   email: string;
   role: string;
+}
+
+export interface UpdateDashboardUserRequest {
+  username?: string | null;
+  email?: string | null;
+  role?: string | null;
+  is_active?: boolean | null;
+}
+
+export interface DashboardOverviewResponse {
+  total_users: number;
+  active_sessions: number;
+  daily_active_users: {
+    count: number;
+    yesterday_count: number;
+    growth_pct: number;
+    display?: string | null;
+  };
+  stickiness_ratio_pct: number;
+  total_sessions: number;
+  engaged_sessions_rate_pct: number;
+  returning_user_rate_pct: number;
+  total_flows_initiated: number;
+  flow_completion_rate_pct: number;
+  flow_abandonment_rate_pct: number;
 }
 
 export interface ConfigResponse {

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Input from "@/components/form/input/InputField";
 import Switch from "@/components/form/input/Switch";
-import Badge from "@/components/ui/badge/Badge";
+import StatusBadge from "@/components/common/StatusBadge";
 import Button from "@/components/ui/button/Button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import useRequiredFields from "@/hooks/useRequiredFields";
@@ -12,8 +12,8 @@ import { ApiError } from "@/lib/api/client";
 import type { ConfigResponse } from "@/lib/api/types";
 import {
   configKind,
+  isConfigDraft,
   rangeHint,
-  typeLabel,
   validateConfigValue,
 } from "./configurationFields";
 
@@ -43,8 +43,12 @@ export default function ConfigurationRow({
   const enabled = value.trim().toLowerCase() === "true";
   const unchanged = value.trim() === config.config_value.trim();
   const inputId = `configuration-${config.config_key}`;
+  const validationError =
+    !unchanged && value.trim() ? validateConfigValue(config, value, t) : null;
+  const fieldError = error ?? validationError;
 
   const save = async () => {
+    if (busy || unchanged) return;
     setError(null);
     if (!required.validate([value])) return;
     const validationError = validateConfigValue(config, value, t);
@@ -60,6 +64,18 @@ export default function ConfigurationRow({
   };
 
   const change = (next: string) => {
+    if (!isConfigDraft(config, next)) {
+      setError(
+        t(
+          kind === "integer"
+            ? "integerRequired"
+            : kind === "boolean"
+              ? "booleanRequired"
+              : "numberRequired",
+        ),
+      );
+      return;
+    }
     setError(null);
     onChange(next);
   };
@@ -100,15 +116,40 @@ export default function ConfigurationRow({
                         ? "number"
                         : "text"
                     }
-                    step={kind === "integer" ? 1 : undefined}
+                    inputMode={
+                      kind === "integer"
+                        ? "numeric"
+                        : kind === "number"
+                          ? "decimal"
+                          : undefined
+                    }
+                    step={
+                      kind === "integer"
+                        ? 1
+                        : kind === "number"
+                          ? "any"
+                          : undefined
+                    }
                     min={config.min_value ?? undefined}
                     max={config.max_value ?? undefined}
                     value={value}
                     onChange={(event) => change(event.target.value)}
-                    error={required.invalid(value) || !!error}
+                    error={required.invalid(value) || !!fieldError}
                     hint={rangeHint(config, t)}
                     disabled={saving}
                     onKeyDown={(event) => {
+                      if (
+                        !event.ctrlKey &&
+                        !event.metaKey &&
+                        !event.altKey &&
+                        (kind === "number" || kind === "integer") &&
+                        (["e", "E", "+"].includes(event.key) ||
+                          (kind === "integer" &&
+                            [".", ","].includes(event.key)))
+                      ) {
+                        event.preventDefault();
+                        return;
+                      }
                       if (event.key === "Enter" && !busy && !unchanged) {
                         event.preventDefault();
                         void save();
@@ -118,29 +159,22 @@ export default function ConfigurationRow({
                 )}
               </div>
             </div>
-            {error && (
+            {fieldError && (
               <p
                 role="alert"
                 className="mt-2 text-theme-xs text-error-600 dark:text-error-400"
               >
-                {error}
+                {fieldError}
               </p>
             )}
           </div>
         ) : kind === "boolean" ? (
-          <Badge size="sm" color={enabled ? "success" : "light"}>
-            {t(enabled ? "enabled" : "disabled")}
-          </Badge>
+          <StatusBadge active={enabled} kind="enabled" />
         ) : (
           <span className="font-medium break-words text-gray-800 dark:text-white/90">
             {config.config_value}
           </span>
         )}
-      </TableCell>
-      <TableCell className="px-4 py-3 text-sm">
-        <Badge size="sm" color="light">
-          {typeLabel(config, t)}
-        </Badge>
       </TableCell>
       <TableCell className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
         {config.updated_at ? new Date(config.updated_at).toLocaleString() : "—"}
@@ -151,7 +185,7 @@ export default function ConfigurationRow({
             size="sm"
             className="h-11"
             onClick={save}
-            disabled={busy || unchanged}
+            disabled={busy || unchanged || !value.trim() || !!validationError}
           >
             {t(saving ? "saving" : "save")}
           </Button>

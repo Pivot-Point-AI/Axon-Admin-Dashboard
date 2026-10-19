@@ -2,6 +2,8 @@
 
 import Pagination from "@/components/common/Pagination";
 import usePagination from "@/hooks/usePagination";
+import useModal from "@/hooks/useModal";
+import EditUserModal from "./EditUserModal";
 import { useConfirm } from "@/context/FeedbackContext";
 import useRequiredFields from "@/hooks/useRequiredFields";
 import { useTranslations } from "next-intl";
@@ -58,6 +60,10 @@ export default function UsersManager() {
   const [createError, setCreateError] = useState<string | null>(null);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const editModal = useModal();
+  const [editTarget, setEditTarget] = useState<DashboardUserResponse | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     if (!accessToken) return;
@@ -227,6 +233,11 @@ export default function UsersManager() {
           </div>
         )}
 
+        <Pagination
+          variant="header"
+          pagination={pagination}
+          disabled={loading}
+        />
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-gray-800">
@@ -302,18 +313,16 @@ export default function UsersManager() {
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-2">
-                        <span title={f("editUnavailable")}>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-brand-600 ring-brand-100 dark:text-brand-300 dark:ring-brand-800"
-                            title={f("editUnavailable")}
-                            disabled
-                          >
-                            <PencilIcon className="size-4 text-brand-500 dark:text-brand-300" />
-                            {f("editUser")}
-                          </Button>
-                        </span>
+                        <ActionIconButton
+                          tone="edit"
+                          title={f("editUser")}
+                          onClick={() => {
+                            setEditTarget(user);
+                            editModal.openModal();
+                          }}
+                        >
+                          <PencilIcon />
+                        </ActionIconButton>
                         <ActionIconButton
                           tone="delete"
                           title="Remove user"
@@ -331,7 +340,20 @@ export default function UsersManager() {
           </Table>
         </div>
 
-        <Pagination pagination={pagination} disabled={loading} />
+        <Pagination
+          variant="footer"
+          pagination={pagination}
+          disabled={loading}
+        />
+        {editModal.isOpen && editTarget && accessToken && (
+          <EditUserModal
+            key={editTarget.user_id}
+            user={editTarget}
+            accessToken={accessToken}
+            onClose={editModal.closeModal}
+            onSaved={load}
+          />
+        )}
         <Modal
           isOpen={createOpen}
           onClose={() => setCreateOpen(false)}

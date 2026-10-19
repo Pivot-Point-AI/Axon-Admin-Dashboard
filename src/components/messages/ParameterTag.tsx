@@ -14,12 +14,18 @@ interface ParameterTagProps {
   name: string;
   onClick?: () => void;
   title?: string;
+  disabled?: boolean;
 }
 
 const baseClasses =
   "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-theme-xs font-medium";
 
-export default function ParameterTag({ name, onClick, title }: ParameterTagProps) {
+export default function ParameterTag({
+  name,
+  onClick,
+  title,
+  disabled = false,
+}: ParameterTagProps) {
   if (!onClick) {
     return (
       <span
@@ -33,10 +39,11 @@ export default function ParameterTag({ name, onClick, title }: ParameterTagProps
     <button
       type="button"
       title={title}
+      disabled={disabled}
       onClick={onClick}
       // Keep focus (and the caret) in the field being edited.
       onMouseDown={(e) => e.preventDefault()}
-      className={`${baseClasses} border border-gray-200 bg-white text-gray-700 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-brand-800 dark:hover:bg-brand-500/15 dark:hover:text-brand-400`}
+      className={`${baseClasses} border border-gray-200 bg-white text-gray-700 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 focus-visible:ring-3 focus-visible:ring-brand-500/20 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-brand-800 dark:hover:bg-brand-500/15 dark:hover:text-brand-400`}
     >
       <PlusIcon />
       {`{${name}}`}

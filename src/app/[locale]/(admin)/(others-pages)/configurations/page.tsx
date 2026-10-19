@@ -17,13 +17,11 @@ export default async function ConfigurationsPage({
   setRequestLocale(locale);
   const t = await getTranslations("managementDesign");
   return (
-    <div className="axon-management space-y-5">
-      <div className="axon-management-heading">
-        <PageBreadcrumb pageTitle="Configurations" />
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t("configsSubtitle")}
-        </p>
-      </div>
+    <div className="axon-management">
+      <PageBreadcrumb
+        pageTitle="Configurations"
+        description={t("configsSubtitle")}
+      />
       <ConfigurationsManager />
     </div>
   );

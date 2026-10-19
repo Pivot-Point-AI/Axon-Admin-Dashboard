@@ -39,6 +39,7 @@ export default function LiveLogs() {
         </h3>
         <LiveLogStatus status={status} paused={paused !== null} />
       </div>
+      <Pagination variant="header" pagination={pagination} />
       <div
         ref={listRef}
         onScroll={() => {
@@ -101,6 +102,7 @@ export default function LiveLogs() {
         </div>
       </div>
       <Pagination
+        variant="footer"
         pagination={{
           ...pagination,
           setPage: (page) => {

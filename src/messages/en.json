@@ -1,4 +1,17 @@
 {
+  "apiErrors": {
+    "serviceUnavailable": "Something went wrong on our side. Please try again in a few moments.",
+    "signInRequired": "Please sign in again to continue.",
+    "permissionDenied": "You don't have permission to do this. Please contact your administrator if you need access.",
+    "notFound": "We couldn't find this information. Refresh the page and try again.",
+    "timeout": "This is taking longer than expected. Please try again in a moment.",
+    "conflict": "This information may have changed or already exists. Refresh the page and check before trying again.",
+    "invalidDetails": "Please check the information you've entered and try again.",
+    "tooManyRequests": "Please wait a moment before trying again.",
+    "unexpected": "We couldn't complete that action. Please try again. If it keeps happening, contact your administrator.",
+    "historyTimeout": "This is taking longer than expected. Try a shorter date range, or try again in a moment.",
+    "historyLoadFailed": "We couldn't load your logs. Please try again in a moment."
+  },
   "configurationEditor": {
     "actions": "Actions",
     "edit": "Edit",
@@ -31,6 +44,9 @@
     }
   },
   "logViewer": {
+    "dateTime": "Date & time",
+    "dateRange": "Log dates on this page",
+    "noTimestamp": "Timestamp unavailable",
     "level": "Level",
     "preview": "Payload preview",
     "eventCount": "{count, plural, one {# event} other {# events}}",
@@ -43,6 +59,8 @@
     "emptyDescription": "New log events will appear here as activity is recorded."
   },
   "pagination": {
+    "tableControls": "Table controls",
+    "pageCount": "Page {page} of {total}",
     "label": "Pagination",
     "range": "Showing {start}–{end} of {total}",
     "rowsPerPage": "Rows per page",
@@ -51,6 +69,7 @@
     "goToPage": "Go to page {page}"
   },
   "common": {
+    "breadcrumb": "Breadcrumb",
     "home": "Home",
     "edit": "Edit",
     "close": "Close",
@@ -86,10 +105,12 @@
     }
   },
   "header": {
+    "sessionLog": "Session log",
     "searchPlaceholder": "Search institutions, licenses, settings...",
     "toggleSidebar": "Toggle Sidebar"
   },
   "userDropdown": {
+    "accountMenu": "Account menu for {name}",
     "editProfile": "Edit profile",
     "language": "Language",
     "signOut": "Sign out"
@@ -225,5 +246,94 @@
       "manager": "Manager",
       "viewer": "Viewer"
     }
+  },
+  "dashboardAnalytics": {
+    "title": "Dashboard analytics",
+    "totalUsers": "Total users",
+    "activeSessions": "Active sessions",
+    "dailyActiveUsers": "Daily active users",
+    "stickinessRatio": "User stickiness",
+    "totalSessions": "Total sessions",
+    "engagedSessionsRate": "Engaged sessions rate",
+    "returningUserRate": "Returning user rate",
+    "totalFlowsInitiated": "Flows initiated",
+    "flowCompletionRate": "Flow completion rate",
+    "flowAbandonmentRate": "Flow abandonment rate",
+    "growth": "{value} vs yesterday",
+    "loadFailed": "Failed to load dashboard analytics.",
+    "pageTitle": "Dashboard",
+    "pageSubtitle": "A clear view of your users, conversations, and banking journeys.",
+    "allTimeUsers": "Unique users, all time",
+    "allTimeSessions": "Conversations, all time",
+    "concurrentSessions": "Concurrent voice sessions",
+    "today": "Active today",
+    "vsYesterday": "vs yesterday",
+    "vsYesterdayCount": "vs yesterday ({count})",
+    "retry": "Try again",
+    "engagementTitle": "Audience engagement",
+    "engagementSubtitle": "Understand the quality of every interaction.",
+    "engagedDescription": "Meaningful interactions beyond the first exchange",
+    "returningDescription": "Today's users who have visited before",
+    "stickinessDescription": "Daily active users as a share of monthly active users",
+    "flowTitle": "Banking journeys",
+    "flowSubtitle": "From first intent to completed task.",
+    "flowsInitiatedDescription": "Banking tasks started across all conversations",
+    "flowCompletionDescription": "Initiated tasks that reached completion",
+    "flowAbandonmentDescription": "Initiated tasks that ended before completion",
+    "allTime": "All time",
+    "completed": "Completed",
+    "abandoned": "Abandoned",
+    "flowFootnote": "Outcomes across all initiated flows",
+    "noFlows": "No banking journeys started yet",
+    "manageFlows": "Manage flows",
+    "snapshot": "Performance snapshot",
+    "updating": "Updating overview...",
+    "unavailable": "Overview unavailable",
+    "updatedAt": "Updated {time}",
+    "refresh": "Refresh"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "messageEditor": {
+    "title": "Messages",
+    "messageKey": "Message key",
+    "parameters": "Parameters",
+    "language": "Language",
+    "message": "Message",
+    "english": "English",
+    "urdu": "Urdu",
+    "arabic": "Arabic",
+    "status": "Status",
+    "actions": "Actions",
+    "edit": "Edit",
+    "cancelEditing": "Cancel editing",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
+    "save": "Save",
+    "saving": "Saving…",
+    "loading": "Loading messages…",
+    "empty": "No messages found.",
+    "loadFailed": "We couldn't load your messages. Please try again in a moment.",
+    "saveFailed": "We couldn't save this message. Please try again in a moment.",
+    "editingHint": "Edit any message text or status, then save each changed row. Select a parameter chip to insert it into the text. Cancel editing discards unsaved changes.",
+    "fieldLabel": "{language} text for {key}",
+    "saveMessage": "Save changes to {key}",
+    "insertParameter": "Insert {name} into the {language} message",
+    "missingParameters": "Missing parameters: {names}"
+  },
+  "userEditor": {
+    "title": "Edit dashboard user",
+    "username": "Username",
+    "email": "Email",
+    "role": "Role",
+    "active": "Active",
+    "saving": "Saving…",
+    "saveFailed": "Failed to update user."
   }
 }

@@ -17,13 +17,11 @@ export default async function UsersPage({
   setRequestLocale(locale);
   const t = await getTranslations("managementDesign");
   return (
-    <div className="axon-management space-y-5">
-      <div className="axon-management-heading">
-        <PageBreadcrumb pageTitle="Dashboard Users" />
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t("usersSubtitle")}
-        </p>
-      </div>
+    <div className="axon-management">
+      <PageBreadcrumb
+        pageTitle="Dashboard Users"
+        description={t("usersSubtitle")}
+      />
       <UsersManager />
     </div>
   );

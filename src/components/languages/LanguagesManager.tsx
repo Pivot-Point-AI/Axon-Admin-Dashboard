@@ -1,6 +1,8 @@
 "use client";
 
 import Pagination from "@/components/common/Pagination";
+import StatusBadge from "@/components/common/StatusBadge";
+import { asBoolean } from "@/utils/boolean";
 import usePagination from "@/hooks/usePagination";
 import { useConfirm } from "@/context/FeedbackContext";
 import { useCallback, useEffect, useState } from "react";
@@ -91,6 +93,11 @@ export default function LanguagesManager() {
   const [editEnabled, setEditEnabled] = useState(true);
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [initialEditSelection, setInitialEditSelection] = useState("");
+  const editChanged =
+    !!editTarget &&
+    (editSelection !== initialEditSelection ||
+      editEnabled !== Boolean(editTarget.is_enabled ?? true));
 
   const [busyCode, setBusyCode] = useState<string | null>(null);
 
@@ -177,12 +184,13 @@ export default function LanguagesManager() {
       LANGUAGE_OPTIONS.find((o) => o.code === currentCode) ??
       LANGUAGE_OPTIONS.find((o) => o.name.toLowerCase() === currentName);
     setEditSelection(match?.code ?? "");
+    setInitialEditSelection(match?.code ?? "");
     setEditEnabled(Boolean(language.is_enabled ?? true));
     setEditError(null);
   };
 
   const submitEdit = async () => {
-    if (!editTarget || !accessToken) return;
+    if (!editTarget || !accessToken || editSubmitting || !editChanged) return;
     const code = String(editTarget.language_code ?? "");
     if (!code) {
       setEditError("Missing language_code on this record.");
@@ -278,6 +286,7 @@ export default function LanguagesManager() {
         </div>
       )}
 
+      <Pagination variant="header" pagination={pagination} disabled={loading} />
       <div className="w-full overflow-x-auto">
         <Table className="w-full">
           <TableHeader className="border-b border-gray-100 dark:border-gray-800">
@@ -333,7 +342,10 @@ export default function LanguagesManager() {
                       {String(language.language_name ?? "—")}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                      {language.is_enabled ? "Yes" : "No"}
+                      <StatusBadge
+                        active={asBoolean(language.is_enabled)}
+                        kind="enabled"
+                      />
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-3">
@@ -369,7 +381,7 @@ export default function LanguagesManager() {
           </TableBody>
         </Table>
       </div>
-      <Pagination pagination={pagination} disabled={loading} />
+      <Pagination variant="footer" pagination={pagination} disabled={loading} />
 
       <Modal
         isOpen={createOpen}
@@ -453,7 +465,7 @@ export default function LanguagesManager() {
           <Button
             className="w-full"
             onClick={submitEdit}
-            disabled={editSubmitting}
+            disabled={editSubmitting || !editChanged}
           >
             {editSubmitting ? "Saving…" : "Save Changes"}
           </Button>

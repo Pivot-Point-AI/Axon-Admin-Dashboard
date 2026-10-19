@@ -22,6 +22,7 @@ import {
   removeDonation,
   updateBank,
   updateBiller,
+  updateCardType,
   updateDonation,
 } from "@/lib/api/masterData";
 import MasterDataSection, {
@@ -42,7 +43,9 @@ function namesFrom(payload: unknown, nameKey: string): string[] {
   const names = asRecordArray(payload)
     .filter((row) => row.is_active !== false)
     .map((row) => row[nameKey] ?? row.name)
-    .filter((name): name is string => typeof name === "string" && !!name.trim());
+    .filter(
+      (name): name is string => typeof name === "string" && !!name.trim(),
+    );
   return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b));
 }
 
@@ -139,7 +142,10 @@ export default function MasterDataManager() {
         allOptions: (items) =>
           uniqueSorted([...billerCategories, ...items.map((i) => i.category)]),
         onCreate: async (name, token) => {
-          await createBillerCategory({ category_name: name, is_active: true }, token);
+          await createBillerCategory(
+            { category_name: name, is_active: true },
+            token,
+          );
           await loadLookups();
         },
       },
@@ -162,7 +168,7 @@ export default function MasterDataManager() {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
-      <div className="mb-6 flex gap-2 border-b border-gray-200 dark:border-gray-800">
+      <div className="mb-4 flex gap-1 border-b border-gray-200 dark:border-gray-800">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -181,6 +187,7 @@ export default function MasterDataManager() {
 
       {activeTab === "banks" && (
         <MasterDataSection
+          key="banks"
           title="Banks"
           idField="bank_id"
           fields={bankFields}
@@ -192,36 +199,45 @@ export default function MasterDataManager() {
       )}
       {activeTab === "billers" && (
         <MasterDataSection
+          key="billers"
           title="Billers"
           idField="biller_id"
           fields={billerFields}
           filters={billerFilters}
           fetchItems={getBillers}
           createItem={(body, token) => createBiller(body as never, token)}
-          updateItem={(id, body, token) => updateBiller(id, body as never, token)}
+          updateItem={(id, body, token) =>
+            updateBiller(id, body as never, token)
+          }
           removeItem={removeBiller}
         />
       )}
       {activeTab === "donations" && (
         <MasterDataSection
+          key="donations"
           title="Donations"
           idField="org_id"
           fields={donationFields}
           preserveKeys={["synonyms"]}
           fetchItems={getDonations}
           createItem={(body, token) => createDonation(body as never, token)}
-          updateItem={(id, body, token) => updateDonation(id, body as never, token)}
+          updateItem={(id, body, token) =>
+            updateDonation(id, body as never, token)
+          }
           removeItem={removeDonation}
         />
       )}
       {activeTab === "cards" && (
         <MasterDataSection
+          key="cards"
           title="Card Types"
-          editPending
-          idField="card_type_id"
+          idField="type_id"
           fields={cardFields}
           fetchItems={getCardTypes}
           createItem={(body, token) => createCardType(body as never, token)}
+          updateItem={(id, body, token) =>
+            updateCardType(id, body as never, token)
+          }
         />
       )}
     </div>

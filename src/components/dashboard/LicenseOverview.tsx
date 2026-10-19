@@ -23,7 +23,7 @@ export default function LicenseOverview({
     {
       label: t("active"),
       value: healthy,
-      color: "bg-brand-500 dark:bg-brand-400",
+      color: "bg-success-500 dark:bg-success-400",
     },
     {
       label: t("expiring"),
@@ -76,7 +76,7 @@ export default function LicenseOverview({
             style={
               total
                 ? {
-                    background: `conic-gradient(var(--color-brand-500) 0deg ${activeAngle}deg, var(--color-warning-500) ${activeAngle}deg ${expiringAngle}deg, var(--color-error-500) ${expiringAngle}deg 360deg)`,
+                    background: `conic-gradient(var(--color-success-500) 0deg ${activeAngle}deg, var(--color-warning-500) ${activeAngle}deg ${expiringAngle}deg, var(--color-error-500) ${expiringAngle}deg 360deg)`,
                   }
                 : undefined
             }

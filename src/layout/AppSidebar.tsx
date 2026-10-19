@@ -68,12 +68,12 @@ export default function AppSidebar() {
                 key={key}
                 className={
                   key === "users" || key === "userProfile"
-                    ? "mt-4 border-t border-white/15 pt-4 dark:border-white/15"
+                    ? "mt-2 border-t border-white/15 pt-2 dark:border-white/15"
                     : undefined
                 }
               >
                 {showLabels && key === "users" && (
-                  <p className="mb-3 px-3 text-theme-xs font-medium tracking-wide text-brand-300 dark:text-brand-300">
+                  <p className="mb-1 px-3 text-theme-xs font-medium tracking-wide text-brand-300 dark:text-brand-300">
                     {t("groups.administration")}
                   </p>
                 )}

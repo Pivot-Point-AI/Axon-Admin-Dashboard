@@ -1,4 +1,5 @@
 import { notify } from "@/lib/feedback";
+import messages from "@/messages/en.json";
 import type { HTTPValidationError } from "./types";
 
 // The backend is only served over plain HTTP. Browsers block that as mixed
@@ -68,7 +69,11 @@ function buildUrl(
   return url;
 }
 
-function extractErrorMessage(status: number, body: unknown): string {
+export function getApiErrorMessage(status: number, body: unknown): string {
+  const errors = messages.apiErrors;
+  // Keep diagnostics on ApiError.detail, while giving users an actionable
+  // message even if the server returns internal details or an HTML error page.
+  if (status >= 500) return errors.serviceUnavailable;
   if (
     body &&
     typeof body === "object" &&
@@ -83,7 +88,24 @@ function extractErrorMessage(status: number, body: unknown): string {
     const detail = (body as { detail: unknown }).detail;
     if (typeof detail === "string") return detail;
   }
-  return `Request failed with status ${status}`;
+  switch (status) {
+    case 401:
+      return errors.signInRequired;
+    case 403:
+      return errors.permissionDenied;
+    case 404:
+      return errors.notFound;
+    case 408:
+      return errors.timeout;
+    case 409:
+      return errors.conflict;
+    case 422:
+      return errors.invalidDetails;
+    case 429:
+      return errors.tooManyRequests;
+    default:
+      return errors.unexpected;
+  }
 }
 
 async function performRequest<T>(url: string, init: RequestInit): Promise<T> {
@@ -95,7 +117,7 @@ async function performRequest<T>(url: string, init: RequestInit): Promise<T> {
 
   if (!response.ok) {
     throw new ApiError(
-      extractErrorMessage(response.status, payload),
+      getApiErrorMessage(response.status, payload),
       response.status,
       payload,
     );
@@ -145,7 +167,11 @@ export async function apiRequest<T>(
       init,
     );
     if (method !== "GET" && successNotification !== false) {
-      notify({ kind: "success", operation: method, messageKey: successNotification });
+      notify({
+        kind: "success",
+        operation: method,
+        messageKey: successNotification,
+      });
     }
     return result;
   } catch (error) {

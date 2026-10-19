@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import Badge from "@/components/ui/badge/Badge";
+import StatusBadge from "@/components/common/StatusBadge";
 import {
   Table,
   TableBody,
@@ -134,9 +135,13 @@ export default function RecentInstitutionsTable() {
                         : "—"}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm">
-                      <Badge size="sm" color={status.color}>
-                        {status.label}
-                      </Badge>
+                      {status.color === "success" ? (
+                        <StatusBadge active />
+                      ) : (
+                        <Badge size="sm" color={status.color}>
+                          {status.label}
+                        </Badge>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

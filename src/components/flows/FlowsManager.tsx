@@ -1,6 +1,8 @@
 "use client";
 
 import Pagination from "@/components/common/Pagination";
+import { useTranslations } from "next-intl";
+import { asBoolean } from "@/utils/boolean";
 import usePagination from "@/hooks/usePagination";
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
@@ -18,6 +20,7 @@ import { getFlows, updateFlow } from "@/lib/api/flows";
 import { asRecordArray } from "@/lib/api/normalize";
 
 export default function FlowsManager() {
+  const status = useTranslations("status");
   const { accessToken } = useAdminAuth();
   const [flows, setFlows] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,6 +87,7 @@ export default function FlowsManager() {
         </div>
       )}
 
+      <Pagination variant="header" pagination={pagination} disabled={loading} />
       <div className="overflow-x-auto">
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-gray-800">
@@ -125,7 +129,12 @@ export default function FlowsManager() {
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm">
                       <Switch
-                        checked={Boolean(flow.is_enabled ?? true)}
+                        label={status(
+                          asBoolean(flow.is_enabled, true)
+                            ? "enabled"
+                            : "disabled",
+                        )}
+                        checked={asBoolean(flow.is_enabled, true)}
                         disabled={busyIntent === intentName}
                         onChange={(checked) => handleToggle(flow, checked)}
                       />
@@ -137,7 +146,7 @@ export default function FlowsManager() {
           </TableBody>
         </Table>
       </div>
-      <Pagination pagination={pagination} disabled={loading} />
+      <Pagination variant="footer" pagination={pagination} disabled={loading} />
     </div>
   );
 }

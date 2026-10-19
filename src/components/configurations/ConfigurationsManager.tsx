@@ -175,6 +175,11 @@ export default function ConfigurationsManager() {
           </div>
         )}
 
+        <Pagination
+          variant="header"
+          pagination={pagination}
+          disabled={loading}
+        />
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-gray-800">
@@ -183,7 +188,6 @@ export default function ConfigurationsManager() {
                   e("setting"),
                   t("description"),
                   e("value"),
-                  e("type"),
                   e("lastUpdated"),
                   ...(editing ? [e("actions")] : []),
                 ].map((heading, i) => (
@@ -233,7 +237,11 @@ export default function ConfigurationsManager() {
           </Table>
         </div>
 
-        <Pagination pagination={pagination} disabled={loading} />
+        <Pagination
+          variant="footer"
+          pagination={pagination}
+          disabled={loading}
+        />
       </div>
     </div>
   );

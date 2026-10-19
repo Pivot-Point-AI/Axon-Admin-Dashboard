@@ -42,6 +42,10 @@ export default function EditMessageModal({
     ),
   );
   const [position, setPosition] = useState<InsertPosition>("cursor");
+  const changed = MESSAGE_TEXT_FIELDS.some(
+    ({ key }) =>
+      values[key] !== (typeof message[key] === "string" ? message[key] : ""),
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
@@ -86,6 +90,7 @@ export default function EditMessageModal({
   };
 
   const handleSave = async () => {
+    if (!changed || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -106,7 +111,7 @@ export default function EditMessageModal({
           <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90">
             Edit Message
           </h4>
-          <p className="mt-1.5 inline-block rounded-md bg-gray-100 px-2 py-0.5 font-mono text-theme-xs break-all text-gray-600 dark:bg-white/5 dark:text-gray-400">
+          <p className="font-mono mt-1.5 inline-block rounded-md bg-gray-100 px-2 py-0.5 text-theme-xs break-all text-gray-600 dark:bg-white/5 dark:text-gray-400">
             {String(message.message_key ?? "")}
           </p>
         </div>
@@ -224,7 +229,7 @@ export default function EditMessageModal({
               size="sm"
               className="w-full sm:w-auto"
               onClick={handleSave}
-              disabled={submitting}
+              disabled={submitting || !changed}
             >
               {submitting ? "Saving…" : "Save Changes"}
             </Button>

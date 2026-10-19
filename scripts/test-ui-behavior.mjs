@@ -19,6 +19,7 @@ function harness(overrides = {}) {
   let cursor = 0;
   let changed = false;
   const cache = new Map();
+  const effects = [];
   const react = {
     ...React,
     useState(initial) {
@@ -34,7 +35,9 @@ function harness(overrides = {}) {
         },
       ];
     },
-    useEffect() {},
+    useEffect(effect) {
+      effects.push(effect);
+    },
     useLayoutEffect() {},
     useCallback: (fn) => fn,
     useRef: (value) => ({ current: value }),
@@ -46,6 +49,7 @@ function harness(overrides = {}) {
     const output = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
       compilerOptions: {
         module: ts.ModuleKind.CommonJS,
+        target: ts.ScriptTarget.ES2017,
         jsx: ts.JsxEmit.ReactJSX,
         esModuleInterop: true,
       },
@@ -57,16 +61,22 @@ function harness(overrides = {}) {
       if (name === "react") return react;
       if (name === "next-intl")
         return {
+          useFormatter: () => ({
+            number: (value, options) =>
+              new Intl.NumberFormat("en-US", options).format(value),
+            dateTime: (value, options) =>
+              new Intl.DateTimeFormat("en-US", options).format(value),
+          }),
           useTranslations:
             (namespace) =>
             (key, values = {}) => {
               const text =
-                key
-                  .split(".")
-                  .reduce(
-                    (value, part) => value?.[part],
-                    messages[namespace],
-                  ) ?? key;
+                key.split(".").reduce(
+                  (value, part) => value?.[part],
+                  namespace
+                    .split(".")
+                    .reduce((value, part) => value?.[part], messages),
+                ) ?? key;
               return text.replace(/\{(\w+)\}/g, (_, part) => values[part]);
             },
         };
@@ -75,6 +85,7 @@ function harness(overrides = {}) {
           { __esModule: true },
           { get: (_, key) => (key === "__esModule" ? true : "svg") },
         );
+      if (name === "@/i18n/navigation") return { Link: "a" };
       if (name === "@/context/AdminAuthContext")
         return { useAdminAuth: () => ({ accessToken: "test-token" }) };
       if (name === "@/context/FeedbackContext")
@@ -93,6 +104,8 @@ function harness(overrides = {}) {
         const stem = name.startsWith("@/")
           ? path.resolve(__dirname, "../src", name.slice(2))
           : path.resolve(path.dirname(filename), name);
+        if (stem.endsWith(".json") && fs.existsSync(stem))
+          return JSON.parse(fs.readFileSync(stem, "utf8"));
         const target = [".ts", ".tsx", "/index.ts", "/index.tsx"]
           .map((extension) => stem + extension)
           .find(fs.existsSync);
@@ -110,6 +123,10 @@ function harness(overrides = {}) {
   }
   return {
     load,
+    async runEffects() {
+      for (const effect of effects.splice(0)) await effect();
+      await new Promise((resolve) => setImmediate(resolve));
+    },
     render(component, props) {
       let result;
       let count = 0;
@@ -199,9 +216,9 @@ test("pagination resets for filters and page size, clamps after deletion, and re
     1,
     "Restoring a filter must not restore a stale page",
   );
-  page.setPageSize(25);
+  page.setPageSize(20);
   page = render();
-  assert.deepEqual([page.page, page.pageSize, page.items.length], [1, 25, 20]);
+  assert.deepEqual([page.page, page.pageSize, page.items.length], [1, 20, 20]);
   rows = [];
   page = render();
   assert.deepEqual(
@@ -327,4 +344,761 @@ test("native required validation suppresses browser messages and clears red stat
   });
   tree = runtime.render(Input, { id: "required-input", required: true });
   assert.equal(byId(tree, "required-input").props["aria-invalid"], undefined);
+});
+
+test("user editing saves changed details and status, and disables Save after reverting", async () => {
+  const calls = [];
+  let closed = 0;
+  let reloaded = 0;
+  const runtime = harness({
+    "@/lib/api/adminUsers": {
+      updateDashboardUser: async (...args) => calls.push(args),
+    },
+  });
+  const Editor = runtime.load("src/components/users/EditUserModal.tsx").default;
+  const user = {
+    user_id: "user/17",
+    username: "jane",
+    email: "jane@example.com",
+    role: "MANAGER",
+    is_active: true,
+  };
+  const render = () =>
+    runtime.render(Editor, {
+      user,
+      accessToken: "test-token",
+      onClose: () => closed++,
+      onSaved: async () => reloaded++,
+    });
+  const submit = async (tree) =>
+    elements(tree)
+      .find((el) => el.type === "form")
+      .props.onSubmit({ preventDefault() {} });
+  let tree = render();
+  assert.equal(button(tree, "Save Changes").props.disabled, true);
+  await submit(tree);
+  assert.equal(calls.length, 0);
+  byId(tree, "edit-email").props.onChange({
+    target: { value: "new@example.com" },
+  });
+  tree = render();
+  assert.equal(button(tree, "Save Changes").props.disabled, false);
+  byId(tree, "edit-email").props.onChange({ target: { value: user.email } });
+  tree = render();
+  assert.equal(button(tree, "Save Changes").props.disabled, true);
+  byId(tree, "edit-user-active").props.onChange(false);
+  tree = render();
+  assert.equal(button(tree, "Save Changes").props.disabled, false);
+  byId(tree, "edit-user-active").props.onChange(true);
+  tree = render();
+  assert.equal(button(tree, "Save Changes").props.disabled, true);
+  byId(tree, "edit-role").props.onChange({ target: { value: "VIEWER" } });
+  byId(tree, "edit-user-active").props.onChange(false);
+  tree = render();
+  await submit(tree);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(calls, [
+    [
+      "user/17",
+      {
+        username: "jane",
+        email: "jane@example.com",
+        role: "VIEWER",
+        is_active: false,
+      },
+      "test-token",
+    ],
+  ]);
+  assert.equal(closed, 1);
+  assert.equal(reloaded, 1);
+});
+
+test("failed user updates keep edits available for retry", async () => {
+  let closed = false;
+  const runtime = harness({
+    "@/lib/api/adminUsers": {
+      updateDashboardUser: async () => {
+        throw new Error("unavailable");
+      },
+    },
+  });
+  const Editor = runtime.load("src/components/users/EditUserModal.tsx").default;
+  const render = () =>
+    runtime.render(Editor, {
+      user: {
+        user_id: "17",
+        username: "jane",
+        email: "jane@example.com",
+        role: "SUPER_ADMIN",
+        is_active: true,
+      },
+      accessToken: "test-token",
+      onClose: () => {
+        closed = true;
+      },
+      onSaved: async () => {},
+    });
+  let tree = render();
+  assert.equal(byId(tree, "edit-role").props.value, "SUPER_ADMIN");
+  byId(tree, "edit-username").props.onChange({
+    target: { value: "jane.updated" },
+  });
+  tree = render();
+  elements(tree)
+    .find((el) => el.type === "form")
+    .props.onSubmit({ preventDefault() {} });
+  await new Promise((resolve) => setImmediate(resolve));
+  tree = render();
+  assert.equal(closed, false);
+  assert.equal(byId(tree, "edit-username").props.value, "jane.updated");
+  assert.equal(button(tree, "Save Changes").props.disabled, false);
+  assert.equal(
+    elements(tree).find((el) => el.props.role === "alert").props.children,
+    "Failed to update user.",
+  );
+});
+
+test("card edits preserve the real ID and inactive state; unchanged and reverted forms cannot save", async () => {
+  const calls = [];
+  const record = { type_id: 7, type_name: "credit", is_active: false };
+  const runtime = harness();
+  const Section = runtime.load(
+    "src/components/masterData/MasterDataSection.tsx",
+  ).default;
+  const props = {
+    title: "Card Types",
+    idField: "type_id",
+    fields: [
+      { key: "type_name", label: "Card Type", type: "text", required: true },
+      { key: "is_active", label: "Active", type: "checkbox" },
+    ],
+    fetchItems: async () => [record],
+    createItem: async () => {},
+    updateItem: async (...args) => calls.push(args),
+  };
+  const render = () => runtime.render(Section, props);
+  let tree = render();
+  await runtime.runEffects();
+  tree = render();
+  elements(tree)
+    .find((el) => el.props.title === "Edit")
+    .props.onClick();
+  tree = render();
+  assert.equal(button(tree, "Save Changes").props.disabled, true);
+  await button(tree, "Save Changes").props.onClick();
+  assert.equal(calls.length, 0);
+  byId(
+    elements(tree).find((el) => el.type === "Modal" && el.props.isOpen),
+    "field-type_name",
+  ).props.onChange({
+    target: { value: "credit updated" },
+  });
+  tree = render();
+  assert.equal(button(tree, "Save Changes").props.disabled, false);
+  byId(
+    elements(tree).find((el) => el.type === "Modal" && el.props.isOpen),
+    "field-type_name",
+  ).props.onChange({ target: { value: "credit" } });
+  tree = render();
+  assert.equal(button(tree, "Save Changes").props.disabled, true);
+  byId(
+    elements(tree).find((el) => el.type === "Modal" && el.props.isOpen),
+    "field-type_name",
+  ).props.onChange({
+    target: { value: "credit updated" },
+  });
+  tree = render();
+  await button(tree, "Save Changes").props.onClick();
+  assert.deepEqual(calls, [
+    [7, { type_name: "credit updated", is_active: false }, "test-token"],
+  ]);
+});
+
+test("analytics display API percentages without inventing trends or hiding zero outcomes", () => {
+  const runtime = harness();
+  const overview = {
+    total_users: 43,
+    total_sessions: 3008,
+    active_sessions: 1,
+    daily_active_users: { count: 6, yesterday_count: 2, growth_pct: 200 },
+    stickiness_ratio_pct: 33.3,
+    engaged_sessions_rate_pct: 44.7,
+    returning_user_rate_pct: 83.3,
+    total_flows_initiated: 19,
+    flow_completion_rate_pct: 0,
+    flow_abandonment_rate_pct: 100,
+  };
+  const Cards = runtime.load(
+    "src/components/dashboard/AnalyticsKpiCards.tsx",
+  ).default;
+  const MetricCard = runtime.load(
+    "src/components/dashboard/AnalyticsMetricCard.tsx",
+  ).default;
+  const expandCards = (tree) => [
+    tree,
+    ...elements(tree)
+      .filter((element) => element.type === MetricCard)
+      .map((element) => runtime.render(MetricCard, element.props)),
+  ];
+  let tree = runtime.render(Cards, { overview });
+  const copy = (tree) =>
+    elements(expandCards(tree))
+      .flatMap((el) => React.Children.toArray(el.props.children))
+      .filter((child) => typeof child === "string");
+  assert.ok(copy(tree).includes("3,008"));
+  assert.ok(copy(tree).includes("+200%"));
+  const Engagement = runtime.load(
+    "src/components/dashboard/EngagementOverview.tsx",
+  ).default;
+  tree = runtime.render(Engagement, { overview });
+  assert.deepEqual(
+    elements(expandCards(tree))
+      .filter((el) => el.props.role === "progressbar")
+      .map((el) => el.props["aria-valuenow"]),
+    [44.7, 83.3, 33.3],
+  );
+  const Outcomes = runtime.load(
+    "src/components/dashboard/FlowOutcomes.tsx",
+  ).default;
+  tree = runtime.render(Outcomes, { overview });
+  assert.ok(copy(tree).includes("0%"));
+  assert.ok(copy(tree).includes("100%"));
+  assert.ok(copy(tree).includes("19"));
+  tree = runtime.render(Outcomes, {
+    overview: { ...overview, total_flows_initiated: 0 },
+  });
+  assert.ok(copy(tree).includes("No banking journeys started yet"));
+  tree = runtime.render(Outcomes, { overview: null });
+  assert.equal(copy(tree).includes("0%"), false);
+});
+
+test("configuration validation rejects incorrect types and enforces numeric bounds", () => {
+  const runtime = harness();
+  const { validateConfigValue, isConfigDraft } = runtime.load(
+    "src/components/configurations/configurationFields.ts",
+  );
+  const t = (key) => key;
+  const base = { config_key: "SETTING", config_value: "10" };
+  for (const data_type of ["int", "integer"]) {
+    const config = { ...base, data_type };
+    for (const value of [
+      "1.5",
+      "1.0",
+      "abc",
+      "true",
+      "1e3",
+      "0x10",
+      "NaN",
+      "Infinity",
+      "",
+      " ",
+    ]) {
+      assert.notEqual(
+        validateConfigValue(config, value, t),
+        null,
+        `${data_type}: ${value}`,
+      );
+    }
+    for (const value of ["0", "15", "-10"])
+      assert.equal(validateConfigValue(config, value, t), null);
+    for (const value of ["1.5", "abc", "1e3", "0x10"])
+      assert.equal(isConfigDraft(config, value), false);
+    assert.equal(
+      isConfigDraft(config, "-"),
+      true,
+      "Negative integers can be entered incrementally",
+    );
+  }
+  for (const data_type of ["float", "double", "decimal", "number"]) {
+    const config = { ...base, data_type, min_value: 0, max_value: 1 };
+    for (const value of ["0", "0.5", ".25", "1"])
+      assert.equal(validateConfigValue(config, value, t), null);
+    for (const value of [
+      "-0.1",
+      "1.1",
+      "abc",
+      "true",
+      "NaN",
+      "Infinity",
+      "1e3",
+      "0x10",
+      ".",
+      "-",
+    ])
+      assert.notEqual(validateConfigValue(config, value, t), null);
+    assert.equal(isConfigDraft(config, "0."), true);
+    assert.equal(isConfigDraft(config, "abc"), false);
+  }
+  for (const data_type of ["bool", "boolean"]) {
+    const config = { ...base, data_type };
+    for (const value of ["true", "false"])
+      assert.equal(validateConfigValue(config, value, t), null);
+    for (const value of ["yes", "no", "1", "0", "other"])
+      assert.notEqual(validateConfigValue(config, value, t), null);
+  }
+  assert.equal(
+    validateConfigValue(
+      { ...base, data_type: "string" },
+      "arbitrary text 123",
+      t,
+    ),
+    null,
+  );
+});
+
+test("configuration controls reject invalid drafts and block invalid saves without a Type column", async () => {
+  for (const [kind, invalid, valid] of [
+    ["integer", ["abc", "1.5", "1e3"], "25"],
+    ["number", ["abc", "0x10", "1e3"], "0.5"],
+  ]) {
+    const runtime = harness();
+    const Row = runtime.load(
+      "src/components/configurations/ConfigurationRow.tsx",
+    ).default;
+    const calls = [];
+    const changes = [];
+    const config = {
+      config_key: "LIMIT",
+      config_value: "10",
+      data_type: kind,
+      min_value: 0,
+      max_value: 50,
+    };
+    const props = {
+      config,
+      editing: true,
+      value: "10",
+      saving: false,
+      busy: false,
+      onChange: (value) => {
+        changes.push(value);
+        props.value = value;
+      },
+      onSave: async (...args) => calls.push(args),
+    };
+    const render = () => runtime.render(Row, props);
+    let tree = render();
+    assert.equal(
+      tree.props.children.filter(Boolean).length,
+      5,
+      "Only setting, description, value, update time, and actions remain",
+    );
+    assert.equal(
+      byId(tree, "configuration-LIMIT").props.step,
+      kind === "integer" ? 1 : "any",
+    );
+    for (const value of invalid) {
+      byId(tree, "configuration-LIMIT").props.onChange({ target: { value } });
+      tree = render();
+      assert.equal(props.value, "10");
+    }
+    assert.deepEqual(changes, []);
+    byId(tree, "configuration-LIMIT").props.onChange({
+      target: { value: "51" },
+    });
+    tree = render();
+    assert.equal(button(tree, "Save").props.disabled, true);
+    await button(tree, "Save").props.onClick();
+    assert.equal(calls.length, 0);
+    byId(tree, "configuration-LIMIT").props.onChange({
+      target: { value: valid },
+    });
+    tree = render();
+    assert.equal(button(tree, "Save").props.disabled, false);
+    await button(tree, "Save").props.onClick();
+    assert.deepEqual(calls, [[config, valid]]);
+  }
+});
+
+test("all requested page sizes render and paginate the correct slices", () => {
+  const runtime = harness();
+  const paginate = runtime.load("src/hooks/usePagination.ts").default;
+  const rows = Array.from({ length: 125 }, (_, index) => index + 1);
+  const render = () => runtime.render(() => paginate(rows));
+  let pagination = render();
+  for (const size of [10, 20, 30, 50, 100]) {
+    pagination.setPageSize(size);
+    pagination = render();
+    assert.deepEqual(pagination.items, rows.slice(0, size));
+    pagination.setPage(2);
+    pagination = render();
+    assert.deepEqual(pagination.items, rows.slice(size, size * 2));
+  }
+  const Controls = runtime.load("src/components/common/Pagination.tsx").default;
+  const tree = runtime.render(Controls, { pagination });
+  assert.deepEqual(
+    elements(tree)
+      .filter((el) => el.type === "option")
+      .map((el) => el.props.value),
+    [10, 20, 30, 50, 100],
+  );
+});
+
+test("log date bounds use real timestamps regardless of ordering and skip invalid dates", () => {
+  const runtime = harness();
+  const { logDateBounds, logTimestamp } = runtime.load(
+    "src/components/logs/logDates.ts",
+  );
+  const entries = [
+    { data: { timestamp: "2026-10-19T09:30:00Z" } },
+    { data: { timestamp: "invalid", created_at: "2026-10-18T18:00:00Z" } },
+    { data: { timestamp: "2026-10-19T12:00:00Z" } },
+    { data: {} },
+  ];
+  const bounds = logDateBounds(entries);
+  assert.equal(bounds.start.toISOString(), "2026-10-18T18:00:00.000Z");
+  assert.equal(bounds.end.toISOString(), "2026-10-19T12:00:00.000Z");
+  assert.equal(logDateBounds([{ data: { timestamp: "invalid" } }]), null);
+  assert.equal(logDateBounds([]), null);
+  assert.equal(logTimestamp({ timestamp: " " }), null);
+});
+
+test("log headers and rows expose date information and handle missing timestamps", () => {
+  const runtime = harness();
+  const Viewer = runtime.load("src/components/logs/RawLogViewer.tsx").default;
+  const Row = runtime.load("src/components/logs/RawLogRow.tsx").default;
+  const entries = [
+    {
+      id: 1,
+      data: {
+        timestamp: "2026-10-19T09:30:00Z",
+        event: "started",
+        level: "info",
+      },
+    },
+    {
+      id: 2,
+      data: {
+        timestamp: "2026-10-19T10:00:00Z",
+        event: "finished",
+        level: "info",
+      },
+    },
+  ];
+  let tree = runtime.render(Viewer, { entries });
+  assert.deepEqual(
+    elements(tree)
+      .filter((el) => el.type === "time")
+      .map((el) => el.props.dateTime),
+    ["2026-10-19T09:30:00.000Z", "2026-10-19T10:00:00.000Z"],
+  );
+  assert.ok(elements(tree).some((el) => el.props.children === "Date & time"));
+  tree = runtime.render(Row, { entry: entries[0] });
+  assert.ok(
+    elements(tree)
+      .filter((el) => el.type === "time")
+      .every((el) => el.props.dateTime === "2026-10-19T09:30:00.000Z"),
+  );
+  tree = runtime.render(Viewer, {
+    entries: [{ id: 3, data: { event: "no_date" } }],
+  });
+  assert.ok(
+    elements(tree).some((el) => el.props.children === "Timestamp unavailable"),
+  );
+});
+
+test("table summaries and page-size selectors stay in the header while navigation stays in the footer", () => {
+  const runtime = harness();
+  const Controls = runtime.load("src/components/common/Pagination.tsx").default;
+  const changes = [];
+  const pagination = {
+    page: 1,
+    pageSize: 10,
+    pageCount: 20,
+    total: 200,
+    start: 1,
+    end: 10,
+    setPage: (page) => changes.push(["page", page]),
+    setPageSize: (size) => changes.push(["size", size]),
+  };
+  let tree = runtime.render(Controls, { pagination, variant: "header" });
+  assert.equal(tree.props["aria-label"], "Table controls");
+  const select = elements(tree).find((el) => el.type === "select");
+  assert.ok(select);
+  assert.equal(button(tree, "Next"), undefined);
+  select.props.onChange({ target: { value: "30" } });
+  assert.deepEqual(changes, [["size", 30]]);
+  tree = runtime.render(Controls, { pagination, variant: "footer" });
+  assert.equal(
+    elements(tree).some((el) => el.type === "select"),
+    false,
+  );
+  assert.equal(button(tree, "Previous").props.disabled, true);
+  button(tree, "Next").props.onClick();
+  assert.deepEqual(changes.at(-1), ["page", 2]);
+});
+
+test("shared header breadcrumbs identify the current page and nested log session", () => {
+  let pathname = "/users";
+  const runtime = harness({
+    "@/i18n/navigation": { Link: "a", usePathname: () => pathname },
+    "@/context/SidebarContext": {
+      useSidebar: () => ({ toggleSidebar() {}, toggleMobileSidebar() {} }),
+    },
+  });
+  const Header = runtime.load("src/layout/AppHeader.tsx").default;
+  const render = () => runtime.render(Header);
+  let tree = render();
+  let breadcrumb = elements(tree).find(
+    (el) => el.props["aria-label"] === "Breadcrumb",
+  );
+  assert.ok(breadcrumb);
+  assert.equal(
+    elements(breadcrumb).find((el) => el.props["aria-current"] === "page").props
+      .children,
+    "Dashboard Users",
+  );
+  assert.ok(
+    elements(breadcrumb).some((el) => el.type === "a" && el.props.href === "/"),
+  );
+  pathname = "/logs/session-17";
+  tree = render();
+  breadcrumb = elements(tree).find(
+    (el) => el.props["aria-label"] === "Breadcrumb",
+  );
+  assert.equal(
+    elements(breadcrumb).find((el) => el.props["aria-current"] === "page").props
+      .children,
+    "Session log",
+  );
+  assert.ok(
+    elements(breadcrumb).some(
+      (el) => el.type === "a" && el.props.href === "/logs",
+    ),
+  );
+});
+
+test("one Messages Edit button enables all rows; drafts survive pagination and individual saves", async () => {
+  const calls = [];
+  let loads = 0;
+  const records = Array.from({ length: 12 }, (_, index) => ({
+    message_key: `message.${index}`,
+    msg_en: "Original {amount}",
+    msg_ur: "Urdu original",
+    msg_ar: null,
+    parameters: ["amount"],
+    is_active: true,
+    metadata: { preserve: index },
+  }));
+  const runtime = harness({
+    "@/lib/api/messages": {
+      getMessages: async () => {
+        loads++;
+        return records;
+      },
+      updateMessage: async (...args) => {
+        calls.push(args);
+        return { success: true };
+      },
+    },
+  });
+  const Manager = runtime.load(
+    "src/components/messages/MessagesManager.tsx",
+  ).default;
+  const Row = runtime.load("src/components/messages/MessageRow.tsx").default;
+  const render = () => runtime.render(Manager);
+  const rows = (tree) => elements(tree).filter((el) => el.type === Row);
+  const controls = (tree) =>
+    elements(tree).find(
+      (el) => el.props.variant === "footer" && el.props.pagination,
+    );
+  let tree = render();
+  assert.equal(button(tree, "Edit").props.disabled, true);
+  await runtime.runEffects();
+  tree = render();
+  assert.ok(rows(tree).every((row) => row.props.editing === false));
+  assert.equal(
+    elements(tree).filter(
+      (el) => el.props.isHeader && el.props.children === "Actions",
+    ).length,
+    0,
+  );
+  button(tree, "Edit").props.onClick();
+  tree = render();
+  assert.ok(rows(tree).every((row) => row.props.editing === true));
+  assert.equal(button(tree, "Refresh").props.disabled, true);
+  let [first, second] = rows(tree);
+  first.props.onChange({
+    ...first.props.draft,
+    msg_en: "Changed {amount}",
+    is_active: false,
+  });
+  second.props.onChange({ ...second.props.draft, msg_ur: "Urdu draft" });
+  tree = render();
+  assert.equal(
+    calls.length,
+    0,
+    "Editing a status or text must not save automatically",
+  );
+  controls(tree).props.pagination.setPage(2);
+  tree = render();
+  const later = rows(tree)[0];
+  later.props.onChange({ ...later.props.draft, msg_ar: "Arabic draft" });
+  tree = render();
+  controls(tree).props.pagination.setPage(1);
+  tree = render();
+  [first, second] = rows(tree);
+  assert.equal(first.props.draft.msg_en, "Changed {amount}");
+  assert.equal(second.props.draft.msg_ur, "Urdu draft");
+  await first.props.onSave(first.props.message, first.props.draft);
+  tree = render();
+  [first, second] = rows(tree);
+  assert.deepEqual(calls, [
+    [
+      { ...records[0], msg_en: "Changed {amount}", is_active: false },
+      "test-token",
+    ],
+  ]);
+  assert.equal(
+    calls[0][0].msg_ar,
+    null,
+    "An untouched null translation must be preserved",
+  );
+  assert.equal(
+    loads,
+    1,
+    "Saving one row must not reload or discard other drafts",
+  );
+  assert.equal(second.props.draft.msg_ur, "Urdu draft");
+  await first.props.onSave(first.props.message, first.props.draft);
+  assert.equal(calls.length, 1, "An unchanged row must not save twice");
+  controls(tree).props.pagination.setPage(2);
+  tree = render();
+  assert.equal(rows(tree)[0].props.draft.msg_ar, "Arabic draft");
+  button(tree, "Cancel editing").props.onClick();
+  tree = render();
+  assert.equal(rows(tree)[0].props.draft.msg_ar, "");
+  controls(tree).props.pagination.setPage(1);
+  tree = render();
+  assert.equal(
+    rows(tree)[0].props.draft.msg_en,
+    "Changed {amount}",
+    "Cancel must retain saved changes",
+  );
+  assert.equal(
+    rows(tree)[1].props.draft.msg_ur,
+    "Urdu original",
+    "Cancel must discard unsaved changes",
+  );
+  assert.ok(rows(tree).every((row) => row.props.editing === false));
+});
+
+test("message rows are read-only until Edit and Save only changed text or status", async () => {
+  const runtime = harness();
+  const Row = runtime.load("src/components/messages/MessageRow.tsx").default;
+  const Field = runtime.load(
+    "src/components/messages/MessageTextField.tsx",
+  ).default;
+  const { messageDraft } = runtime.load(
+    "src/components/messages/messageFields.ts",
+  );
+  const message = {
+    message_key: "transfer.amount",
+    msg_en: "Send {amount}",
+    msg_ur: "Urdu",
+    msg_ar: "Arabic",
+    parameters: ["amount"],
+    is_active: false,
+  };
+  const calls = [];
+  const props = {
+    message,
+    draft: messageDraft(message),
+    editing: false,
+    saving: false,
+    busy: false,
+    onChange: (draft) => {
+      props.draft = draft;
+    },
+    onSave: async (...args) => calls.push(args),
+  };
+  const render = () => runtime.render(Row, props);
+  let tree = render();
+  assert.equal(
+    elements(tree).some((el) => el.type === Field),
+    false,
+  );
+  assert.equal(button(tree, "Save"), undefined);
+  props.editing = true;
+  tree = render();
+  assert.equal(elements(tree).filter((el) => el.type === Field).length, 3);
+  assert.equal(button(tree, "Save").props.disabled, true);
+  elements(tree)
+    .find((el) => el.type === Field && el.props.field.key === "msg_en")
+    .props.onChange("Updated {amount}");
+  tree = render();
+  assert.equal(button(tree, "Save").props.disabled, false);
+  elements(tree)
+    .find((el) => el.type === Field && el.props.field.key === "msg_en")
+    .props.onChange("Send {amount}");
+  tree = render();
+  assert.equal(button(tree, "Save").props.disabled, true);
+  elements(tree)
+    .find((el) => el.type === "@/components/form/input/Switch")
+    .props.onChange(true);
+  tree = render();
+  assert.equal(calls.length, 0);
+  await button(tree, "Save").props.onClick();
+  assert.deepEqual(calls, [
+    [message, { ...messageDraft(message), is_active: true }],
+  ]);
+  props.busy = true;
+  tree = render();
+  assert.equal(button(tree, "Save").props.disabled, true);
+  await button(tree, "Save").props.onClick();
+  assert.equal(calls.length, 1);
+});
+
+test("failed inline message saves preserve the row draft and show a friendly retry message", async () => {
+  const runtime = harness();
+  const Row = runtime.load("src/components/messages/MessageRow.tsx").default;
+  const { ApiError } = runtime.load("src/lib/api/client.ts");
+  const { messageDraft } = runtime.load(
+    "src/components/messages/messageFields.ts",
+  );
+  const message = { message_key: "greeting", msg_en: "Hello", is_active: true };
+  const draft = { ...messageDraft(message), msg_en: "Welcome" };
+  const props = {
+    message,
+    draft,
+    editing: true,
+    saving: false,
+    busy: false,
+    onChange() {},
+    onSave: async () => {
+      throw new ApiError("Please try again in a moment.", 500);
+    },
+  };
+  let tree = runtime.render(Row, props);
+  await button(tree, "Save").props.onClick();
+  tree = runtime.render(Row, props);
+  assert.equal(
+    elements(tree).find((el) => el.props.role === "alert").props.children,
+    "Please try again in a moment.",
+  );
+  assert.equal(props.draft.msg_en, "Welcome");
+  assert.equal(button(tree, "Save").props.disabled, false);
+});
+
+test("message parameter insertion respects the cursor, selections, and surrounding words", () => {
+  const runtime = harness();
+  const { insertMessageParameter } = runtime.load(
+    "src/components/messages/messageFields.ts",
+  );
+  assert.deepEqual(insertMessageParameter("Send", "amount"), {
+    text: "Send {amount}",
+    caret: 13,
+  });
+  assert.deepEqual(insertMessageParameter("Send here", "amount", 5, 9), {
+    text: "Send {amount}",
+    caret: 13,
+  });
+  assert.deepEqual(insertMessageParameter("Send now", "amount", 5, 5), {
+    text: "Send {amount} now",
+    caret: 13,
+  });
+  assert.deepEqual(insertMessageParameter("Send", "amount", 0, 0), {
+    text: "{amount} Send",
+    caret: 8,
+  });
 });

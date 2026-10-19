@@ -2,6 +2,7 @@ import { ADMIN_API_BASE_URL, apiRequest } from "./client";
 import type {
   CreateDashboardUserRequest,
   DashboardUserResponse,
+  UpdateDashboardUserRequest,
 } from "./types";
 
 export function listDashboardUsers(bearerToken: string) {
@@ -29,4 +30,20 @@ export function deleteDashboardUser(userId: string, bearerToken: string) {
     bearerToken,
     baseUrl: ADMIN_API_BASE_URL,
   });
+}
+
+export function updateDashboardUser(
+  userId: string,
+  body: UpdateDashboardUserRequest,
+  bearerToken: string,
+) {
+  return apiRequest<DashboardUserResponse>(
+    `/management/${encodeURIComponent(userId)}`,
+    {
+      method: "PUT",
+      body,
+      bearerToken,
+      baseUrl: ADMIN_API_BASE_URL,
+    },
+  );
 }

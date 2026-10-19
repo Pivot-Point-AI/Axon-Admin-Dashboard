@@ -1,6 +1,7 @@
 "use client";
 
 import Pagination from "@/components/common/Pagination";
+import StatusBadge from "@/components/common/StatusBadge";
 import usePagination from "@/hooks/usePagination";
 import useRequiredFields from "@/hooks/useRequiredFields";
 import { asBoolean } from "@/utils/boolean";
@@ -61,14 +62,12 @@ interface MasterDataSectionProps {
   // Record keys that have no form input but must be sent back unchanged on
   // update, since PUT replaces the record.
   preserveKeys?: string[];
-  editPending?: boolean;
   fetchItems: (bearerToken: string) => Promise<unknown>;
   createItem: (
     body: Record<string, unknown>,
     bearerToken: string,
   ) => Promise<unknown>;
-  // Update / remove are optional: a section whose API is create + list only
-  // (e.g. card types) simply shows no row actions.
+  // Update / remove are optional for sections with list/create-only APIs.
   updateItem?: (
     id: number,
     body: Record<string, unknown>,
@@ -85,13 +84,23 @@ function emptyForm(fields: MasterDataField[]): Record<string, unknown> {
   return form;
 }
 
+function itemForm(fields: MasterDataField[], item: Record<string, unknown>) {
+  return Object.fromEntries(
+    fields.map((field) => [
+      field.key,
+      field.type === "checkbox"
+        ? asBoolean(item[field.key], true)
+        : String(item[field.key] ?? ""),
+    ]),
+  );
+}
+
 export default function MasterDataSection({
   title,
   idField,
   fields,
   filters = [],
   preserveKeys = [],
-  editPending = false,
   fetchItems,
   createItem,
   updateItem,
@@ -102,7 +111,7 @@ export default function MasterDataSection({
   const t = useTranslations("fixes");
   const confirm = useConfirm();
   const { accessToken } = useAdminAuth();
-  const hasActions = !!updateItem || !!removeItem || editPending;
+  const hasActions = !!updateItem || !!removeItem;
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,6 +132,14 @@ export default function MasterDataSection({
 
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const initialCreateForm = emptyForm(fields);
+  const createChanged = fields.some(
+    (field) => createForm[field.key] !== initialCreateForm[field.key],
+  );
+  const initialEditForm = editTarget ? itemForm(fields, editTarget) : {};
+  const editChanged =
+    !!editTarget &&
+    fields.some((field) => editForm[field.key] !== initialEditForm[field.key]);
 
   const applyFilters = (
     rows: Record<string, unknown>[],
@@ -177,7 +194,7 @@ export default function MasterDataSection({
   };
 
   const submitCreate = async () => {
-    if (!accessToken) return;
+    if (!accessToken || createSubmitting || !createChanged) return;
     setCreateError(null);
     if (
       !createRequired.validate(
@@ -207,19 +224,19 @@ export default function MasterDataSection({
   const openEdit = (item: Record<string, unknown>) => {
     editRequired.reset();
     setEditTarget(item);
-    const form: Record<string, unknown> = {};
-    for (const field of fields) {
-      form[field.key] =
-        field.type === "checkbox"
-          ? asBoolean(item[field.key], true)
-          : String(item[field.key] ?? "");
-    }
-    setEditForm(form);
+    setEditForm(itemForm(fields, item));
     setEditError(null);
   };
 
   const submitEdit = async () => {
-    if (!editTarget || !accessToken || !updateItem) return;
+    if (
+      !editTarget ||
+      !accessToken ||
+      !updateItem ||
+      editSubmitting ||
+      !editChanged
+    )
+      return;
     const id = recordId(editTarget, idField);
     if (id === null) {
       setEditError(t("missingRecordId", { field: idField }));
@@ -339,8 +356,8 @@ export default function MasterDataSection({
   const pagination = usePagination(visibleItems, JSON.stringify(filterValues));
 
   return (
-    <div>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+    <div className="axon-master-data">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <h4 className="me-auto self-center text-base font-semibold text-gray-800 dark:text-white/90">
           {title}
         </h4>
@@ -399,6 +416,7 @@ export default function MasterDataSection({
         </div>
       )}
 
+      <Pagination variant="header" pagination={pagination} disabled={loading} />
       <div className="overflow-x-auto">
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-gray-800">
@@ -445,21 +463,27 @@ export default function MasterDataSection({
                     {fields.map((field) => (
                       <TableCell
                         key={field.key}
-                        className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300"
+                        className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300"
                       >
-                        {field.type === "checkbox"
-                          ? asBoolean(item[field.key])
-                            ? "Yes"
-                            : "No"
-                          : String(item[field.key] ?? "—")}
+                        {field.type === "checkbox" ? (
+                          <StatusBadge
+                            active={asBoolean(item[field.key])}
+                            kind={
+                              field.key === "is_active" ? "active" : "yesNo"
+                            }
+                          />
+                        ) : (
+                          String(item[field.key] ?? "—")
+                        )}
                       </TableCell>
                     ))}
                     {hasActions && (
-                      <TableCell className="px-4 py-3 text-sm">
+                      <TableCell className="px-4 py-2 text-sm">
                         <div className="flex items-center gap-3">
-                          {(updateItem || editPending) && (
+                          {updateItem && (
                             <ActionIconButton
                               tone="edit"
+                              className="size-8 rounded-lg"
                               title="Edit"
                               onClick={() => openEdit(item)}
                             >
@@ -486,7 +510,7 @@ export default function MasterDataSection({
           </TableBody>
         </Table>
       </div>
-      <Pagination pagination={pagination} disabled={loading} />
+      <Pagination variant="footer" pagination={pagination} disabled={loading} />
 
       <Modal
         isOpen={createOpen}
@@ -511,7 +535,7 @@ export default function MasterDataSection({
           <Button
             className="w-full"
             onClick={submitCreate}
-            disabled={createSubmitting}
+            disabled={createSubmitting || !createChanged}
           >
             {createSubmitting ? "Saving…" : "Save"}
           </Button>
@@ -534,7 +558,7 @@ export default function MasterDataSection({
           <Button
             className="w-full"
             onClick={submitEdit}
-            disabled={editSubmitting || editPending}
+            disabled={editSubmitting || !editChanged}
           >
             {editSubmitting ? "Saving…" : "Save Changes"}
           </Button>
