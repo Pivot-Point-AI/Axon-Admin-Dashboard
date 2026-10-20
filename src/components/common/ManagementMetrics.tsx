@@ -5,6 +5,7 @@ export interface ManagementMetric {
   value: string | number;
   icon: ReactNode;
   tone: "brand" | "success" | "warning" | "purple" | "error";
+  description?: string;
 }
 interface ManagementMetricsProps {
   items: ManagementMetric[];
@@ -25,24 +26,35 @@ export default function ManagementMetrics({
   loading,
 }: ManagementMetricsProps) {
   return (
-    <div className="axon-management-metrics grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div
+      className={`axon-management-metrics grid grid-cols-1 gap-4 sm:grid-cols-2 ${items.length === 3 ? "xl:grid-cols-3" : "xl:grid-cols-4"}`}
+    >
       {items.map((item) => (
         <div
           key={item.label}
-          className="flex items-center gap-5 rounded-2xl border border-brand-100 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/3"
+          aria-busy={loading}
+          className="axon-metric relative flex min-h-28 min-w-0 items-start gap-3 overflow-hidden rounded-xl border border-brand-100/70 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
         >
           <div
-            className={`flex size-14 shrink-0 items-center justify-center rounded-2xl ${tones[item.tone]}`}
+            aria-hidden="true"
+            className={`flex size-10 shrink-0 items-center justify-center rounded-xl [&>svg]:size-5 ${tones[item.tone]}`}
           >
             {item.icon}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <p className="text-theme-xs font-medium text-gray-700 dark:text-gray-300">
               {item.label}
             </p>
-            <p className="mt-2 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white/90">
+            <p
+              className={`mt-2 font-semibold tracking-tight break-words text-gray-950 tabular-nums dark:text-white/90 ${typeof item.value === "string" && item.value.length > 9 ? "text-xl" : "text-2xl"}`}
+            >
               {loading ? "\u2014" : item.value}
             </p>
+            {item.description && (
+              <p className="mt-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
+                {item.description}
+              </p>
+            )}
           </div>
         </div>
       ))}

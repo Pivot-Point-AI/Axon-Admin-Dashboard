@@ -10,9 +10,18 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 
 export default function UserDropdown() {
   const t = useTranslations("userDropdown");
+  const profile = useTranslations("profile");
   const router = useRouter();
   const { logout, username, role } = useAdminAuth();
   const displayName = username || role || "Admin";
+  const roleLabel =
+    role === "SUPER_ADMIN"
+      ? profile("roles.superAdmin")
+      : role === "MANAGER"
+        ? profile("roles.manager")
+        : role === "VIEWER"
+          ? profile("roles.viewer")
+          : role;
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleDropdown = () => {
@@ -33,17 +42,24 @@ export default function UserDropdown() {
         onClick={toggleDropdown}
         className="dropdown-toggle flex items-center rounded-xl px-2 py-1 text-gray-800 transition-colors hover:bg-brand-50 dark:text-gray-200 dark:hover:bg-brand-500/10"
       >
-        <span className="size-8 shrink-0 overflow-hidden rounded-full ring-1 ring-gray-200 md:me-2 dark:ring-gray-700">
+        <span className="size-9 shrink-0 overflow-hidden rounded-full ring-2 ring-brand-50 md:me-2.5 dark:ring-gray-700">
           <Image
-            width={32}
-            height={32}
+            width={36}
+            height={36}
             src="/images/user/owner.png"
             alt="User"
           />
         </span>
 
-        <span className="me-1 hidden max-w-32 truncate text-theme-sm font-medium md:block">
-          {displayName}
+        <span className="me-3 hidden max-w-32 text-start md:block">
+          <span className="block truncate text-theme-xs font-semibold text-gray-900 dark:text-gray-100">
+            {displayName}
+          </span>
+          {roleLabel && (
+            <span className="block truncate text-theme-xs text-gray-500 dark:text-gray-400">
+              {roleLabel}
+            </span>
+          )}
         </span>
 
         <ChevronDownIcon

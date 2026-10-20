@@ -10,11 +10,13 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import useRequiredFields from "@/hooks/useRequiredFields";
 import { ApiError } from "@/lib/api/client";
 import type { ConfigResponse } from "@/lib/api/types";
+import { CheckCircleIcon, ListIcon, PieChartIcon } from "@/icons";
 import {
   configKind,
   isConfigDraft,
   rangeHint,
   validateConfigValue,
+  typeLabel,
 } from "./configurationFields";
 
 interface ConfigurationRowProps {
@@ -83,12 +85,31 @@ export default function ConfigurationRow({
   return (
     <TableRow className="transition-colors hover:bg-gray-50 dark:hover:bg-white/3">
       <TableCell className="max-w-md px-4 py-3">
-        <label
-          htmlFor={editing ? inputId : undefined}
-          className="font-mono text-sm font-medium break-words text-gray-800 dark:text-white/90"
-        >
-          {config.config_key}
-        </label>
+        <div className="flex items-center gap-3">
+          <span
+            aria-hidden="true"
+            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-theme-purple-500/10 text-theme-purple-500 dark:bg-theme-purple-500/15 dark:text-theme-purple-500"
+          >
+            {kind === "boolean" ? (
+              <CheckCircleIcon className="size-5" />
+            ) : kind === "integer" || kind === "number" ? (
+              <PieChartIcon className="size-5" />
+            ) : (
+              <ListIcon className="size-5" />
+            )}
+          </span>
+          <div className="min-w-0">
+            <label
+              htmlFor={editing ? inputId : undefined}
+              className="text-theme-xs font-semibold break-words text-gray-900 dark:text-white/90"
+            >
+              {config.config_key}
+            </label>
+            <span className="mt-1 block w-fit rounded-full bg-brand-50 px-2 py-0.5 text-theme-xs text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
+              {typeLabel(config, t)}
+            </span>
+          </div>
+        </div>
       </TableCell>
       <TableCell className="max-w-xs px-4 py-4 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
         {config.description || "—"}

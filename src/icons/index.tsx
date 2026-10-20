@@ -62,3 +62,7 @@ export { default as VideoIcon } from "./videos.svg";
 export { default as SunIcon } from "./sun.svg";
 export { default as MoonIcon } from "./moon.svg";
 export { default as GlobeIcon } from "./globe.svg";
+
+export { default as DatabaseIcon } from "./database.svg";
+export { default as ChartBarsIcon } from "./chart-bars.svg";
+export { default as PlayIcon } from "./play.svg";

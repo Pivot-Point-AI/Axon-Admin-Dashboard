@@ -92,7 +92,7 @@ export default function AnalyticsFilters({
               : undefined,
           });
       }}
-      className="border-y border-gray-100 py-4 dark:border-gray-800"
+      className="rounded-xl border border-brand-100/70 bg-white px-3 py-3 sm:px-4 dark:border-gray-800 dark:bg-gray-900"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">

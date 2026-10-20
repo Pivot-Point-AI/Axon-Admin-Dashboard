@@ -17,10 +17,7 @@ export default function LogsManager() {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs lg:p-6 dark:border-gray-800 dark:bg-white/3">
-      <div
-        role="tablist"
-        className="mb-6 flex gap-4 border-b border-gray-200 dark:border-gray-800"
-      >
+      <div role="tablist" className="axon-tabs mb-6 no-scrollbar">
         {tabs.map((tab) => (
           <button
             key={tab.key}

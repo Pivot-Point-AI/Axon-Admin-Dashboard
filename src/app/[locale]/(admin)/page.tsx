@@ -21,18 +21,18 @@ export default async function DashboardHome({
   const t = await getTranslations("dashboardAnalytics");
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-title-sm font-semibold text-gray-800 dark:text-white/90">
-            {t("pageTitle")}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t("pageSubtitle")}
-          </p>
-        </div>
-      </div>
-
-      <DashboardStats />
+      <DashboardStats
+        heading={
+          <div>
+            <h1 className="text-title-sm font-bold tracking-tight text-gray-950 dark:text-white/90">
+              {t("pageTitle")}
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {t("pageSubtitle")}
+            </p>
+          </div>
+        }
+      />
 
       <InstitutionLicenseOverview />
 

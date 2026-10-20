@@ -641,6 +641,115 @@ test("analytics language charts preserve wrapped counts, shares, and readable la
   );
 });
 
+test("analytics charts retain reported zeroes and sparse categories while ordering time buckets", () => {
+  const runtime = harness();
+  const { chartRows } = runtime.load(
+    "src/components/analytics/analyticsChartData.ts",
+  );
+  const hours = [
+    { hour: 18, count: 3 },
+    { hour: 0, count: 0 },
+    { hour: 9, count: 8 },
+  ];
+  const original = JSON.stringify(hours);
+  assert.deepEqual(
+    chartRows("peak_activity_hours", hours).map(({ key, count }) => [
+      key,
+      count,
+    ]),
+    [
+      ["0", 0],
+      ["9", 8],
+      ["18", 3],
+    ],
+  );
+  assert.equal(
+    JSON.stringify(hours),
+    original,
+    "Plotting must not reorder the original response or invent missing hours",
+  );
+  const days = [
+    { day_index: 4, day_name: "Friday", count: 6 },
+    { day_index: 0, day_name: "Monday", count: 1 },
+  ];
+  assert.deepEqual(
+    chartRows("activity_by_day_of_week", days).map((row) => row.key),
+    ["Monday", "Friday"],
+  );
+  const buckets = {
+    high: { count: 8, percentage: 80 },
+    low: { count: 0, percentage: 0 },
+    medium: { count: 2, percentage: 20 },
+  };
+  assert.deepEqual(
+    chartRows("intent_confidence_buckets", buckets).map(
+      ({ key, count, percentage }) => [key, count, percentage],
+    ),
+    [
+      ["low", 0, 0],
+      ["medium", 2, 20],
+      ["high", 8, 80],
+    ],
+  );
+});
+
+test("chart keyboard inspection skips missing values and follows RTL direction without changing the series", () => {
+  const runtime = harness();
+  const Chart = runtime.load(
+    "src/components/analytics/AnalyticsPeriodChart.tsx",
+  ).default;
+  const points = [
+    { label: "Today", value: 0 },
+    { label: "Missing", value: null },
+    { label: "This week", value: 14 },
+  ];
+  const original = JSON.stringify(points);
+  const render = () => runtime.render(Chart, { points });
+  const canvas = (tree) =>
+    elements(tree).find((element) => element.type === "canvas");
+  const tooltip = (tree) =>
+    elements(tree).find((element) => element.props.role === "status");
+  let tree = render();
+  canvas(tree).props.onFocus();
+  tree = render();
+  assert.equal(tooltip(tree).props.children[0].props.children, "Today");
+  assert.equal(tooltip(tree).props.children[1].props.children, "0");
+  const previousStyle = globalThis.getComputedStyle;
+  let direction = "ltr";
+  globalThis.getComputedStyle = () => ({ direction });
+  try {
+    canvas(tree).props.onKeyDown({
+      key: "ArrowRight",
+      currentTarget: {},
+      preventDefault() {},
+    });
+    tree = render();
+    assert.equal(tooltip(tree).props.children[0].props.children, "This week");
+    assert.equal(tooltip(tree).props.children[1].props.children, "14");
+    direction = "rtl";
+    canvas(tree).props.onKeyDown({
+      key: "ArrowRight",
+      currentTarget: {},
+      preventDefault() {},
+    });
+    tree = render();
+    assert.equal(tooltip(tree).props.children[0].props.children, "Today");
+    canvas(tree).props.onKeyDown({
+      key: "End",
+      currentTarget: {},
+      preventDefault() {},
+    });
+    tree = render();
+    assert.equal(tooltip(tree).props.children[0].props.children, "This week");
+    canvas(tree).props.onKeyDown({ key: "Escape" });
+    assert.equal(tooltip(render()), undefined);
+    assert.equal(JSON.stringify(points), original);
+  } finally {
+    if (previousStyle) globalThis.getComputedStyle = previousStyle;
+    else delete globalThis.getComputedStyle;
+  }
+});
+
 test("analytics detail tables keep nested diagnostics in aligned columns", () => {
   const runtime = harness();
   const { analyticsTableRows } = runtime.load(

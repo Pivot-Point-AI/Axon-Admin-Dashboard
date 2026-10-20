@@ -31,7 +31,7 @@ export default function Pagination({
       aria-label={t(variant === "header" ? "tableControls" : "label")}
       className={
         variant === "header"
-          ? "mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 dark:border-gray-800 dark:bg-gray-800/30"
+          ? "mb-2 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100/70 bg-white px-4 py-2.5 dark:border-gray-800 dark:bg-gray-900"
           : "mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4 dark:border-gray-800"
       }
     >

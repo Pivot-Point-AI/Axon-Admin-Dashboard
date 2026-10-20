@@ -28,14 +28,14 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   // Size Classes
   const sizeClasses = {
-    sm: "px-4 py-3 text-sm",
-    md: "px-5 py-3.5 text-sm",
+    sm: "min-h-10 px-4 py-2.5 text-sm",
+    md: "min-h-11 px-5 py-3 text-sm",
   };
 
   // Variant Classes
   const variantClasses = {
     primary:
-      "bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600 dark:bg-brand-500 dark:hover:bg-brand-400 disabled:bg-brand-300 dark:disabled:bg-brand-800",
+      "bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600 dark:bg-brand-500 dark:hover:bg-brand-400 disabled:bg-brand-300 dark:disabled:bg-brand-800 [&_svg]:text-current",
     outline:
       "bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/3 dark:hover:text-gray-300",
     danger:

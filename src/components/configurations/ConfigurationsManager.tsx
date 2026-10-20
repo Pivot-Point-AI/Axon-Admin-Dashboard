@@ -24,6 +24,7 @@ import {
 import type { ConfigResponse } from "@/lib/api/types";
 
 import ConfigurationRow from "./ConfigurationRow";
+import ConfigurationMetrics from "./ConfigurationMetrics";
 import { configKind, typeLabel, type ConfigKind } from "./configurationFields";
 
 export default function ConfigurationsManager() {
@@ -114,6 +115,7 @@ export default function ConfigurationsManager() {
 
   return (
     <div className="space-y-5">
+      <ConfigurationMetrics configs={configs} loading={loading || !!error} />
       <div className="axon-management-panel rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
           <div className="flex flex-1 flex-wrap gap-3">

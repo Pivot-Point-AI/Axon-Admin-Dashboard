@@ -84,22 +84,22 @@ export default async function QuickLinks() {
           <Link
             key={link.key}
             href={link.href}
-            className="axon-shortcut group flex min-w-0 flex-col gap-3 rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-brand-200 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-brand-700"
+            className="axon-shortcut group flex min-w-0 items-center gap-3 rounded-xl border border-brand-100 bg-white p-4 transition-colors hover:border-brand-200 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-brand-700"
           >
-            <div className="flex min-w-0 items-center gap-3">
-              <span
-                className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${iconTones[link.key]}`}
-              >
-                {link.icon}
-              </span>
-              <span className="min-w-0 flex-1 text-sm leading-5 font-semibold text-gray-800 dark:text-gray-100">
+            <span
+              className={`flex size-11 shrink-0 items-center justify-center rounded-xl [&>svg]:size-6 ${iconTones[link.key]}`}
+            >
+              {link.icon}
+            </span>
+            <div className="min-w-0 flex-1">
+              <span className="text-theme-xs leading-5 font-semibold text-gray-900 dark:text-gray-100">
                 {link.label}
               </span>
-              <ArrowRightIcon className="ms-auto size-4 shrink-0 text-gray-400 transition-colors group-hover:text-brand-500 rtl:rotate-180 dark:text-gray-500 dark:group-hover:text-brand-300" />
+              <p className="mt-1 text-theme-xs leading-5 text-gray-500 dark:text-gray-400">
+                {link.description}
+              </p>
             </div>
-            <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
-              {link.description}
-            </p>
+            <ArrowRightIcon className="ms-auto size-4 shrink-0 text-gray-400 transition-colors group-hover:text-brand-500 rtl:rotate-180 dark:text-gray-500 dark:group-hover:text-brand-300" />
           </Link>
         ))}
       </div>

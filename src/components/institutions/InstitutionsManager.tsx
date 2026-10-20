@@ -1,6 +1,7 @@
 "use client";
 
 import Pagination from "@/components/common/Pagination";
+import InstitutionMetrics from "./InstitutionMetrics";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import usePagination from "@/hooks/usePagination";
 import useRequiredFields from "@/hooks/useRequiredFields";
@@ -311,296 +312,329 @@ export default function InstitutionsManager() {
         </Button>
       </PageBreadcrumb>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+      <div className="mb-5">
+        <InstitutionMetrics
+          institutions={institutions}
+          loading={loading || !!error}
+        />
+      </div>
+      <div className="axon-institutions axon-management-panel rounded-xl border border-brand-100 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-gray-900">
         {error && (
           <div className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
             {error}
           </div>
         )}
 
-      <Pagination variant="header" pagination={pagination} disabled={loading} />
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader className="border-b border-gray-100 dark:border-gray-800">
-            <TableRow>
-              <TableCell
-                isHeader
-                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                Institution
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                Institution ID
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                License Expiry
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                {status("title")}
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                Actions
-              </TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {loading ? (
+        <Pagination
+          variant="header"
+          pagination={pagination}
+          disabled={loading}
+        />
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="border-b border-gray-100 dark:border-gray-800">
               <TableRow>
-                <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  Loading institutions…
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  Institution
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  Institution ID
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  License Expiry
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  {status("title")}
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                >
+                  Actions
                 </TableCell>
               </TableRow>
-            ) : institutions.length === 0 ? (
-              <TableRow>
-                <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  No institutions yet.
-                </TableCell>
-              </TableRow>
-            ) : (
-              pagination.items.map((institution) => (
-                <TableRow key={institution.institution_id}>
-                  <TableCell className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
-                    {institution.institution_name}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-2">
-                      <span className="break-all">
-                        {institution.institution_id}
-                      </span>
-                      <ActionIconButton
-                        type="button"
-                        aria-label={t("copy")}
-                        title={t("copy")}
-                        tone="copy"
-                        onClick={async () => {
-                          try {
-                            await navigator.clipboard.writeText(
-                              institution.institution_id,
-                            );
-                            notify({ kind: "success", message: t("copied") });
-                          } catch {
-                            notify({ kind: "error", message: t("copyFailed") });
-                          }
-                        }}
-                      >
-                        <CopyIcon className="size-4" />
-                      </ActionIconButton>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm">
-                    <span
-                      className={
-                        isExpired(institution.license_expires_at)
-                          ? "text-error-500"
-                          : "text-gray-600 dark:text-gray-300"
-                      }
-                    >
-                      {formatDate(institution.license_expires_at)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm">
-                    <StatusBadge active={institution.is_active ?? true} />
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm">
-                    <div className="flex items-center gap-3">
-                      <ActionIconButton
-                        tone="edit"
-                        title={t("editInstitution")}
-                        onClick={() => openEdit(institution)}
-                      >
-                        <PencilIcon />
-                      </ActionIconButton>
-                      <ActionIconButton
-                        tone="renew"
-                        title="Renew license"
-                        onClick={() => openRenew(institution)}
-                      >
-                        <TimeIcon />
-                      </ActionIconButton>
-                      <ActionIconButton
-                        tone="delete"
-                        title="Remove institution"
-                        disabled={deletingId === institution.institution_id}
-                        onClick={() => handleDelete(institution)}
-                      >
-                        <TrashBinIcon />
-                      </ActionIconButton>
-                    </div>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {loading ? (
+                <TableRow>
+                  <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    Loading institutions…
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <Pagination variant="footer" pagination={pagination} disabled={loading} />
+              ) : institutions.length === 0 ? (
+                <TableRow>
+                  <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    No institutions yet.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                pagination.items.map((institution) => (
+                  <TableRow key={institution.institution_id}>
+                    <TableCell className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
+                      <div className="flex items-center gap-3">
+                        <span
+                          aria-hidden="true"
+                          className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"
+                        >
+                          {institution.institution_name
+                            .slice(0, 1)
+                            .toUpperCase()}
+                        </span>
+                        {institution.institution_name}
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-2">
+                        <span className="break-all">
+                          {institution.institution_id}
+                        </span>
+                        <ActionIconButton
+                          type="button"
+                          aria-label={t("copy")}
+                          title={t("copy")}
+                          tone="copy"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(
+                                institution.institution_id,
+                              );
+                              notify({ kind: "success", message: t("copied") });
+                            } catch {
+                              notify({
+                                kind: "error",
+                                message: t("copyFailed"),
+                              });
+                            }
+                          }}
+                        >
+                          <CopyIcon className="size-4" />
+                        </ActionIconButton>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
+                      <span
+                        className={
+                          isExpired(institution.license_expires_at)
+                            ? "text-error-500"
+                            : "text-gray-600 dark:text-gray-300"
+                        }
+                      >
+                        {formatDate(institution.license_expires_at)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
+                      <StatusBadge active={institution.is_active ?? true} />
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
+                      <div className="flex items-center gap-3">
+                        <ActionIconButton
+                          tone="edit"
+                          title={t("editInstitution")}
+                          onClick={() => openEdit(institution)}
+                        >
+                          <PencilIcon />
+                        </ActionIconButton>
+                        <ActionIconButton
+                          tone="renew"
+                          title="Renew license"
+                          onClick={() => openRenew(institution)}
+                        >
+                          <TimeIcon />
+                        </ActionIconButton>
+                        <ActionIconButton
+                          tone="delete"
+                          title="Remove institution"
+                          disabled={deletingId === institution.institution_id}
+                          onClick={() => handleDelete(institution)}
+                        >
+                          <TrashBinIcon />
+                        </ActionIconButton>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <Pagination
+          variant="footer"
+          pagination={pagination}
+          disabled={loading}
+        />
 
-      {/* Create institution */}
-      <Modal isOpen={createOpen} onClose={closeCreate} className="max-w-md p-6">
-        <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
-          New Institution
-        </h4>
-        {createResult ? (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Institution created. Save this license key now — it won&apos;t be
-              shown again.
-            </p>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-800 dark:bg-gray-900">
-              <div className="text-gray-500 dark:text-gray-400">
-                Institution ID
+        {/* Create institution */}
+        <Modal
+          isOpen={createOpen}
+          onClose={closeCreate}
+          className="max-w-md p-6"
+        >
+          <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
+            New Institution
+          </h4>
+          {createResult ? (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Institution created. Save this license key now — it won&apos;t
+                be shown again.
+              </p>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-800 dark:bg-gray-900">
+                <div className="text-gray-500 dark:text-gray-400">
+                  Institution ID
+                </div>
+                <div className="font-mono mb-2 break-all text-gray-800 dark:text-white/90">
+                  {createResult.institutionId}
+                </div>
+                <div className="text-gray-500 dark:text-gray-400">
+                  License Key
+                </div>
+                <div className="font-mono break-all text-gray-800 dark:text-white/90">
+                  {createResult.licenseKey}
+                </div>
               </div>
-              <div className="font-mono mb-2 break-all text-gray-800 dark:text-white/90">
-                {createResult.institutionId}
-              </div>
-              <div className="text-gray-500 dark:text-gray-400">
-                License Key
-              </div>
-              <div className="font-mono break-all text-gray-800 dark:text-white/90">
-                {createResult.licenseKey}
-              </div>
-            </div>
-            <Button
-              className="w-full"
-              startIcon={
-                <CopyIcon className="size-5 text-brand-100 dark:text-white" />
-              }
-              onClick={copyCredentials}
-              disabled={copying}
-            >
-              {t("copyBoth")}
-            </Button>
-            {credentialsCopied && (
-              <Button className="w-full" onClick={closeCreate}>
-                {t("done")}
+              <Button
+                className="w-full"
+                startIcon={
+                  <CopyIcon className="size-5 text-brand-100 dark:text-white" />
+                }
+                onClick={copyCredentials}
+                disabled={copying}
+              >
+                {t("copyBoth")}
               </Button>
-            )}
-          </div>
-        ) : (
+              {credentialsCopied && (
+                <Button className="w-full" onClick={closeCreate}>
+                  {t("done")}
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="create-name">
+                  Institution Name <span className="text-error-500">*</span>
+                </Label>
+                <Input
+                  id="create-name"
+                  error={createRequired.invalid(createName)}
+                  value={createName}
+                  onChange={(e) => setCreateName(e.target.value)}
+                  placeholder="e.g. First National Bank"
+                />
+              </div>
+              <div>
+                <Label htmlFor="create-expiry">
+                  License Expires At <span className="text-error-500">*</span>
+                </Label>
+                <DateTimeField
+                  id="create-expiry"
+                  error={createRequired.invalid(createExpiry)}
+                  value={createExpiry}
+                  onChange={setCreateExpiry}
+                />
+              </div>
+              {createError && (
+                <p className="text-sm text-error-500">{createError}</p>
+              )}
+              <Button
+                className="w-full"
+                onClick={submitCreate}
+                disabled={createSubmitting}
+              >
+                {createSubmitting ? "Creating…" : "Create Institution"}
+              </Button>
+            </div>
+          )}
+        </Modal>
+
+        {/* Edit institution name */}
+        <Modal
+          isOpen={!!editTarget}
+          onClose={() => setEditTarget(null)}
+          className="max-w-md p-6"
+        >
+          <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
+            {t("editInstitution")}
+          </h4>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="create-name">
-                Institution Name <span className="text-error-500">*</span>
-              </Label>
+              <Label htmlFor="edit-name">Institution Name</Label>
               <Input
-                id="create-name"
-                error={createRequired.invalid(createName)}
-                value={createName}
-                onChange={(e) => setCreateName(e.target.value)}
-                placeholder="e.g. First National Bank"
+                id="edit-name"
+                error={editRequired.invalid(editName)}
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
               />
             </div>
+            <Switch
+              id="institution-active"
+              label={status(editActive ? "active" : "inactive")}
+              checked={editActive}
+              onChange={setEditActive}
+            />
+            {editError && <p className="text-sm text-error-500">{editError}</p>}
+            <Button
+              className="w-full"
+              onClick={submitEdit}
+              disabled={editSubmitting || !editChanged}
+            >
+              {editSubmitting ? "Saving…" : "Save Changes"}
+            </Button>
+          </div>
+        </Modal>
+
+        {/* Renew license */}
+        <Modal
+          isOpen={!!renewTarget}
+          onClose={() => setRenewTarget(null)}
+          className="max-w-md p-6"
+        >
+          <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
+            Renew License
+          </h4>
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="create-expiry">
-                License Expires At <span className="text-error-500">*</span>
+              <Label htmlFor="renew-expiry">
+                New License Expiry <span className="text-error-500">*</span>
               </Label>
               <DateTimeField
-                id="create-expiry"
-                error={createRequired.invalid(createExpiry)}
-                value={createExpiry}
-                onChange={setCreateExpiry}
+                id="renew-expiry"
+                error={renewRequired.invalid(renewExpiry)}
+                value={renewExpiry}
+                onChange={setRenewExpiry}
               />
             </div>
-            {createError && (
-              <p className="text-sm text-error-500">{createError}</p>
+            <Switch
+              id="license-active"
+              label={status(renewActive ? "active" : "inactive")}
+              checked={renewActive}
+              onChange={setRenewActive}
+            />
+            {renewError && (
+              <p className="text-sm text-error-500">{renewError}</p>
             )}
             <Button
               className="w-full"
-              onClick={submitCreate}
-              disabled={createSubmitting}
+              onClick={submitRenew}
+              disabled={renewSubmitting}
             >
-              {createSubmitting ? "Creating…" : "Create Institution"}
+              {renewSubmitting ? "Renewing…" : "Renew License"}
             </Button>
           </div>
-        )}
-      </Modal>
-
-      {/* Edit institution name */}
-      <Modal
-        isOpen={!!editTarget}
-        onClose={() => setEditTarget(null)}
-        className="max-w-md p-6"
-      >
-        <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
-          {t("editInstitution")}
-        </h4>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="edit-name">Institution Name</Label>
-            <Input
-              id="edit-name"
-              error={editRequired.invalid(editName)}
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-            />
-          </div>
-          <Switch
-            id="institution-active"
-            label={status(editActive ? "active" : "inactive")}
-            checked={editActive}
-            onChange={setEditActive}
-          />
-          {editError && <p className="text-sm text-error-500">{editError}</p>}
-          <Button
-            className="w-full"
-            onClick={submitEdit}
-            disabled={editSubmitting || !editChanged}
-          >
-            {editSubmitting ? "Saving…" : "Save Changes"}
-          </Button>
-        </div>
-      </Modal>
-
-      {/* Renew license */}
-      <Modal
-        isOpen={!!renewTarget}
-        onClose={() => setRenewTarget(null)}
-        className="max-w-md p-6"
-      >
-        <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
-          Renew License
-        </h4>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="renew-expiry">
-              New License Expiry <span className="text-error-500">*</span>
-            </Label>
-            <DateTimeField
-              id="renew-expiry"
-              error={renewRequired.invalid(renewExpiry)}
-              value={renewExpiry}
-              onChange={setRenewExpiry}
-            />
-          </div>
-          <Switch
-            id="license-active"
-            label={status(renewActive ? "active" : "inactive")}
-            checked={renewActive}
-            onChange={setRenewActive}
-          />
-          {renewError && <p className="text-sm text-error-500">{renewError}</p>}
-          <Button
-            className="w-full"
-            onClick={submitRenew}
-            disabled={renewSubmitting}
-          >
-            {renewSubmitting ? "Renewing…" : "Renew License"}
-          </Button>
-        </div>
-      </Modal>
-    </div>
-  </>
-);
+        </Modal>
+      </div>
+    </>
+  );
 }

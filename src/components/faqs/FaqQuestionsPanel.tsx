@@ -68,6 +68,7 @@ export default function FaqQuestionsPanel({
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
+            variant="outline"
             className="h-11"
             disabled={loading || busyId !== null}
             startIcon={
@@ -145,7 +146,7 @@ export default function FaqQuestionsPanel({
           disabled={loading}
         />
       )}
-      <div aria-busy={loading} className="space-y-3">
+      <div aria-busy={loading} className="space-y-1.5">
         {loading && items === null ? (
           <>
             <p role="status" className="sr-only">

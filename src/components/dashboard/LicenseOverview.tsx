@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
+import { CheckCircleIcon, CloseLineIcon, TimeIcon } from "@/icons";
 
 interface LicenseOverviewProps {
   active: number;
@@ -19,6 +20,7 @@ export default function LicenseOverview({
 }: LicenseOverviewProps) {
   const t = useTranslations("redesign");
   const status = useTranslations("status");
+  const format = useFormatter();
   // Expiring licenses are included in the existing active metric.
   const healthy = Math.max(0, active - expiringSoon);
   const total = active + expired + inactive;
@@ -27,21 +29,25 @@ export default function LicenseOverview({
       label: t("active"),
       value: healthy,
       color: "bg-success-500 dark:bg-success-400",
+      icon: CheckCircleIcon,
     },
     {
       label: t("expiring"),
       value: expiringSoon,
       color: "bg-warning-500 dark:bg-warning-400",
+      icon: TimeIcon,
     },
     {
       label: t("expired"),
       value: expired,
       color: "bg-error-500 dark:bg-error-400",
+      icon: CloseLineIcon,
     },
     {
       label: status("inactive"),
       value: inactive,
       color: "bg-gray-400 dark:bg-gray-500",
+      icon: null,
     },
   ];
   const activeAngle = total ? (healthy / total) * 360 : 0;
@@ -50,40 +56,65 @@ export default function LicenseOverview({
     ? ((healthy + expiringSoon + expired) / total) * 360
     : 0;
   return (
-    <div className="grid gap-5 lg:grid-cols-5">
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs lg:col-span-3 dark:border-gray-800 dark:bg-white/3">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">
+    <div className="grid gap-4 lg:grid-cols-2">
+      <section className="rounded-xl border border-brand-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <h3 className="text-base font-semibold text-gray-950 dark:text-white/90">
           {t("licenseOverview")}
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           {t("licenseSubtitle")}
         </p>
-        <div className="mt-7 space-y-5">
-          {rows.map((row) => (
-            <div key={row.label}>
-              <div className="mb-2 flex justify-between gap-3 text-sm text-gray-600 dark:text-gray-300">
-                <span>{row.label}</span>
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {loading ? "\u2014" : row.value}
+        <div className="mt-6 space-y-4">
+          {rows.map((row) => {
+            const Icon = row.icon;
+            return (
+              <div key={row.label} className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className={`flex size-8 shrink-0 items-center justify-center rounded-full text-white dark:text-white ${row.color}`}
+                >
+                  {Icon ? (
+                    <Icon className="size-5" />
+                  ) : (
+                    <span className="text-xl">−</span>
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="mb-2 text-theme-xs text-gray-700 dark:text-gray-300">
+                    {row.label}
+                  </p>
+                  <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                    <div
+                      className={`h-full rounded-full ${row.color}`}
+                      style={{
+                        width: `${total ? (row.value / total) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+                <span className="w-6 shrink-0 text-end text-theme-xs font-semibold text-gray-950 tabular-nums dark:text-gray-100">
+                  {loading ? "\u2014" : format.number(row.value)}
+                </span>
+                <span className="w-10 shrink-0 text-end text-theme-xs text-gray-500 tabular-nums dark:text-gray-400">
+                  {loading
+                    ? "\u2014"
+                    : format.number(total ? row.value / total : 0, {
+                        style: "percent",
+                        maximumFractionDigits: 0,
+                      })}
                 </span>
               </div>
-              <div className="h-3 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                <div
-                  className={`h-full rounded-full ${row.color}`}
-                  style={{ width: `${total ? (row.value / total) * 100 : 0}%` }}
-                />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs lg:col-span-2 dark:border-gray-800 dark:bg-white/3">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">
+      <section className="rounded-xl border border-brand-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <h3 className="text-base font-semibold text-gray-950 dark:text-white/90">
           {t("distribution")}
         </h3>
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-7">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-6">
           <div
-            className="relative size-40 shrink-0 rounded-full bg-gray-100 dark:bg-gray-800"
+            className="relative size-48 shrink-0 rounded-full bg-gray-100 2xl:size-52 dark:bg-gray-800"
             style={
               total
                 ? {
@@ -92,7 +123,7 @@ export default function LicenseOverview({
                 : undefined
             }
           >
-            <div className="absolute inset-6 flex flex-col items-center justify-center rounded-full bg-white dark:bg-gray-900">
+            <div className="absolute inset-8 flex flex-col items-center justify-center rounded-full bg-white dark:bg-gray-900">
               <span className="text-title-sm font-semibold text-gray-900 dark:text-white">
                 {loading ? "\u2014" : total}
               </span>

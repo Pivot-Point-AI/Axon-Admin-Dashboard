@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useAdminAuth } from "@/context/AdminAuthContext";
-import { RefreshIcon } from "@/icons";
+import { CalenderIcon, RefreshIcon } from "@/icons";
 import Button from "@/components/ui/button/Button";
 import { ApiError } from "@/lib/api/client";
 import { getDashboardOverview } from "@/lib/api/dashboardAnalytics";
@@ -12,7 +12,11 @@ import AnalyticsKpiCards from "./AnalyticsKpiCards";
 import EngagementOverview from "./EngagementOverview";
 import FlowOutcomes from "./FlowOutcomes";
 
-export default function DashboardStats() {
+interface DashboardStatsProps {
+  heading?: ReactNode;
+}
+
+export default function DashboardStats({ heading }: DashboardStatsProps = {}) {
   const { accessToken } = useAdminAuth();
   const t = useTranslations("dashboardAnalytics");
   const format = useFormatter();
@@ -53,24 +57,27 @@ export default function DashboardStats() {
   };
 
   return (
-    <section aria-label={t("title")} className="space-y-2">
+    <section aria-label={t("title")} className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white/90">
-              {t("snapshot")}
-            </h2>
+        {heading ?? (
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white/90">
+            {t("snapshot")}
+          </h2>
+        )}
         <div className="flex flex-wrap items-center gap-3">
           <p
             role="status"
-            className="text-theme-xs text-gray-400 dark:text-gray-500"
+            className="inline-flex items-center gap-2 rounded-lg border border-brand-100 bg-white px-3 py-2.5 text-theme-xs font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
           >
+            <CalenderIcon aria-hidden="true" className="size-4" />
             {loading
               ? t("updating")
               : updatedAt
                 ? t("updatedAt", {
                     time: format.dateTime(updatedAt, {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      second: "2-digit",
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
                     }),
                   })
                 : t("unavailable")}
@@ -78,7 +85,7 @@ export default function DashboardStats() {
           <Button
             size="sm"
             variant="primary"
-            className="gap-1.5 px-3 py-2 text-theme-xs !text-white"
+            className="gap-2 !text-white"
             onClick={refresh}
             disabled={loading}
             startIcon={
@@ -100,7 +107,7 @@ export default function DashboardStats() {
           {error}
         </div>
       )}
-      <div aria-busy={loading} className="space-y-4">
+      <div aria-busy={loading} className="space-y-6">
         <AnalyticsKpiCards overview={overview} />
         <EngagementOverview overview={overview} />
         <FlowOutcomes overview={overview} />

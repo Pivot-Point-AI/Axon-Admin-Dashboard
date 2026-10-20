@@ -30,7 +30,7 @@ export default function FaqSections({
     <ComponentCard title={t("sections")} description={t("sectionsHint")}>
       <nav
         aria-label={t("sectionNavigation")}
-        className="custom-scrollbar max-h-96 space-y-1 overflow-y-auto"
+        className="custom-scrollbar max-h-128 space-y-1 overflow-y-auto"
       >
         {options.map(({ name, count }) => (
           <button
@@ -56,7 +56,7 @@ export default function FaqSections({
           </button>
         ))}
       </nav>
-      <p className="mt-5 border-t border-gray-100 pt-4 text-theme-xs leading-5 text-gray-400 dark:border-gray-800 dark:text-gray-500">
+      <p className="mt-5 rounded-xl bg-brand-25 p-4 text-theme-xs leading-5 text-gray-500 dark:bg-brand-500/10 dark:text-gray-400">
         {t("sectionFootnote")}
       </p>
     </ComponentCard>

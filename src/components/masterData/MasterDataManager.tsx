@@ -174,11 +174,13 @@ export default function MasterDataManager() {
   ];
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
-      <div className="mb-4 flex flex-wrap gap-1 border-b border-gray-200 dark:border-gray-800">
+    <div className="space-y-5">
+      <div role="tablist" className="axon-tabs no-scrollbar">
         {tabs.map((tab) => (
           <button
             key={tab.key}
+            role="tab"
+            aria-selected={activeTab === tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
               "-mb-px border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",

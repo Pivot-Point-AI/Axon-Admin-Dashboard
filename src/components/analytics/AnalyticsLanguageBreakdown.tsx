@@ -50,12 +50,7 @@ export default function AnalyticsLanguageBreakdown({
     <ComponentCard
       title={t("design.languageTitle")}
       description={t("design.languageDescription")}
-      actions={
-        <GlobeIcon
-          aria-hidden="true"
-          className="hidden size-5 text-gray-400 sm:block dark:text-gray-500"
-        />
-      }
+      icon={<GlobeIcon />}
       className="h-full"
     >
       {total === 0 ? (
@@ -65,10 +60,10 @@ export default function AnalyticsLanguageBreakdown({
           <div className="flex flex-wrap items-center justify-center gap-6 py-3 sm:gap-8">
             <div
               aria-hidden="true"
-              className="relative flex size-40 shrink-0 items-center justify-center rounded-full"
+              className="relative flex size-44 shrink-0 items-center justify-center rounded-full 2xl:size-48"
               style={{ background: `conic-gradient(${gradient})` }}
             >
-              <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full bg-white dark:bg-gray-900">
+              <div className="absolute inset-6 flex flex-col items-center justify-center rounded-full bg-white dark:bg-gray-900">
                 <span className="text-title-sm font-semibold tracking-tight text-gray-900 tabular-nums dark:text-white">
                   {format.number(total)}
                 </span>
@@ -117,7 +112,7 @@ export default function AnalyticsLanguageBreakdown({
               ))}
             </div>
           </div>
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-4 text-theme-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-theme-purple-500/5 p-4 text-sm text-gray-500 dark:bg-theme-purple-500/10 dark:text-gray-400">
             <span>
               {t("design.languagesCount", {
                 count: rows.filter((row) => row.key !== "unknown").length,

@@ -1,6 +1,7 @@
 "use client";
 
 import Pagination from "@/components/common/Pagination";
+import MasterDataMetrics from "./MasterDataMetrics";
 import StatusBadge from "@/components/common/StatusBadge";
 import usePagination from "@/hooks/usePagination";
 import useRequiredFields from "@/hooks/useRequiredFields";
@@ -356,161 +357,188 @@ export default function MasterDataSection({
   const pagination = usePagination(visibleItems, JSON.stringify(filterValues));
 
   return (
-    <div className="axon-master-data">
-      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-        <h4 className="me-auto self-center text-base font-semibold text-gray-800 dark:text-white/90">
-          {title}
-        </h4>
-        {filters.length > 0 && (
-          <div className="flex flex-1 flex-wrap items-end gap-3 lg:justify-end">
-            {filters.map((filter, index) => {
-              const choices = filter.options(applyFilters(items, index));
-              return (
-                <div key={filter.key} className="min-w-44">
-                  <Label htmlFor={`filter-${filter.key}`}>{filter.label}</Label>
-                  <select
-                    id={`filter-${filter.key}`}
-                    value={filterValues[filter.key] ?? ""}
-                    onChange={(e) => changeFilter(index, e.target.value)}
-                    className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
-                  >
-                    <option value="">All</option>
-                    {choices.map((choice) => (
-                      <option key={choice} value={choice}>
-                        {choice}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              );
-            })}
-            {Object.values(filterValues).some(Boolean) && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setFilterValues({})}
-              >
-                Clear filters
-              </Button>
-            )}
+    <div className="axon-master-data space-y-5">
+      <MasterDataMetrics items={items} loading={loading || !!error} />
+      <div className="axon-management-panel rounded-xl border border-brand-100 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-gray-900">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <h4 className="me-auto self-center text-base font-semibold text-gray-800 dark:text-white/90">
+            {title}
+          </h4>
+          {filters.length > 0 && (
+            <div className="flex flex-1 flex-wrap items-end gap-3 lg:justify-end">
+              {filters.map((filter, index) => {
+                const choices = filter.options(applyFilters(items, index));
+                return (
+                  <div key={filter.key} className="min-w-44">
+                    <Label htmlFor={`filter-${filter.key}`}>
+                      {filter.label}
+                    </Label>
+                    <select
+                      id={`filter-${filter.key}`}
+                      value={filterValues[filter.key] ?? ""}
+                      onChange={(e) => changeFilter(index, e.target.value)}
+                      className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
+                    >
+                      <option value="">All</option>
+                      {choices.map((choice) => (
+                        <option key={choice} value={choice}>
+                          {choice}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
+              {Object.values(filterValues).some(Boolean) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setFilterValues({})}
+                >
+                  Clear filters
+                </Button>
+              )}
+            </div>
+          )}
+
+          <Button
+            size="sm"
+            startIcon={
+              <PlusIcon
+                aria-hidden="true"
+                className="block size-5 text-white dark:text-white"
+              />
+            }
+            onClick={openCreate}
+          >
+            Add {title.replace(/s$/, "")}
+          </Button>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
+            {error}
           </div>
         )}
 
-        <Button
-          size="sm"
-          startIcon={
-            <PlusIcon
-              aria-hidden="true"
-              className="block size-5 text-white dark:text-white"
-            />
-          }
-          onClick={openCreate}
-        >
-          Add {title.replace(/s$/, "")}
-        </Button>
-      </div>
-
-      {error && (
-        <div className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
-          {error}
-        </div>
-      )}
-
-      <Pagination variant="header" pagination={pagination} disabled={loading} />
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader className="border-b border-gray-100 dark:border-gray-800">
-            <TableRow>
-              {fields.map((field) => (
-                <TableCell
-                  key={field.key}
-                  isHeader
-                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                >
-                  {field.label}
-                </TableCell>
-              ))}
-              {hasActions && (
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                >
-                  Actions
-                </TableCell>
+        <Pagination
+          variant="header"
+          pagination={pagination}
+          disabled={loading}
+        />
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="border-b border-gray-100 dark:border-gray-800">
+              <TableRow>
+                {fields.map((field) => (
+                  <TableCell
+                    key={field.key}
+                    isHeader
+                    className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                  >
+                    {field.label}
+                  </TableCell>
+                ))}
+                {hasActions && (
+                  <TableCell
+                    isHeader
+                    className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                  >
+                    Actions
+                  </TableCell>
+                )}
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {loading ? (
+                <TableRow>
+                  <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    Loading…
+                  </TableCell>
+                </TableRow>
+              ) : visibleItems.length === 0 ? (
+                <TableRow>
+                  <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {items.length === 0
+                      ? "No entries yet."
+                      : "No entries match the selected filters."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                pagination.items.map((item, index) => {
+                  const id = recordId(item, idField);
+                  return (
+                    <TableRow key={id != null ? String(id) : index}>
+                      {fields.map((field) => (
+                        <TableCell
+                          key={field.key}
+                          className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300"
+                        >
+                          {field.type === "checkbox" ? (
+                            <StatusBadge
+                              active={asBoolean(item[field.key])}
+                              kind={
+                                field.key === "is_active" ? "active" : "yesNo"
+                              }
+                            />
+                          ) : field.key === fields[0].key ? (
+                            <div className="flex items-center gap-3">
+                              <span
+                                aria-hidden="true"
+                                className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-theme-xs font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"
+                              >
+                                {String(item[field.key] ?? "")
+                                  .slice(0, 1)
+                                  .toUpperCase()}
+                              </span>
+                              <span className="font-medium text-gray-800 dark:text-gray-200">
+                                {String(item[field.key] ?? "—")}
+                              </span>
+                            </div>
+                          ) : (
+                            String(item[field.key] ?? "—")
+                          )}
+                        </TableCell>
+                      ))}
+                      {hasActions && (
+                        <TableCell className="px-4 py-2 text-sm">
+                          <div className="flex items-center gap-3">
+                            {updateItem && (
+                              <ActionIconButton
+                                tone="edit"
+                                className="size-8 rounded-lg"
+                                title="Edit"
+                                onClick={() => openEdit(item)}
+                              >
+                                <PencilIcon />
+                              </ActionIconButton>
+                            )}
+                            {removeItem && (
+                              <ActionIconButton
+                                tone="delete"
+                                title="Remove"
+                                disabled={deletingId === Number(id)}
+                                onClick={() => handleDelete(item)}
+                              >
+                                <TrashBinIcon />
+                              </ActionIconButton>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })
               )}
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {loading ? (
-              <TableRow>
-                <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  Loading…
-                </TableCell>
-              </TableRow>
-            ) : visibleItems.length === 0 ? (
-              <TableRow>
-                <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  {items.length === 0
-                    ? "No entries yet."
-                    : "No entries match the selected filters."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              pagination.items.map((item, index) => {
-                const id = recordId(item, idField);
-                return (
-                  <TableRow key={id != null ? String(id) : index}>
-                    {fields.map((field) => (
-                      <TableCell
-                        key={field.key}
-                        className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300"
-                      >
-                        {field.type === "checkbox" ? (
-                          <StatusBadge
-                            active={asBoolean(item[field.key])}
-                            kind={
-                              field.key === "is_active" ? "active" : "yesNo"
-                            }
-                          />
-                        ) : (
-                          String(item[field.key] ?? "—")
-                        )}
-                      </TableCell>
-                    ))}
-                    {hasActions && (
-                      <TableCell className="px-4 py-2 text-sm">
-                        <div className="flex items-center gap-3">
-                          {updateItem && (
-                            <ActionIconButton
-                              tone="edit"
-                              className="size-8 rounded-lg"
-                              title="Edit"
-                              onClick={() => openEdit(item)}
-                            >
-                              <PencilIcon />
-                            </ActionIconButton>
-                          )}
-                          {removeItem && (
-                            <ActionIconButton
-                              tone="delete"
-                              title="Remove"
-                              disabled={deletingId === Number(id)}
-                              onClick={() => handleDelete(item)}
-                            >
-                              <TrashBinIcon />
-                            </ActionIconButton>
-                          )}
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+            </TableBody>
+          </Table>
+        </div>
+        <Pagination
+          variant="footer"
+          pagination={pagination}
+          disabled={loading}
+        />
       </div>
-      <Pagination variant="footer" pagination={pagination} disabled={loading} />
 
       <Modal
         isOpen={createOpen}

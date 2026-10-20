@@ -62,7 +62,7 @@ export default function RecentInstitutionsTable() {
   }, [accessToken]);
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+    <div className="axon-dashboard-institutions rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -73,7 +73,7 @@ export default function RecentInstitutionsTable() {
           </p>
         </div>
         <Link
-          className="rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+          className="rounded-lg border border-brand-200 bg-white px-4 py-2.5 text-theme-xs font-medium text-brand-600 hover:bg-brand-50 dark:border-brand-700 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-500/10"
           href="/institutions"
         >
           Manage all
@@ -86,6 +86,12 @@ export default function RecentInstitutionsTable() {
         <Table>
           <TableHeader className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
             <TableRow>
+              <TableCell
+                isHeader
+                className="w-12 px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
+                {t("rowNumber")}
+              </TableCell>
               <TableCell
                 isHeader
                 className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
@@ -109,21 +115,30 @@ export default function RecentInstitutionsTable() {
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
             {loading ? (
               <TableRow>
-                <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                <TableCell
+                  colSpan={4}
+                  className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400"
+                >
                   Loading…
                 </TableCell>
               </TableRow>
             ) : institutions.length === 0 ? (
               <TableRow>
-                <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                <TableCell
+                  colSpan={4}
+                  className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400"
+                >
                   No institutions yet.
                 </TableCell>
               </TableRow>
             ) : (
-              institutions.map((institution) => {
+              institutions.map((institution, index) => {
                 const status = licenseStatus(institution.license_expires_at);
                 return (
                   <TableRow key={institution.institution_id}>
+                    <TableCell className="px-4 py-3 text-theme-xs text-gray-500 tabular-nums dark:text-gray-400">
+                      {index + 1}
+                    </TableCell>
                     <TableCell className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
                       {institution.institution_name}
                     </TableCell>

@@ -6,7 +6,8 @@ import {
   ArrowUpIcon,
   ChatIcon,
   GroupIcon,
-  UserCircleIcon,
+  UserIcon,
+  DatabaseIcon,
 } from "@/icons";
 import type { DashboardOverviewResponse } from "@/lib/api/types";
 import AnalyticsMetricCard from "./AnalyticsMetricCard";
@@ -31,31 +32,31 @@ export default function AnalyticsKpiCards({
     {
       key: "totalSessions",
       value: overview?.total_sessions,
-      icon: ChatIcon,
-      tone: "brand",
+      icon: DatabaseIcon,
+      tone: "purple",
     },
     {
       key: "dailyActiveUsers",
       value: overview?.daily_active_users.count,
-      icon: UserCircleIcon,
-      tone: "brand",
+      icon: UserIcon,
+      tone: "success",
     },
     {
       key: "activeSessions",
       value: overview?.active_sessions,
       icon: ChatIcon,
-      tone: "success",
+      tone: "warning",
     },
   ] as const;
   return (
-    <div className="grid grid-cols-1 gap-3 2xsm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
         <AnalyticsMetricCard
           key={card.key}
           label={t(card.key)}
           badge={
             card.key === "totalUsers" || card.key === "totalSessions" ? (
-              <span className="rounded-md bg-gray-100 px-2 py-0.5 text-theme-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+              <span className="shrink-0 rounded-md bg-gray-50 px-1.5 py-0.5 text-theme-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                 {t("allTime")}
               </span>
             ) : undefined

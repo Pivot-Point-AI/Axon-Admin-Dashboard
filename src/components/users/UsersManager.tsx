@@ -304,7 +304,9 @@ export default function UsersManager() {
                       {user.email}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm">
-                      <span className="text-theme-xs font-medium text-gray-700 dark:text-gray-300">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1.5 text-theme-xs font-medium ${user.role === "SUPER_ADMIN" ? "bg-theme-purple-500/10 text-theme-purple-500 dark:bg-theme-purple-500/20 dark:text-theme-purple-500" : user.role === "MANAGER" ? "bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400" : "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"}`}
+                      >
                         {user.role}
                       </span>
                     </TableCell>

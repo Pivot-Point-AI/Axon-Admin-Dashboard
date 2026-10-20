@@ -34,44 +34,34 @@
   --text-theme-xs--line-height: 18px;
 
   --color-current: currentColor;
-  --color-surface-app: #f8fafc;
+  --color-surface-app: #f3f8ff;
   --color-surface-dark: #0a0c10;
   --color-surface-panel: #0f1219;
-  --color-sidebar-navy: #122d4e;
-  --color-sidebar-dark: #041126;
+  --color-sidebar-navy: #102d4e;
+  --color-sidebar-dark: #0c223d;
   --color-slate-body: #64748b;
   --color-slate-heading: #0f172a;
   --color-slate-muted: #94a3b8;
   --color-slate-border: #475569;
-  --color-action-blue: #0047ab;
+  --color-action-blue: #1558ff;
   --color-action-dark: #3b82f6;
-  --color-surface-app: #f8fafc;
-  --color-surface-dark: #0a0c10;
-  --color-surface-panel: #0f1219;
-  --color-sidebar-navy: #122d4e;
-  --color-sidebar-dark: #041126;
-  --color-slate-body: #64748b;
-  --color-slate-heading: #0f172a;
-  --color-slate-muted: #94a3b8;
-  --color-slate-border: #475569;
-  --color-action-blue: #0047ab;
-  --color-action-dark: #3b82f6;
+
   --color-transparent: transparent;
   --color-white: #ffffff;
   --color-black: #101828;
 
-  --color-brand-25: #f5f9fd;
-  --color-brand-50: #eaf3fb;
-  --color-brand-100: #d5e7f6;
-  --color-brand-200: #adceed;
-  --color-brand-300: #7bafdc;
-  --color-brand-400: #3d87c5;
-  --color-brand-500: #005099;
-  --color-brand-600: #004480;
-  --color-brand-700: #00366a;
-  --color-brand-800: #002b55;
-  --color-brand-900: #002044;
-  --color-brand-950: #00162f;
+  --color-brand-25: #f5f9ff;
+  --color-brand-50: #eaf2ff;
+  --color-brand-100: #e0eafb;
+  --color-brand-200: #c1d4ff;
+  --color-brand-300: #91b5ff;
+  --color-brand-400: #367dff;
+  --color-brand-500: #1558ff;
+  --color-brand-600: #0648eb;
+  --color-brand-700: #073ac1;
+  --color-brand-800: #103299;
+  --color-brand-900: #122b73;
+  --color-brand-950: #0c1d4e;
 
   --color-blue-light-25: #f5fbff;
   --color-blue-light-50: #f0f9ff;
@@ -619,202 +609,6 @@ pre[class*="language-"].line-numbers {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
-/* Axon uses the banking reference's blue shell with its own data and identity. */
-.axon-admin {
-  background: var(--color-gray-100);
-}
-.dark .axon-admin {
-  background: var(--color-gray-950);
-}
-.axon-sidebar {
-  background: var(--color-brand-500);
-  border-color: var(--color-brand-600);
-  box-shadow: var(--shadow-theme-sm);
-}
-.dark .axon-sidebar {
-  background: var(--color-brand-800);
-  border-color: var(--color-brand-700);
-}
-.axon-sidebar .menu-item {
-  min-height: 3rem;
-  margin-block: 0.25rem;
-  border-radius: 0.5rem;
-}
-.axon-sidebar .menu-item-inactive,
-.axon-sidebar .menu-item-icon-inactive {
-  color: var(--color-white);
-}
-.axon-sidebar .menu-item-active {
-  background: color-mix(in srgb, var(--color-white) 8%, transparent);
-  color: var(--color-success-300);
-  box-shadow: none;
-}
-.axon-sidebar .menu-item-icon-active {
-  color: var(--color-success-300);
-}
-.axon-sidebar .menu-item-inactive:hover {
-  color: var(--color-white);
-  background: color-mix(in srgb, var(--color-white) 12%, transparent);
-}
-.axon-header {
-  min-height: 5rem;
-  background: var(--color-white);
-}
-.dark .axon-header {
-  background: var(--color-gray-900);
-}
-.axon-header > div > div:first-child > button:first-child {
-  background: var(--color-brand-500);
-  color: var(--color-white);
-  border-color: var(--color-brand-500);
-}
-.dark .axon-header > div > div:first-child > button:first-child {
-  background: var(--color-brand-600);
-}
-.axon-stat {
-  min-height: 8rem;
-  border: 0;
-  box-shadow: none;
-}
-.axon-stat-icon {
-  order: 1;
-  margin-inline-start: auto;
-  background: transparent;
-}
-.axon-stat:nth-child(2) .axon-stat-icon {
-  color: var(--color-success-500);
-  background: transparent;
-}
-.axon-stat:nth-child(3) .axon-stat-icon {
-  color: var(--color-warning-500);
-  background: transparent;
-}
-.axon-stat:nth-child(4) .axon-stat-icon {
-  color: var(--color-error-500);
-  background: transparent;
-}
-.dark .axon-stat-icon {
-  background: transparent;
-}
-.axon-shortcut {
-  background: var(--color-white);
-  border-color: var(--color-gray-200);
-  transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
-}
-.dark .axon-shortcut {
-  background: var(--color-gray-900);
-  border-color: var(--color-gray-800);
-}
-.axon-shortcut:hover {
-  background: var(--color-brand-50);
-  border-color: var(--color-brand-200);
-  box-shadow: var(--shadow-theme-xs);
-}
-.dark .axon-shortcut:hover {
-  background: var(--color-brand-950);
-  border-color: var(--color-brand-700);
-}
-.axon-auth-panel {
-  background: radial-gradient(
-    ellipse at 50% 38%,
-    var(--color-brand-700),
-    var(--color-brand-900) 75%
-  );
-}
-.dark .axon-auth-panel {
-  background: radial-gradient(
-    ellipse at 50% 38%,
-    var(--color-brand-800),
-    var(--color-brand-950) 75%
-  );
-}
-.axon-signin {
-  background: var(--color-white);
-}
-.dark .axon-signin {
-  background: var(--color-gray-950);
-}
-.axon-login-card {
-  margin-block: 2rem;
-}
-.axon-login-card h1 {
-  font-size: var(--text-title-sm);
-  line-height: var(--text-title-sm--line-height);
-  text-align: center;
-}
-.axon-login-card input {
-  border-radius: 0;
-  border-width: 0 0 1px;
-  box-shadow: none;
-}
-.axon-login-card input:focus {
-  border-color: var(--color-brand-500);
-  outline: none;
-}
-.axon-management-heading > div {
-  margin-block-end: 0;
-}
-.axon-management-heading h2 {
-  font-size: var(--text-title-sm);
-  line-height: var(--text-title-sm--line-height);
-  color: var(--color-gray-900);
-  font-weight: 500;
-}
-.dark .axon-management-heading h2 {
-  color: var(--color-white);
-}
-.axon-management-panel {
-  box-shadow: none;
-  border-color: transparent;
-}
-.dark .axon-management-panel {
-  border-color: var(--color-gray-800);
-}
-.axon-management-panel table {
-  min-width: 46rem;
-}
-.axon-management-panel thead {
-  background: transparent;
-  border-block-end: 1px solid var(--color-gray-300);
-}
-.dark .axon-management-panel thead {
-  background: transparent;
-  border-color: var(--color-gray-700);
-}
-.axon-management-panel thead th {
-  padding-block: 1rem;
-  text-transform: none;
-  letter-spacing: normal;
-  font-size: var(--text-theme-sm);
-  color: var(--color-brand-700);
-}
-.dark .axon-management-panel thead th {
-  color: var(--color-brand-200);
-}
-.axon-management-panel tbody td {
-  padding-block: 1rem;
-}
-.axon-management-panel tbody tr:hover {
-  background: var(--color-gray-50);
-}
-.dark .axon-management-panel tbody tr:hover {
-  background: var(--color-gray-800);
-}
-.axon-user-avatar-0 {
-  background: var(--color-brand-400);
-}
-.axon-user-avatar-1 {
-  background: var(--color-theme-purple-500);
-}
-.axon-user-avatar-2 {
-  background: var(--color-theme-pink-500);
-}
-.axon-user-avatar-3 {
-  background: var(--color-success-500);
-}
 .axon-log-history > div:nth-child(2) {
   margin-block-end: 1.5rem;
 }
@@ -903,69 +697,203 @@ input[role="switch"]:checked {
   }
 }
 
-/* Compact typography and consistent, distinct action colors. */
+/* Shared admin presentation. All values come from the application theme. */
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 .axon-admin {
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-25),
+    var(--color-surface-app)
+  );
+  color: var(--color-gray-900);
   font-size: var(--text-theme-sm);
-  line-height: 1.6;
+  line-height: 1.5;
 }
-.axon-admin h2,
-.axon-admin h3,
-.axon-admin h4 {
-  letter-spacing: -0.025em;
+.dark .axon-admin {
+  background: var(--color-surface-dark);
+  color: var(--color-gray-200);
 }
-.axon-admin table {
-  font-variant-numeric: tabular-nums;
+.axon-admin :is(h1, h2, h3, h4) {
+  letter-spacing: -0.03em;
 }
-.axon-management-panel thead th {
-  font-size: var(--text-theme-xs);
-  font-weight: 600;
-  color: var(--color-gray-600);
+.axon-sidebar {
+  background: linear-gradient(
+    155deg,
+    var(--color-sidebar-navy),
+    var(--color-sidebar-dark)
+  );
+  border-color: var(--color-sidebar-navy);
+  isolation: isolate;
 }
-.dark .axon-management-panel thead th {
-  color: var(--color-gray-300);
+.dark .axon-sidebar {
+  border-color: var(--color-sidebar-dark);
 }
-.axon-management-panel tbody td {
-  padding-block: 0.875rem;
+.axon-sidebar::before,
+.axon-sidebar::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  inline-size: 210%;
+  block-size: 35%;
+  inset-inline-start: -55%;
+  inset-block-end: -10%;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--color-brand-400) 12%, transparent);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--color-brand-500) 22%, transparent),
+    transparent 70%
+  );
+  transform: rotate(-30deg);
 }
-.axon-sidebar nav {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.axon-sidebar::after {
+  inset-block-end: 15%;
+  inset-inline-start: -65%;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--color-brand-500) 12%, transparent),
+    transparent 70%
+  );
 }
-.axon-sidebar nav::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+[dir="rtl"] .axon-sidebar::before,
+[dir="rtl"] .axon-sidebar::after {
+  transform: rotate(30deg);
 }
 .axon-sidebar .menu-item {
+  min-block-size: 2.5rem;
+  padding-block: 0.625rem;
   font-size: var(--text-theme-sm);
   font-weight: 500;
-}
-.axon-action {
-  display: inline-flex;
-  width: 2rem;
-  height: 2rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.5rem;
   transition:
     background-color 160ms ease,
-    color 160ms ease,
-    box-shadow 160ms ease;
+    color 160ms ease;
+}
+.axon-sidebar .menu-item-inactive,
+.axon-sidebar .menu-item-icon-inactive {
+  color: var(--color-gray-100);
+}
+.axon-sidebar .menu-item-active {
+  background: linear-gradient(
+    105deg,
+    var(--color-brand-600),
+    var(--color-brand-400)
+  );
+  color: var(--color-white);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-white) 15%, transparent),
+    var(--shadow-theme-sm);
+}
+.axon-sidebar .menu-item-icon-active {
+  color: var(--color-white);
+}
+.axon-sidebar .menu-item-inactive:hover {
+  background: color-mix(in srgb, var(--color-white) 7%, transparent);
+  color: var(--color-white);
+}
+.axon-sidebar .menu-item svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+.axon-page :where(.rounded-2xl.border.bg-white) {
+  border-radius: 0.875rem;
+  border-color: var(--color-brand-100);
+  box-shadow: none;
+}
+.dark .axon-page :where(.rounded-2xl.border.bg-white) {
+  border-color: var(--color-gray-800);
+}
+.axon-management-panel {
+  min-inline-size: 0;
+}
+.axon-table {
+  font-variant-numeric: tabular-nums;
+}
+.axon-table thead {
+  background: linear-gradient(
+    100deg,
+    var(--color-gray-50),
+    var(--color-brand-25)
+  );
+  border-block-end: 0;
+}
+.dark .axon-table thead {
+  background: var(--color-gray-800);
+}
+.axon-table thead th {
+  padding-block: 0.75rem;
+  color: var(--color-gray-500);
+  font-weight: 500;
+  font-size: var(--text-theme-xs);
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+.dark .axon-table thead th {
+  color: var(--color-gray-400);
+}
+.axon-table thead th:first-child {
+  border-start-start-radius: 0.5rem;
+  border-end-start-radius: 0.5rem;
+}
+.axon-table thead th:last-child {
+  border-start-end-radius: 0.5rem;
+  border-end-end-radius: 0.5rem;
+}
+.axon-table tbody td {
+  padding-block: 0.875rem;
+}
+.axon-institutions .axon-table tbody td {
+  padding-block: 0.375rem;
+}
+.axon-master-data .axon-table tbody td {
+  padding-block: 0.5rem;
+}
+.axon-table tbody tr {
+  border-block-end: 1px solid var(--color-gray-100);
+  transition: background-color 160ms ease;
+}
+.dark .axon-table tbody tr {
+  border-color: var(--color-gray-800);
+}
+.axon-table tbody tr:hover {
+  background: var(--color-brand-25);
+}
+.dark .axon-table tbody tr:hover {
+  background: color-mix(in srgb, var(--color-brand-500) 5%, transparent);
+}
+.axon-user-avatar-0 {
+  background: linear-gradient(
+    135deg,
+    var(--color-blue-light-600),
+    var(--color-brand-400)
+  );
+}
+.axon-user-avatar-1 {
+  background: linear-gradient(
+    135deg,
+    var(--color-theme-purple-500),
+    var(--color-brand-400)
+  );
+}
+.axon-user-avatar-2 {
+  background: var(--color-theme-pink-500);
+}
+.axon-user-avatar-3 {
+  background: var(--color-success-500);
+}
+.axon-action {
+  padding: 0.375rem;
+  line-height: 1;
+  overflow: visible;
 }
 .axon-action svg {
-  width: 1.25rem;
-  height: 1.25rem;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
 }
-.axon-action:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-/* Keep SVG viewboxes intact inside compact flex controls. */
 button > svg,
 button > span > svg,
 a.menu-item > svg,
@@ -973,68 +901,78 @@ a.menu-item > svg,
   flex-shrink: 0;
   overflow: visible;
 }
-.axon-action {
-  padding: 0.375rem;
-  line-height: 1;
-  overflow: visible;
+.axon-shortcut {
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
 }
-
-/* Keep validation visible on inputs, selects, and custom date pickers. */
-/* Reference palette and restrained dashboard surfaces. */
-.axon-admin { background: var(--color-surface-app); color: var(--color-slate-heading); }
-.dark .axon-admin { background: var(--color-surface-dark); color: var(--color-gray-200); }
-.axon-sidebar { background: var(--color-sidebar-navy); border-color: var(--color-sidebar-navy); box-shadow: none; }
-.dark .axon-sidebar { background: var(--color-sidebar-dark); border-color: var(--color-sidebar-dark); }
-.axon-sidebar .menu-item { min-height: 2.5rem; margin-block: 0; padding-block: 0.5rem; font-weight: 400; }
-.axon-sidebar .menu-item-active { background: color-mix(in srgb, var(--color-action-dark) 25%, transparent); color: var(--color-white); font-weight: 600; }
-.axon-sidebar .menu-item-icon-active { color: var(--color-white); }
-.axon-sidebar .menu-item svg { width: 1.25rem; height: 1.25rem; }
-.axon-header { min-height: 4.25rem; }
-.axon-header-reference { min-height: 4rem; }
-.dark .axon-header { background: var(--color-surface-panel); border-color: var(--color-slate-border); }
-.axon-header > div > div:first-child > button:first-child { background: transparent; border-color: var(--color-gray-200); color: var(--color-brand-500); }
-.dark .axon-header > div > div:first-child > button:first-child { background: transparent; border-color: var(--color-gray-700); color: var(--color-slate-muted); }
-.axon-header input { background: var(--color-surface-app); box-shadow: none; }
-.dark .axon-header input { background: var(--color-gray-dark); }
-.axon-admin > div > div > .space-y-6 > h2,
-.axon-management-heading h2 { font-weight: 600; letter-spacing: -0.035em; }
-.axon-management-heading > div { flex-direction: column; align-items: flex-start; gap: 0.375rem; }
-.axon-management-panel { border-color: var(--color-gray-200); border-radius: 0.75rem; box-shadow: var(--shadow-theme-xs); }
-.dark .axon-management-panel { background: var(--color-surface-panel); border-color: var(--color-gray-700); }
-.axon-management-panel thead { background: var(--color-surface-app); border-block-end: 0; }
-.dark .axon-management-panel thead { background: var(--color-gray-dark); border-color: var(--color-gray-700); }
-.axon-management-panel thead th { padding-block: 0.875rem; font-size: var(--text-theme-xs); color: var(--color-slate-body); font-weight: 600; }
-.dark .axon-management-panel thead th { color: var(--color-slate-muted); }
-.axon-management-panel tbody td { padding-block: 1.125rem; }
-.axon-management-panel input[type="search"] { background: var(--color-white); }
-.dark .axon-management-panel input[type="search"] { background: var(--color-surface-panel); }
-.axon-management-metrics > div { border-color: var(--color-gray-200); border-radius: 0.5rem; padding: 1.25rem; gap: 1rem; box-shadow: none; }
-.axon-management-metrics > div > div:first-child { width: 3rem; height: 3rem; border-radius: 0.625rem; }
-.axon-management-metrics svg { width: 1.75rem; height: 1.75rem; }
-.dark .axon-management-metrics > div { background: var(--color-surface-panel); border-color: var(--color-gray-700); }
-.axon-stat { min-height: 9rem; border: 1px solid var(--color-gray-200); border-radius: 0.5rem; align-items: flex-start; }
-.axon-stat-icon { order: 0; margin-inline-start: 0; background: var(--color-brand-50); border-radius: 0.5rem; }
-.axon-stat-icon svg { width: 1.75rem; height: 1.75rem; }
-.axon-stat:nth-child(2) .axon-stat-icon { background: var(--color-success-50); }
-.axon-stat:nth-child(3) .axon-stat-icon { background: var(--color-warning-50); }
-.axon-stat:nth-child(4) .axon-stat-icon { background: var(--color-error-50); }
-.dark .axon-stat { background: var(--color-surface-panel); border-color: var(--color-gray-700); }
-.dark .axon-stat-icon { background: var(--color-brand-500); }
-.dark .axon-stat:nth-child(2) .axon-stat-icon { background: color-mix(in srgb, var(--color-success-500) 18%, transparent); }
-.dark .axon-stat:nth-child(3) .axon-stat-icon { background: color-mix(in srgb, var(--color-warning-500) 18%, transparent); }
-.dark .axon-stat:nth-child(4) .axon-stat-icon { background: color-mix(in srgb, var(--color-error-500) 18%, transparent); }
-.axon-admin button.bg-brand-500 { background: var(--color-action-blue); }
-.dark .axon-admin button.bg-brand-500 { background: var(--color-action-dark); }
-.axon-auth-panel { background: var(--color-sidebar-navy); }
-.dark .axon-auth-panel { background: var(--color-sidebar-dark); }
-.axon-auth-panel::before { content: ""; position: absolute; inset: 0; opacity: 0.25; background-image: linear-gradient(var(--color-slate-border) 1px, transparent 1px), linear-gradient(90deg, var(--color-slate-border) 1px, transparent 1px); background-size: 6rem 6rem; mask-image: linear-gradient(135deg, transparent 35%, black); pointer-events: none; }
-.axon-login-card { border: 0; background: transparent; box-shadow: none; padding: 0; }
-.dark .axon-login-card { background: transparent; }
-.axon-login-card h1 { text-align: start; font-weight: 600; }
-.axon-login-card input { border-width: 1px; border-radius: 0.75rem; box-shadow: var(--shadow-theme-xs); }
-
+.axon-shortcut:hover {
+  background: var(--color-brand-25);
+}
+.dark .axon-shortcut:hover {
+  background: color-mix(in srgb, var(--color-brand-500) 8%, transparent);
+}
+.axon-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: 0.25rem;
+  padding: 0.375rem;
+  border: 1px solid var(--color-brand-100);
+  border-radius: 0.75rem;
+  background: var(--color-white);
+}
+.dark .axon-tabs {
+  border-color: var(--color-gray-800);
+  background: var(--color-gray-900);
+}
+.axon-tabs > button {
+  border: 0;
+  border-radius: 0.5rem;
+  margin: 0;
+  white-space: nowrap;
+}
+.axon-tabs > button[aria-selected="true"] {
+  background: var(--color-brand-50);
+  color: var(--color-brand-600);
+}
+.dark .axon-tabs > button[aria-selected="true"] {
+  background: color-mix(in srgb, var(--color-brand-500) 15%, transparent);
+  color: var(--color-brand-300);
+}
+.axon-auth-panel {
+  background: linear-gradient(
+    145deg,
+    var(--color-sidebar-navy),
+    var(--color-sidebar-dark)
+  );
+}
+.dark .axon-auth-panel {
+  background: var(--color-sidebar-dark);
+}
+.axon-signin {
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-25),
+    var(--color-white)
+  );
+}
+.dark .axon-signin {
+  background: var(--color-surface-dark);
+}
+.axon-login-card {
+  margin-block: 2rem;
+}
+.axon-login-card h1 {
+  font-size: var(--text-title-sm);
+  line-height: var(--text-title-sm--line-height);
+  font-weight: 600;
+}
 input[aria-invalid="true"],
 select[aria-invalid="true"],
 button[data-invalid="true"] {
   @apply border-error-500 focus:border-error-500 focus:ring-error-500/20 dark:border-error-500 dark:focus:border-error-400;
+}
+
+.axon-dashboard-institutions .axon-table tbody td {
+  padding-block: 0.5rem;
 }

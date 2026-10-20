@@ -3,7 +3,7 @@
 import { useFormatter, useTranslations } from "next-intl";
 import {
   ArrowRightIcon,
-  BoltIcon,
+  PlayIcon,
   CheckCircleIcon,
   CloseLineIcon,
 } from "@/icons";
@@ -37,7 +37,6 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
               {t("allTime")}
             </span>
           </div>
-       
         </div>
         <Link
           href="/flows"
@@ -50,21 +49,22 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
           />
         </Link>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-3">
         <AnalyticsMetricCard
           label={t("totalFlowsInitiated")}
           value={
             overview ? format.number(overview.total_flows_initiated) : null
           }
           description={t("flowsInitiatedDescription")}
-          icon={<BoltIcon />}
+          icon={<PlayIcon />}
+          tone="success"
         />
         <AnalyticsMetricCard
           label={t("flowCompletionRate")}
           value={percent(overview?.flow_completion_rate_pct)}
           description={t("flowCompletionDescription")}
           icon={<CheckCircleIcon />}
-          tone="success"
+          tone="brand"
           progress={overview?.flow_completion_rate_pct}
         />
         <AnalyticsMetricCard
@@ -72,7 +72,7 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
           value={percent(overview?.flow_abandonment_rate_pct)}
           description={t("flowAbandonmentDescription")}
           icon={<CloseLineIcon />}
-          tone="warning"
+          tone="error"
           progress={overview?.flow_abandonment_rate_pct}
         />
       </div>

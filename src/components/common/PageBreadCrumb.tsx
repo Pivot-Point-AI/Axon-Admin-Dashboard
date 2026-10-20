@@ -12,13 +12,13 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
   children,
 }) => {
   return (
-    <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <header className="axon-page-heading mb-6 flex flex-wrap items-center justify-between gap-4">
       <div className="space-y-1">
-        <h1 className="text-title-sm font-semibold tracking-tight text-gray-900 dark:text-white/90">
+        <h1 className="text-title-sm font-bold tracking-tight text-gray-950 dark:text-white/90">
           {pageTitle}
         </h1>
         {description && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="max-w-4xl text-sm leading-6 text-gray-500 dark:text-gray-400">
             {description}
           </p>
         )}

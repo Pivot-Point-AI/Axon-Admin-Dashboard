@@ -72,7 +72,7 @@ export default function FlowsManager() {
   const pagination = usePagination(flows, "");
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+    <div className="axon-management-panel rounded-xl border border-brand-100 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-gray-900">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Conversation Flows

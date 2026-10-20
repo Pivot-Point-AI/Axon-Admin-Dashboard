@@ -147,7 +147,8 @@
     "active": "Active beyond 30 days",
     "expiring": "Expiring within 30 days",
     "expired": "Expired licenses",
-    "total": "Total"
+    "total": "Total",
+    "rowNumber": "#"
   },
   "managementDesign": {
     "usersSubtitle": "Manage dashboard users, roles and permissions.",
@@ -575,10 +576,16 @@
         "peak_activity_hours": "Session volume across the 24-hour day.",
         "activity_by_day_of_week": "See which days are busiest.",
         "top_popular_flows": "The banking tasks people start most often.",
-        "intent_confidence_buckets": "How confidently the assistant understands requests.",
+        "intent_confidence_buckets": "Interaction counts across the reported confidence buckets.",
         "stage_averages_ms": "Compare the time spent in each processing stage.",
         "sources": "How people interact with the assistant.",
-        "token_usage": "Consumption across the reported token categories."
+        "token_usage": "Compare token counts across the reported categories.",
+        "fallback_reasons": "Reported reasons for generative AI fallbacks.",
+        "guardrail_violations_by_risk": "Safety violations by reported risk level.",
+        "guardrail_violations_by_reason": "Compare the reported reasons for safety violations.",
+        "intent_distribution": "Detected intents and their reported counts and shares.",
+        "stt_events": "Speech-to-text event counts by category.",
+        "dispatched_actions": "Actions recorded by the assistant."
       },
       "metricScopes": {
         "total_users": "All Time",
@@ -635,7 +642,22 @@
       "customRange": "Custom dates",
       "dateRange": "{from} to {to}",
       "anyStart": "Any start date",
-      "anyEnd": "Any end date"
+      "anyEnd": "Any end date",
+      "newUsersDescription": "New users across daily, weekly, and monthly windows.",
+      "viewData": "View underlying data",
+      "messageMix": "Message mix",
+      "messageMixDescription": "Messages sent by users and the assistant.",
+      "turnOutcomes": "Interaction outcomes",
+      "turnOutcomesDescription": "Reported successful and failed interactions.",
+      "riskLevels": {
+        "low": "Low risk",
+        "medium": "Medium risk",
+        "high": "High risk",
+        "critical": "Critical risk"
+      },
+      "visibleRecords": "Showing {visible} of {total} records",
+      "chartNavigation": "Interactive chart. Hover or touch to inspect a value. Use the left and right arrow keys to move between values, and Escape to dismiss.",
+      "inspectChart": "Hover, tap, or focus a bar to see its value"
     },
     "columns": {
       "name": "Category",
@@ -692,5 +714,19 @@
     "billerCategories": "Biller categories",
     "typeName": "Type name",
     "categoryName": "Category name"
+  },
+  "designSystem": {
+    "totalInstitutions": "Total Institutions",
+    "activeInstitutions": "Active Institutions",
+    "expiringSoon": "Expiring Soon",
+    "within30Days": "Within the next 30 days",
+    "expiredLicenses": "Expired Licenses",
+    "totalSettings": "Total Settings",
+    "numericSettings": "Numeric Settings",
+    "booleanSettings": "Boolean Settings",
+    "lastUpdated": "Last Updated",
+    "totalRecords": "Total Records",
+    "activeRecords": "Active Records",
+    "inactiveRecords": "Inactive Records"
   }
 }

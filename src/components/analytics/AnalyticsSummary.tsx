@@ -17,19 +17,25 @@ import AnalyticsLanguageBreakdown from "./AnalyticsLanguageBreakdown";
 import AnalyticsBreakdown from "./AnalyticsBreakdown";
 import AnalyticsDataTable from "./AnalyticsDataTable";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
+import AnalyticsAcquisition from "./AnalyticsAcquisition";
+import AnalyticsLatencyChart from "./AnalyticsLatencyChart";
+import AnalyticsJourneyChart from "./AnalyticsJourneyChart";
+import AnalyticsComposition from "./AnalyticsComposition";
 import {
   chartFields,
   latencyFields,
   metricGroups,
   sectionMetrics,
 } from "./analyticsPresentation";
-import { asAnalyticsRecord } from "./analyticsData";
+import { analyticsNumber, asAnalyticsRecord } from "./analyticsData";
 
 interface AnalyticsSummaryProps {
   section: AnalyticsSection;
   filters: AnalyticsFilters;
   accessToken: string;
   filterControls?: ReactNode;
+  navigation?: ReactNode;
+  heading?: ReactNode;
 }
 
 export default function AnalyticsSummary({
@@ -37,6 +43,8 @@ export default function AnalyticsSummary({
   filters,
   accessToken,
   filterControls,
+  navigation,
+  heading,
 }: AnalyticsSummaryProps) {
   const t = useTranslations("analytics");
   const format = useFormatter();
@@ -71,6 +79,13 @@ export default function AnalyticsSummary({
     return () => controller.abort();
   }, [section, accessToken, date, start_time, end_time, revision, t]);
   const groups = metricGroups[section] ?? [];
+  const hasComposition = (
+    section === "chats"
+      ? ["total_user_messages", "total_assistant_messages"]
+      : section === "logs"
+        ? ["turn_success_count", "turn_failed_count"]
+        : []
+  ).some((field) => analyticsNumber(data?.[field]) !== null);
   const usedFields = new Set([
     ...sectionMetrics[section],
     ...groups.flatMap((group) => group.fields),
@@ -90,38 +105,34 @@ export default function AnalyticsSummary({
     (field) => !latencyFields.has(field) && !chartFields.has(field),
   );
   return (
-    <section
-      aria-label={t(`sections.${section}`)}
-      className="space-y-5 rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3"
-    >
+    <section aria-label={t(`sections.${section}`)} className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            <h2 className="text-theme-xl font-semibold text-gray-900 dark:text-white/90">
-              {t(`design.headings.${section}`)}
-            </h2>
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 text-theme-xs text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-              <TimeIcon aria-hidden="true" className="size-3.5" />
-              {section === "users" || section === "flows"
-                ? t("design.allTime")
-                : section === "chats"
-                  ? start_time || end_time
-                    ? t("design.selectedPeriod")
-                    : t("design.allTime")
-                  : date && date !== "today"
-                    ? date
-                    : t("design.today")}
-            </span>
+        {heading ?? (
+          <div>
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <h2 className="text-theme-xl font-semibold text-gray-900 dark:text-white/90">
+                {t(`design.headings.${section}`)}
+              </h2>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {t(`design.descriptions.${section}`)}
+            </p>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t(`design.descriptions.${section}`)}
-          </p>
-        </div>
+        )}
         <div className="flex items-center gap-3">
-          <p
-            role="status"
-            className="text-theme-xs text-gray-400 dark:text-gray-500"
-          >
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-brand-100 bg-white px-3 py-2.5 text-theme-xs font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+            <TimeIcon aria-hidden="true" className="size-4" />
+            {section === "users" || section === "flows"
+              ? t("design.allTime")
+              : section === "chats"
+                ? start_time || end_time
+                  ? t("design.selectedPeriod")
+                  : t("design.allTime")
+                : date && date !== "today"
+                  ? date
+                  : t("design.today")}
+          </span>
+          <p role="status" className="sr-only">
             {loading
               ? t("loading")
               : updatedAt
@@ -152,6 +163,7 @@ export default function AnalyticsSummary({
           </Button>
         </div>
       </div>
+      {navigation}
       {filterControls}
       {error && (
         <p
@@ -167,7 +179,7 @@ export default function AnalyticsSummary({
             {Array.from({ length: 4 }, (_, index) => (
               <div
                 key={index}
-                className="h-48 animate-pulse rounded-2xl border border-gray-200 bg-white p-5 motion-reduce:animate-none dark:border-gray-800 dark:bg-gray-900"
+                className="h-36 animate-pulse rounded-xl border border-brand-100 bg-white p-4 motion-reduce:animate-none dark:border-gray-800 dark:bg-gray-900"
               >
                 <div className="mb-6 size-10 rounded-xl bg-gray-100 dark:bg-gray-800" />
                 <div className="mb-3 h-3 w-24 rounded bg-gray-100 dark:bg-gray-800" />
@@ -190,9 +202,13 @@ export default function AnalyticsSummary({
           <div aria-busy={loading} className="space-y-5">
             <AnalyticsMetrics section={section} data={data} />
             {section === "users" && (
-              <div className="grid items-stretch gap-5 xl:grid-cols-2">
-                <AnalyticsAudienceActivity data={data} />
-                <AnalyticsLanguageBreakdown value={data.language_breakdown} />
+              <div className="grid items-stretch gap-4 xl:grid-cols-7">
+                <div className="min-w-0 xl:col-span-4">
+                  <AnalyticsAudienceActivity data={data} />
+                </div>
+                <div className="min-w-0 xl:col-span-3">
+                  <AnalyticsLanguageBreakdown value={data.language_breakdown} />
+                </div>
               </div>
             )}
             {latency.length > 0 && (
@@ -202,17 +218,29 @@ export default function AnalyticsSummary({
                     key={field}
                     field={field}
                     value={data[field]}
+                    visualization={
+                      <AnalyticsLatencyChart value={data[field]} />
+                    }
                   />
                 ))}
               </div>
             )}
             {charts.length > 0 && (
               <div className="grid items-stretch gap-5 xl:grid-cols-2">
-                {charts.map((field) => (
+                {hasComposition && (
+                  <AnalyticsComposition section={section} data={data} />
+                )}
+                {charts.map((field, index) => (
                   <AnalyticsBreakdown
                     key={field}
                     field={field}
                     value={data[field]}
+                    className={
+                      index === charts.length - 1 &&
+                      (charts.length + Number(hasComposition)) % 2 === 1
+                        ? "xl:col-span-2"
+                        : undefined
+                    }
                   />
                 ))}
               </div>
@@ -221,20 +249,29 @@ export default function AnalyticsSummary({
               <div
                 className={`grid items-start gap-5 ${groups.length > 1 ? "xl:grid-cols-2" : ""}`}
               >
-                {groups.map((group) => (
-                  <AnalyticsMetricList
-                    key={group.title}
-                    title={group.title}
-                    fields={group.fields}
-                    data={data}
-                  />
-                ))}
+                {groups.map((group) =>
+                  group.title === "newUsers" ? (
+                    <AnalyticsAcquisition key={group.title} data={data} />
+                  ) : (
+                    <AnalyticsMetricList
+                      key={group.title}
+                      title={group.title}
+                      fields={group.fields}
+                      data={data}
+                    />
+                  ),
+                )}
               </div>
             )}
             {tables.map((field) => (
               <AnalyticsDataTable
                 key={field}
                 field={field}
+                visualization={
+                  field === "flow_breakdown_by_type" ? (
+                    <AnalyticsJourneyChart value={data[field]} />
+                  ) : undefined
+                }
                 value={
                   typeof data[field] === "object"
                     ? data[field]

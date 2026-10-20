@@ -43,7 +43,7 @@ export default function AppSidebar() {
     >
       <Link
         href="/"
-        className={`flex h-16 shrink-0 items-center ${showLabels ? "justify-start ps-2" : "justify-center"}`}
+        className={`relative z-1 flex h-20 shrink-0 items-center ${showLabels ? "justify-start ps-3" : "justify-center"}`}
       >
         <Image
           src="/images/logo/logo-icon.png"
@@ -54,9 +54,9 @@ export default function AppSidebar() {
           preload
         />
       </Link>
-      <nav className="no-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-6">
+      <nav className="relative z-1 no-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-6">
         {showLabels && (
-          <p className="mb-2 px-3 text-theme-xs font-medium tracking-wide text-brand-300 dark:text-brand-300">
+          <p className="mb-2 px-3 text-theme-xs font-medium tracking-widest text-blue-light-300 uppercase dark:text-blue-light-300">
             {t("groups.overview")}
           </p>
         )}
@@ -71,12 +71,12 @@ export default function AppSidebar() {
                 key={key}
                 className={
                   key === "users" || key === "userProfile"
-                    ? "mt-2 border-t border-white/15 pt-2 dark:border-white/15"
+                    ? "mt-4 border-t border-white/10 pt-4 dark:border-white/10"
                     : undefined
                 }
               >
                 {showLabels && key === "users" && (
-                  <p className="mb-1 px-3 text-theme-xs font-medium tracking-wide text-brand-300 dark:text-brand-300">
+                  <p className="mb-2 px-3 text-theme-xs font-medium tracking-widest text-blue-light-300 uppercase dark:text-blue-light-300">
                     {t("groups.administration")}
                   </p>
                 )}

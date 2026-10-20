@@ -15,9 +15,9 @@ interface AnalyticsMetricsProps {
 const icons = [GroupIcon, ChatIcon, BoltIcon, PieChartIcon];
 const tones = [
   "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300",
-  "bg-blue-light-50 text-blue-light-600 dark:bg-blue-light-500/15 dark:text-blue-light-400",
-  "bg-theme-purple-500/10 text-theme-purple-500 dark:bg-theme-purple-500/15 dark:text-theme-purple-500",
   "bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400",
+  "bg-theme-purple-500/10 text-theme-purple-500 dark:bg-theme-purple-500/15 dark:text-theme-purple-500",
+  "bg-orange-50 text-orange-500 dark:bg-orange-500/15 dark:text-orange-400",
 ];
 
 export default function AnalyticsMetrics({
@@ -52,20 +52,20 @@ export default function AnalyticsMetrics({
         return (
           <article
             key={field}
-            className="relative min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-theme-xs sm:p-5 dark:border-gray-800 dark:bg-white/3"
+            className="axon-metric relative min-w-0 overflow-hidden rounded-xl border border-brand-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
           >
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t(`fields.${field}`)}
-              </h3>
+            <div className="mb-2 flex items-center gap-3">
               <span
                 aria-hidden="true"
                 className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tones[index]}`}
               >
                 <Icon className="size-5" />
               </span>
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t(`fields.${field}`)}
+              </h3>
             </div>
-            <p className="flex items-baseline gap-1.5 text-title-sm font-semibold tracking-tight text-gray-900 tabular-nums dark:text-white/90">
+            <p className="flex items-baseline gap-1.5 text-2xl font-semibold tracking-tight text-gray-950 tabular-nums dark:text-white/90">
               <AnalyticsValue value={value} field={field} />
               {field.endsWith("response_time") && value !== null && (
                 <span className="text-sm font-normal text-gray-400 dark:text-gray-500">
@@ -74,7 +74,7 @@ export default function AnalyticsMetrics({
               )}
             </p>
             <p
-              className={`mt-2 text-theme-xs leading-5 text-gray-400 dark:text-gray-500 ${field === "retention_rate_pct" ? "truncate" : ""}`}
+              className={`mt-2 text-theme-xs leading-5 text-gray-500 dark:text-gray-400 ${field === "retention_rate_pct" ? "truncate" : ""}`}
               title={
                 field === "retention_rate_pct"
                   ? t(`design.metricHints.${field}`)
@@ -114,14 +114,27 @@ export function AnalyticsMetricList({
 }: AnalyticsMetricListProps) {
   const t = useTranslations("analytics");
   return (
-    <ComponentCard title={t(`design.${title}`)} className="h-full">
+    <ComponentCard
+      title={t(`design.${title}`)}
+      icon={<GroupIcon />}
+      className="h-full"
+    >
       <dl className="divide-y divide-gray-100 dark:divide-gray-800">
-        {fields.map((field) => (
+        {fields.map((field, index) => (
           <div
             key={field}
             className="flex items-center justify-between gap-5 py-3 first:pt-0 last:pb-0"
           >
-            <dt className="text-sm text-gray-500 dark:text-gray-400">
+            <dt className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+              <span
+                aria-hidden="true"
+                className={`flex size-8 shrink-0 items-center justify-center rounded-xl ${tones[index % tones.length]}`}
+              >
+                {(() => {
+                  const Icon = icons[index % icons.length];
+                  return <Icon className="size-4" />;
+                })()}
+              </span>
               {t(`fields.${field}`)}
             </dt>
             <dd className="shrink-0 text-sm font-semibold text-gray-900 tabular-nums dark:text-white/90">

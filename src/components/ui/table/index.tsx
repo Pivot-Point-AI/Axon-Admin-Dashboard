@@ -38,7 +38,10 @@ interface TableCellProps {
 const Table: React.FC<TableProps> = ({ children, className }) => {
   return (
     <table
-      className={cn("w-full min-w-full table-auto border-collapse", className)}
+      className={cn(
+        "axon-table w-full min-w-full table-auto border-collapse",
+        className,
+      )}
     >
       {children}
     </table>
@@ -70,7 +73,12 @@ const TableCell: React.FC<TableCellProps> = ({
 }) => {
   const CellTag = isHeader ? "th" : "td";
   return (
-    <CellTag rowSpan={rowSpan} colSpan={colSpan} className={` ${className}`}>
+    <CellTag
+      scope={isHeader ? "col" : undefined}
+      rowSpan={rowSpan}
+      colSpan={colSpan}
+      className={className}
+    >
       {children}
     </CellTag>
   );

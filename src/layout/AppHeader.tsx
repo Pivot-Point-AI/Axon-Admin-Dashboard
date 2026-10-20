@@ -52,7 +52,7 @@ export default function AppHeader() {
   }, []);
 
   return (
-    <header className="axon-header axon-header-reference sticky top-0 z-99999 flex min-h-16 w-full items-center gap-4 border-b border-gray-200 bg-white px-4 sm:px-6 dark:border-gray-700 dark:bg-gray-900">
+    <header className="axon-header sticky top-0 z-99999 flex min-h-16 w-full items-center gap-3 border-b border-brand-100/70 bg-white/95 px-4 backdrop-blur-lg sm:px-6 dark:border-gray-800 dark:bg-gray-900/95">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
@@ -66,7 +66,7 @@ export default function AppHeader() {
         </button>
         <nav
           aria-label={common("breadcrumb")}
-          className="min-w-0 rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 dark:border-brand-800 dark:bg-brand-500/10"
+          className={pathname === "/" ? "sr-only" : "min-w-0 py-2"}
         >
           <ol className="flex min-w-0 items-center gap-2 text-sm">
             <li className="shrink-0">
@@ -107,7 +107,13 @@ export default function AppHeader() {
           </ol>
         </nav>
       </div>
-      <div className="mx-auto hidden w-full max-w-lg px-4 md:block">
+      <div
+        className={
+          pathname === "/"
+            ? "me-auto hidden w-full max-w-lg md:block"
+            : "mx-auto hidden w-full max-w-lg px-4 md:block"
+        }
+      >
         <div className="relative">
           <SearchOutlineIcon
             aria-hidden="true"
@@ -118,8 +124,19 @@ export default function AppHeader() {
             type="search"
             aria-label={t("searchPlaceholder")}
             placeholder={t("searchPlaceholder")}
-            className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 ps-10 pe-3 text-sm text-gray-700 placeholder:text-gray-500 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/10 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-400"
+            className="h-10 w-full rounded-lg border border-brand-100/50 bg-gray-50 ps-10 pe-16 text-theme-xs text-gray-700 placeholder:text-gray-500 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/10 focus:outline-none dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-400"
           />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute end-2.5 top-1/2 hidden -translate-y-1/2 items-center gap-1 text-gray-500 lg:flex dark:text-gray-400"
+          >
+            <kbd className="rounded bg-gray-100 px-1 py-0.5 text-theme-xs dark:bg-gray-700">
+              Ctrl
+            </kbd>
+            <kbd className="rounded bg-gray-100 px-1 py-0.5 text-theme-xs dark:bg-gray-700">
+              K
+            </kbd>
+          </span>
         </div>
       </div>
       <div className="ms-auto flex shrink-0 items-center gap-3">

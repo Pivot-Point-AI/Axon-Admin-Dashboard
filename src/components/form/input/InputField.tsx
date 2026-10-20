@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type React from "react";
 import type { FC } from "react";
+import { SearchOutlineIcon } from "@/icons";
 
 interface InputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -48,7 +49,13 @@ const Input: FC<InputProps> = ({
   }
 
   return (
-    <div className="relative">
+    <div className={`relative min-w-0 ${type === "search" ? "flex-1" : ""}`}>
+      {type === "search" && (
+        <SearchOutlineIcon
+          aria-hidden="true"
+          className="pointer-events-none absolute start-3.5 top-5.5 z-1 size-4 -translate-y-1/2 text-gray-500 dark:text-gray-400"
+        />
+      )}
       <input
         type={type}
         id={id}
@@ -70,7 +77,7 @@ const Input: FC<InputProps> = ({
         max={max}
         step={step}
         disabled={disabled}
-        className={inputClasses}
+        className={`${inputClasses} ${type === "search" ? "ps-10" : ""}`}
         {...props}
         aria-invalid={error || props["aria-invalid"] || undefined}
       />

@@ -46,9 +46,9 @@ export default function AdminLayout({
         {/* Header */}
         <AppHeader />
         {/* Page Content */}
-        <div className="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
+        <main className="axon-page mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6 lg:py-7">
           {children}
-        </div>
+        </main>
       </div>
     </div>
   );
