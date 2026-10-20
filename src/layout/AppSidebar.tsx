@@ -13,12 +13,14 @@ import {
   GroupIcon,
   ListIcon,
   MailIcon,
+  PieChartIcon,
   TableIcon,
   UserCircleIcon,
 } from "@/icons";
 
 const items = [
   { key: "dashboard", path: "/", icon: GridIcon },
+  { key: "analytics", path: "/analytics", icon: PieChartIcon },
   { key: "institutions", path: "/institutions", icon: BoxCubeIcon },
   { key: "logs", path: "/logs", icon: TableIcon },
   { key: "users", path: "/users", icon: GroupIcon },
@@ -27,6 +29,7 @@ const items = [
   { key: "messages", path: "/messages", icon: MailIcon },
   { key: "flows", path: "/flows", icon: BoltIcon },
   { key: "languages", path: "/languages", icon: DocsIcon },
+  { key: "faqs", path: "/faqs", icon: DocsIcon },
   { key: "userProfile", path: "/profile", icon: UserCircleIcon },
 ];
 export default function AppSidebar() {

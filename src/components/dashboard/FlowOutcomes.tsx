@@ -37,9 +37,7 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
               {t("allTime")}
             </span>
           </div>
-          <p className="mt-0.5 text-theme-xs text-gray-500 dark:text-gray-400">
-            {t("flowSubtitle")}
-          </p>
+       
         </div>
         <Link
           href="/flows"

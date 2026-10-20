@@ -53,11 +53,11 @@ export default function DashboardStats() {
   };
 
   return (
-    <section aria-label={t("title")} className="space-y-4">
+    <section aria-label={t("title")} className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-theme-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
-          {t("snapshot")}
-        </h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white/90">
+              {t("snapshot")}
+            </h2>
         <div className="flex flex-wrap items-center gap-3">
           <p
             role="status"
@@ -77,14 +77,14 @@ export default function DashboardStats() {
           </p>
           <Button
             size="sm"
-            variant="outline"
-            className="gap-1.5 px-3 py-2 text-theme-xs"
+            variant="primary"
+            className="gap-1.5 px-3 py-2 text-theme-xs !text-white"
             onClick={refresh}
             disabled={loading}
             startIcon={
               <RefreshIcon
                 aria-hidden="true"
-                className={`size-3.5 ${loading ? "motion-safe:animate-spin" : ""}`}
+                className={`size-3.5 text-white ${loading ? "motion-safe:animate-spin" : ""}`}
               />
             }
           >
@@ -102,10 +102,8 @@ export default function DashboardStats() {
       )}
       <div aria-busy={loading} className="space-y-4">
         <AnalyticsKpiCards overview={overview} />
-        <div className="space-y-4">
-          <EngagementOverview overview={overview} />
-          <FlowOutcomes overview={overview} />
-        </div>
+        <EngagementOverview overview={overview} />
+        <FlowOutcomes overview={overview} />
       </div>
     </section>
   );

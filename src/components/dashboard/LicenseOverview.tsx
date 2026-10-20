@@ -6,6 +6,7 @@ interface LicenseOverviewProps {
   active: number;
   expiringSoon: number;
   expired: number;
+  inactive?: number;
   loading: boolean;
 }
 
@@ -13,12 +14,14 @@ export default function LicenseOverview({
   active,
   expiringSoon,
   expired,
+  inactive = 0,
   loading,
 }: LicenseOverviewProps) {
   const t = useTranslations("redesign");
+  const status = useTranslations("status");
   // Expiring licenses are included in the existing active metric.
   const healthy = Math.max(0, active - expiringSoon);
-  const total = active + expired;
+  const total = active + expired + inactive;
   const rows = [
     {
       label: t("active"),
@@ -35,9 +38,17 @@ export default function LicenseOverview({
       value: expired,
       color: "bg-error-500 dark:bg-error-400",
     },
+    {
+      label: status("inactive"),
+      value: inactive,
+      color: "bg-gray-400 dark:bg-gray-500",
+    },
   ];
   const activeAngle = total ? (healthy / total) * 360 : 0;
   const expiringAngle = total ? ((healthy + expiringSoon) / total) * 360 : 0;
+  const expiredAngle = total
+    ? ((healthy + expiringSoon + expired) / total) * 360
+    : 0;
   return (
     <div className="grid gap-5 lg:grid-cols-5">
       <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs lg:col-span-3 dark:border-gray-800 dark:bg-white/3">
@@ -76,7 +87,7 @@ export default function LicenseOverview({
             style={
               total
                 ? {
-                    background: `conic-gradient(var(--color-success-500) 0deg ${activeAngle}deg, var(--color-warning-500) ${activeAngle}deg ${expiringAngle}deg, var(--color-error-500) ${expiringAngle}deg 360deg)`,
+                    background: `conic-gradient(var(--color-success-500) 0deg ${activeAngle}deg, var(--color-warning-500) ${activeAngle}deg ${expiringAngle}deg, var(--color-error-500) ${expiringAngle}deg ${expiredAngle}deg, var(--color-gray-400) ${expiredAngle}deg 360deg)`,
                   }
                 : undefined
             }

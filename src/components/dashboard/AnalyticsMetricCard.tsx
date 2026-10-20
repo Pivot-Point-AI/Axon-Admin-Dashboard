@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 
 interface AnalyticsMetricCardProps {
   label: string;
+  badge?: ReactNode;
   value: string | null;
-  description: string;
+  description?: string;
   icon: ReactNode;
   tone?: "brand" | "success" | "purple" | "warning";
   progress?: number;
@@ -31,8 +32,9 @@ const tones = {
 
 export default function AnalyticsMetricCard({
   label,
+  badge,
   value,
-  description,
+  description = "",
   icon,
   tone = "brand",
   progress,
@@ -43,12 +45,15 @@ export default function AnalyticsMetricCard({
     <article
       aria-label={label}
       aria-busy={value === null}
-      className="flex min-h-36 min-w-0 flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs transition-shadow motion-safe:hover:shadow-theme-md dark:border-gray-800 dark:bg-gray-900"
+      className="flex min-h-32 min-w-0 flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-theme-xs transition-shadow motion-safe:hover:shadow-theme-md dark:border-gray-800 dark:bg-gray-900"
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">
-          {label}
-        </h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            {label}
+          </h3>
+          {badge}
+        </div>
         <span
           aria-hidden="true"
           className={`flex size-8 shrink-0 items-center justify-center rounded-lg [&>svg]:size-4 ${palette.icon}`}
@@ -56,23 +61,25 @@ export default function AnalyticsMetricCard({
           {icon}
         </span>
       </div>
-      <p className="mt-2 text-title-sm font-semibold tracking-tight text-gray-900 tabular-nums dark:text-white/90">
-        {value ?? (
-          <span
-            aria-hidden="true"
-            className="inline-block h-8 w-16 animate-pulse rounded-md bg-gray-100 motion-reduce:animate-none dark:bg-gray-800"
-          />
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <p className="text-title-sm font-semibold tracking-tight text-gray-900 tabular-nums dark:text-white/90">
+          {value ?? (
+            <span
+              aria-hidden="true"
+              className="inline-block h-8 w-16 animate-pulse rounded-md bg-gray-100 motion-reduce:animate-none dark:bg-gray-800"
+            />
+          )}
+        </p>
+        {children && (
+          <div className="flex flex-wrap items-center gap-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
+            {children}
+          </div>
         )}
-      </p>
+      </div>
       {description && (
         <p className="mt-1 text-theme-xs leading-4 text-gray-500 dark:text-gray-400">
           {description}
         </p>
-      )}
-      {children && (
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-theme-xs text-gray-500 dark:text-gray-400">
-          {children}
-        </div>
       )}
       {progress != null && (
         <div className="mt-auto pt-3">

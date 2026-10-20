@@ -39,6 +39,7 @@ export interface InstitutionItem {
   institution_id: string;
   institution_name: string;
   license_expires_at: string | null;
+  is_active?: boolean;
 }
 
 export interface CreateInstitutionRequest {
@@ -54,7 +55,8 @@ export interface CreateInstitutionResponse {
 }
 
 export interface UpdateInstitutionRequest {
-  institution_name: string;
+  institution_name?: string | null;
+  is_active?: boolean | null;
 }
 
 export interface RenewInstitutionLicenseRequest {

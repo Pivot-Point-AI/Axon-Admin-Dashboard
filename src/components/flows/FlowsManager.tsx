@@ -80,11 +80,12 @@ export default function FlowsManager() {
         <Button
           size="sm"
           variant="primary"
+          className="!text-white"
           onClick={load}
           disabled={loading}
           startIcon={
             <RefreshIcon
-              className={`size-4 ${loading ? "motion-safe:animate-spin" : ""}`}
+              className={`size-4 text-white ${loading ? "motion-safe:animate-spin" : ""}`}
             />
           }
         >

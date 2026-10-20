@@ -135,7 +135,9 @@ export default function RecentInstitutionsTable() {
                         : "—"}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm">
-                      {status.color === "success" ? (
+                      {institution.is_active === false ? (
+                        <StatusBadge active={false} />
+                      ) : status.color === "success" ? (
                         <StatusBadge active />
                       ) : (
                         <Badge size="sm" color={status.color}>

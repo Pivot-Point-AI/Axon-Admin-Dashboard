@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/utils";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { asRecordArray } from "@/lib/api/normalize";
@@ -20,6 +21,8 @@ import {
   removeBank,
   removeBiller,
   removeDonation,
+  removeBillerType,
+  removeBillerCategory,
   updateBank,
   updateBiller,
   updateCardType,
@@ -73,11 +76,15 @@ const tabs = [
   { key: "billers", label: "Billers" },
   { key: "donations", label: "Donations" },
   { key: "cards", label: "Cards" },
+  { key: "billerTypes", label: "billerTypes" },
+  { key: "billerCategories", label: "billerCategories" },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
 
 export default function MasterDataManager() {
+  const t = useTranslations("masterDataLookups");
+  const status = useTranslations("status");
   const { accessToken } = useAdminAuth();
   const [activeTab, setActiveTab] = useState<TabKey>("banks");
   const [billerTypes, setBillerTypes] = useState<string[]>([]);
@@ -168,7 +175,7 @@ export default function MasterDataManager() {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
-      <div className="mb-4 flex gap-1 border-b border-gray-200 dark:border-gray-800">
+      <div className="mb-4 flex flex-wrap gap-1 border-b border-gray-200 dark:border-gray-800">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -180,7 +187,9 @@ export default function MasterDataManager() {
                 : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300",
             )}
           >
-            {tab.label}
+            {tab.key === "billerTypes" || tab.key === "billerCategories"
+              ? t(tab.key)
+              : tab.label}
           </button>
         ))}
       </div>
@@ -238,6 +247,72 @@ export default function MasterDataManager() {
           updateItem={(id, body, token) =>
             updateCardType(id, body as never, token)
           }
+        />
+      )}
+      {activeTab === "billerTypes" && (
+        <MasterDataSection
+          key="billerTypes"
+          title={t("billerTypes")}
+          idField="type_id"
+          fields={[
+            {
+              key: "type_name",
+              label: t("typeName"),
+              type: "text",
+              required: true,
+            },
+            { key: "is_active", label: status("active"), type: "checkbox" },
+          ]}
+          fetchItems={getBillerTypes}
+          createItem={async (body, token) => {
+            const result = await createBillerType(
+              {
+                type_name: String(body.type_name ?? ""),
+                is_active: body.is_active === true,
+              },
+              token,
+            );
+            await loadLookups();
+            return result;
+          }}
+          removeItem={async (id, token) => {
+            const result = await removeBillerType(id, token);
+            await loadLookups();
+            return result;
+          }}
+        />
+      )}
+      {activeTab === "billerCategories" && (
+        <MasterDataSection
+          key="billerCategories"
+          title={t("billerCategories")}
+          idField="cat_id"
+          fields={[
+            {
+              key: "category_name",
+              label: t("categoryName"),
+              type: "text",
+              required: true,
+            },
+            { key: "is_active", label: status("active"), type: "checkbox" },
+          ]}
+          fetchItems={getBillerCategories}
+          createItem={async (body, token) => {
+            const result = await createBillerCategory(
+              {
+                category_name: String(body.category_name ?? ""),
+                is_active: body.is_active === true,
+              },
+              token,
+            );
+            await loadLookups();
+            return result;
+          }}
+          removeItem={async (id, token) => {
+            const result = await removeBillerCategory(id, token);
+            await loadLookups();
+            return result;
+          }}
         />
       )}
     </div>

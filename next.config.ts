@@ -31,6 +31,7 @@ const nextConfig: NextConfig = {
       "/admin/messages/",
       "/admin/flows/",
       "/admin/languages/",
+      "/admin/faqs/",
     ];
 
     return [

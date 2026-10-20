@@ -8,6 +8,22 @@ import type {
   DonationOrgModel,
 } from "./types";
 
+export function removeBillerType(typeId: number, bearerToken: string) {
+  return apiRequest<unknown>(`/master-data/biller-types/${typeId}`, {
+    method: "DELETE",
+    bearerToken,
+    baseUrl: ADMIN_API_BASE_URL,
+  });
+}
+
+export function removeBillerCategory(categoryId: number, bearerToken: string) {
+  return apiRequest<unknown>(`/master-data/biller-categories/${categoryId}`, {
+    method: "DELETE",
+    bearerToken,
+    baseUrl: ADMIN_API_BASE_URL,
+  });
+}
+
 // The backend doesn't declare a response_model for these list/write endpoints
 // (the OpenAPI spec just shows "string"), so the actual response shape is
 // whatever the server returns — callers should treat it as unknown and

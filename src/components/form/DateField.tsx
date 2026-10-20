@@ -1,12 +1,14 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Label from "@/components/form/Label";
 import { CalenderIcon } from "@/icons/index";
 
 interface DateFieldProps {
   id: string;
-  label: string;
+  label?: string;
+  placeholder?: string;
+  hideLabel?: boolean;
   value: string; // YYYY-MM-DD
   onChange: (value: string) => void;
   min?: string;
@@ -21,7 +23,9 @@ interface DateFieldProps {
  */
 export default function DateField({
   id,
-  label,
+  label = "",
+  placeholder,
+  hideLabel = false,
   value,
   onChange,
   min,
@@ -30,6 +34,7 @@ export default function DateField({
   error = false,
 }: DateFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [focused, setFocused] = useState(false);
 
   const openPicker = () => {
     try {
@@ -39,22 +44,33 @@ export default function DateField({
     }
   };
 
+  const showPlaceholder = !focused && !value && Boolean(placeholder);
+
   return (
     <div>
-      <Label htmlFor={id}>
-        {label}
-        {required && <span className="text-error-500"> *</span>}
-      </Label>
+      {label && !hideLabel && (
+        <Label htmlFor={id}>
+          {label}
+          {required && <span className="text-error-500"> *</span>}
+        </Label>
+      )}
       <div className="relative">
         <input
           ref={inputRef}
           id={id}
-          type="date"
-          value={value}
+          type={showPlaceholder ? "text" : "date"}
+          placeholder={placeholder}
+          value={showPlaceholder ? "" : value}
           min={min}
           max={max}
           required={required}
+          aria-label={label || placeholder}
           aria-invalid={error || undefined}
+          onFocus={() => {
+            setFocused(true);
+            openPicker();
+          }}
+          onBlur={() => setFocused(false)}
           onChange={(e) => onChange(e.target.value)}
           onClick={openPicker}
           className={`h-11 w-full min-w-0 cursor-pointer rounded-lg border bg-transparent ps-4 pe-11 text-sm text-gray-800 shadow-theme-xs focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:scheme-dark ${
@@ -66,7 +82,7 @@ export default function DateField({
         <button
           type="button"
           tabIndex={-1}
-          aria-label={`Open ${label} calendar`}
+          aria-label={`Open ${label || placeholder || "date"} calendar`}
           onClick={openPicker}
           className="absolute end-0 top-0 flex h-11 w-11 items-center justify-center text-gray-500 dark:text-gray-400"
         >

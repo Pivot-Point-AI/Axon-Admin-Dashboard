@@ -14,8 +14,13 @@ function classifyInstitutions(institutions: InstitutionItem[]) {
   let active = 0;
   let expiringSoon = 0;
   let expired = 0;
+  let inactive = 0;
 
   for (const inst of institutions) {
+    if (inst.is_active === false) {
+      inactive += 1;
+      continue;
+    }
     if (!inst.license_expires_at) {
       active += 1;
       continue;
@@ -31,7 +36,7 @@ function classifyInstitutions(institutions: InstitutionItem[]) {
     }
   }
 
-  return { active, expiringSoon, expired };
+  return { active, expiringSoon, expired, inactive };
 }
 
 export default function InstitutionLicenseOverview() {
@@ -72,6 +77,7 @@ export default function InstitutionLicenseOverview() {
       active={stats?.active ?? 0}
       expiringSoon={stats?.expiringSoon ?? 0}
       expired={stats?.expired ?? 0}
+      inactive={stats?.inactive ?? 0}
       loading={!stats}
     />
   );

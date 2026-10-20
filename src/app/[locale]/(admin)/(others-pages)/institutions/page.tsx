@@ -1,5 +1,4 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+import { setRequestLocale } from "next-intl/server";
 import InstitutionsManager from "@/components/institutions/InstitutionsManager";
 import { Metadata } from "next";
 
@@ -15,13 +14,8 @@ export default async function InstitutionsPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("managementDesign");
   return (
     <div className="axon-management">
-      <PageBreadcrumb
-        pageTitle="Institutions"
-        description={t("institutionsSubtitle")}
-      />
       <InstitutionsManager />
     </div>
   );

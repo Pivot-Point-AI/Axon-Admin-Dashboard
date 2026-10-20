@@ -21,6 +21,8 @@ const pageKeys: Record<string, string> = {
   messages: "messages",
   flows: "flows",
   languages: "languages",
+  analytics: "analytics",
+  faqs: "faqs",
   profile: "userProfile",
   logs: "logs",
   "chat-history": "chatHistory",

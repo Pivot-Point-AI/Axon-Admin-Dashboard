@@ -1,11 +1,15 @@
 "use client";
 
 import Pagination from "@/components/common/Pagination";
+import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import usePagination from "@/hooks/usePagination";
 import useRequiredFields from "@/hooks/useRequiredFields";
 import { useTranslations } from "next-intl";
 import { notify } from "@/lib/feedback";
 import DateTimeField from "@/components/form/DateTimeField";
+import Switch from "@/components/form/input/Switch";
+import StatusBadge from "@/components/common/StatusBadge";
+import { isFutureDateTime } from "@/utils/dateTime";
 import { CopyIcon } from "@/icons";
 import { useConfirm } from "@/context/FeedbackContext";
 import { useCallback, useEffect, useState } from "react";
@@ -61,6 +65,8 @@ export default function InstitutionsManager() {
   const editRequired = useRequiredFields();
   const renewRequired = useRequiredFields();
   const t = useTranslations("fixes");
+  const m = useTranslations("managementDesign");
+  const status = useTranslations("status");
   const [credentialsCopied, setCredentialsCopied] = useState(false);
   const [copying, setCopying] = useState(false);
   const confirm = useConfirm();
@@ -81,13 +87,17 @@ export default function InstitutionsManager() {
 
   const [editTarget, setEditTarget] = useState<InstitutionItem | null>(null);
   const [editName, setEditName] = useState("");
+  const [editActive, setEditActive] = useState(true);
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const editChanged =
-    !!editTarget && editName.trim() !== editTarget.institution_name.trim();
+    !!editTarget &&
+    (editName.trim() !== editTarget.institution_name.trim() ||
+      editActive !== (editTarget.is_active ?? true));
 
   const [renewTarget, setRenewTarget] = useState<InstitutionItem | null>(null);
   const [renewExpiry, setRenewExpiry] = useState("");
+  const [renewActive, setRenewActive] = useState(true);
   const [renewSubmitting, setRenewSubmitting] = useState(false);
   const [renewError, setRenewError] = useState<string | null>(null);
 
@@ -151,6 +161,10 @@ export default function InstitutionsManager() {
     setCreateError(null);
     if (!createRequired.validate([createName, createExpiry]) || !accessToken)
       return;
+    if (!isFutureDateTime(createExpiry)) {
+      setCreateError(t("futureDateRequired"));
+      return;
+    }
     setCreateSubmitting(true);
     setCreateError(null);
     try {
@@ -179,6 +193,7 @@ export default function InstitutionsManager() {
     editRequired.reset();
     setEditTarget(institution);
     setEditName(institution.institution_name);
+    setEditActive(institution.is_active ?? true);
     setEditError(null);
   };
 
@@ -191,7 +206,7 @@ export default function InstitutionsManager() {
     try {
       await updateInstitution(
         editTarget.institution_id,
-        { institution_name: editName.trim() },
+        { institution_name: editName.trim(), is_active: editActive },
         accessToken,
       );
       setEditTarget(null);
@@ -209,6 +224,7 @@ export default function InstitutionsManager() {
     renewRequired.reset();
     setRenewTarget(institution);
     setRenewExpiry(toDateTimeLocalValue(institution.license_expires_at));
+    setRenewActive(institution.is_active ?? true);
     setRenewError(null);
   };
 
@@ -216,6 +232,10 @@ export default function InstitutionsManager() {
     if (!renewTarget || !accessToken) return;
     setRenewError(null);
     if (!renewRequired.validate([renewExpiry])) return;
+    if (!isFutureDateTime(renewExpiry)) {
+      setRenewError(t("futureDateRequired"));
+      return;
+    }
     setRenewSubmitting(true);
     setRenewError(null);
     try {
@@ -224,6 +244,21 @@ export default function InstitutionsManager() {
         { license_expires_at: new Date(renewExpiry).toISOString() },
         accessToken,
       );
+      if (renewActive !== (renewTarget.is_active ?? true)) {
+        try {
+          await updateInstitution(
+            renewTarget.institution_id,
+            { is_active: renewActive },
+            accessToken,
+          );
+        } catch (err) {
+          setRenewError(
+            `${t("licenseStatusFailed")}${err instanceof ApiError ? ` ${err.message}` : ""}`,
+          );
+          await loadInstitutions();
+          return;
+        }
+      }
       setRenewTarget(null);
       await loadInstitutions();
     } catch (err) {
@@ -260,11 +295,11 @@ export default function InstitutionsManager() {
   const pagination = usePagination(institutions, "");
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Institutions
-        </h3>
+    <>
+      <PageBreadcrumb
+        pageTitle="Institutions"
+        description={m("institutionsSubtitle")}
+      >
         <Button
           size="sm"
           startIcon={
@@ -274,13 +309,14 @@ export default function InstitutionsManager() {
         >
           New Institution
         </Button>
-      </div>
+      </PageBreadcrumb>
 
-      {error && (
-        <div className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
-          {error}
-        </div>
-      )}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+        {error && (
+          <div className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
+            {error}
+          </div>
+        )}
 
       <Pagination variant="header" pagination={pagination} disabled={loading} />
       <div className="overflow-x-auto">
@@ -304,6 +340,12 @@ export default function InstitutionsManager() {
                 className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
               >
                 License Expiry
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+              >
+                {status("title")}
               </TableCell>
               <TableCell
                 isHeader
@@ -369,10 +411,13 @@ export default function InstitutionsManager() {
                     </span>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-sm">
+                    <StatusBadge active={institution.is_active ?? true} />
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-sm">
                     <div className="flex items-center gap-3">
                       <ActionIconButton
                         tone="edit"
-                        title="Edit name"
+                        title={t("editInstitution")}
                         onClick={() => openEdit(institution)}
                       >
                         <PencilIcon />
@@ -489,7 +534,7 @@ export default function InstitutionsManager() {
         className="max-w-md p-6"
       >
         <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
-          Rename Institution
+          {t("editInstitution")}
         </h4>
         <div className="space-y-4">
           <div>
@@ -501,6 +546,12 @@ export default function InstitutionsManager() {
               onChange={(e) => setEditName(e.target.value)}
             />
           </div>
+          <Switch
+            id="institution-active"
+            label={status(editActive ? "active" : "inactive")}
+            checked={editActive}
+            onChange={setEditActive}
+          />
           {editError && <p className="text-sm text-error-500">{editError}</p>}
           <Button
             className="w-full"
@@ -533,6 +584,12 @@ export default function InstitutionsManager() {
               onChange={setRenewExpiry}
             />
           </div>
+          <Switch
+            id="license-active"
+            label={status(renewActive ? "active" : "inactive")}
+            checked={renewActive}
+            onChange={setRenewActive}
+          />
           {renewError && <p className="text-sm text-error-500">{renewError}</p>}
           <Button
             className="w-full"
@@ -544,5 +601,6 @@ export default function InstitutionsManager() {
         </div>
       </Modal>
     </div>
-  );
+  </>
+);
 }

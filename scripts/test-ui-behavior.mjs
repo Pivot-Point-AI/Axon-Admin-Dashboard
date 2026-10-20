@@ -114,10 +114,19 @@ function harness(overrides = {}) {
       }
       return loadDependency(name);
     }
-    new Function("require", "module", "exports", output)(
+    new Function(
+      "require",
+      "module",
+      "exports",
+      "__filename",
+      "__dirname",
+      output,
+    )(
       localRequire,
       loadedModule,
       loadedModule.exports,
+      filename,
+      path.dirname(filename),
     );
     return loadedModule.exports;
   }
@@ -154,6 +163,511 @@ const button = (tree, label) =>
       element.type === "@/components/ui/button/Button" &&
       element.props.children === label,
   );
+
+test("date-time picker blocks past values and accepts a future value", () => {
+  const runtime = harness();
+  const Field = runtime.load("src/components/form/DateTimeField.tsx").default;
+  const { localDateTimeValue } = runtime.load("src/utils/dateTime.ts");
+  const saved = [];
+  const render = () =>
+    runtime.render(Field, {
+      id: "expiry",
+      value: "",
+      onChange: (value) => saved.push(value),
+    });
+  let tree = render();
+  byId(tree, "expiry").props.onClick();
+  tree = render();
+  const past = localDateTimeValue(new Date(Date.now() - 86400000));
+  byId(tree, "expiry-date").props.onChange(past.split("T")[0]);
+  byId(tree, "expiry-time").props.onChange({
+    target: { value: past.split("T")[1] },
+  });
+  tree = render();
+  button(tree, messages.fixes.saveDate).props.onClick();
+  tree = render();
+  assert.equal(saved.length, 0);
+  assert.equal(
+    elements(tree).find((element) => element.props.role === "alert").props
+      .children,
+    messages.fixes.futureDateRequired,
+  );
+  const future = localDateTimeValue(new Date(Date.now() + 86400000));
+  byId(tree, "expiry-date").props.onChange(future.split("T")[0]);
+  byId(tree, "expiry-time").props.onChange({
+    target: { value: future.split("T")[1] },
+  });
+  tree = render();
+  button(tree, messages.fixes.saveDate).props.onClick();
+  assert.deepEqual(saved, [future]);
+});
+
+test("institution submission rechecks expiry after the picker closes", async () => {
+  const calls = [];
+  const runtime = harness({
+    "@/lib/api/institutions": {
+      getAllInstitutions: async () => [],
+      createInstitution: async (body) => {
+        calls.push(body);
+        return { institution_id: "1", license_key: "key" };
+      },
+    },
+  });
+  const Manager = runtime.load(
+    "src/components/institutions/InstitutionsManager.tsx",
+  ).default;
+  const { localDateTimeValue } = runtime.load("src/utils/dateTime.ts");
+  const render = () => runtime.render(Manager);
+  let tree = render();
+  button(tree, "New Institution").props.onClick();
+  tree = render();
+  byId(tree, "create-name").props.onChange({ target: { value: "Test Bank" } });
+  byId(tree, "create-expiry").props.onChange(
+    localDateTimeValue(new Date(Date.now() - 60000)),
+  );
+  tree = render();
+  await button(tree, "Create Institution").props.onClick();
+  assert.equal(calls.length, 0);
+  byId(render(), "create-expiry").props.onChange(
+    localDateTimeValue(new Date(Date.now() + 86400000)),
+  );
+  await button(render(), "Create Institution").props.onClick();
+  assert.equal(calls.length, 1);
+});
+
+test("institution status-only edits and license renewal preserve inactive selection", async () => {
+  const calls = [];
+  const item = {
+    institution_id: "bank-1",
+    institution_name: "Test Bank",
+    license_expires_at: new Date(Date.now() + 86400000).toISOString(),
+    is_active: true,
+  };
+  const runtime = harness({
+    "@/lib/api/institutions": {
+      getAllInstitutions: async () => [item],
+      updateInstitution: async (...args) => {
+        calls.push(["update", ...args]);
+      },
+      renewInstitutionLicense: async (...args) => {
+        calls.push(["renew", ...args]);
+      },
+    },
+  });
+  const Manager = runtime.load(
+    "src/components/institutions/InstitutionsManager.tsx",
+  ).default;
+  const render = () => runtime.render(Manager);
+  render();
+  await runtime.runEffects();
+  let tree = render();
+  elements(tree)
+    .find((element) => element.props.title === messages.fixes.editInstitution)
+    .props.onClick();
+  tree = render();
+  byId(tree, "institution-active").props.onChange(false);
+  tree = render();
+  assert.equal(button(tree, "Save Changes").props.disabled, false);
+  await button(tree, "Save Changes").props.onClick();
+  assert.deepEqual(calls[0], [
+    "update",
+    "bank-1",
+    { institution_name: "Test Bank", is_active: false },
+    "test-token",
+  ]);
+  tree = render();
+  elements(tree)
+    .find((element) => element.props.title === "Renew license")
+    .props.onClick();
+  tree = render();
+  byId(tree, "license-active").props.onChange(false);
+  tree = render();
+  await button(tree, "Renew License").props.onClick();
+  assert.equal(calls[1][0], "renew");
+  assert.ok(Date.parse(calls[1][2].license_expires_at) > Date.now());
+  assert.deepEqual(calls[2], [
+    "update",
+    "bank-1",
+    { is_active: false },
+    "test-token",
+  ]);
+});
+
+test("FAQ responses preserve inactive rows, grouped ordering, and real identifiers", () => {
+  const runtime = harness();
+  const { faqData } = runtime.load("src/components/faqs/faqData.ts");
+  const data = faqData({
+    settings: { title: "Help", subtitle: "Answers" },
+    sections: [
+      {
+        section_title: "Payments",
+        section_order: 2,
+        items: [
+          {
+            faq_id: "42",
+            question: "How?",
+            answer: "Here",
+            item_order: 1,
+            is_active: "false",
+          },
+        ],
+      },
+      {
+        section_title: "Accounts",
+        section_order: 1,
+        items: [{ id: 7, question: "Where?", answer: "There" }],
+      },
+    ],
+  });
+  assert.deepEqual(data.settings, { title: "Help", subtitle: "Answers" });
+  assert.deepEqual(
+    data.items.map((item) => item.id),
+    [7, 42],
+  );
+  assert.equal(data.items[1].is_active, false);
+  assert.equal(data.items[1].section_title, "Payments");
+  assert.equal(
+    faqData({
+      faqs: [{ question: "Missing ID", answer: "Text", section_title: "Help" }],
+    }).items[0].id,
+    null,
+  );
+});
+
+test("FAQ editing sends visibility and display order to the selected record", async () => {
+  const calls = [];
+  const runtime = harness({
+    "@/lib/api/faqs": { updateFaq: async (...args) => calls.push(args) },
+  });
+  const Editor = runtime.load("src/components/faqs/FaqEditor.tsx").default;
+  const item = {
+    id: 42,
+    section_title: "Payments",
+    question: "How?",
+    answer: "Here",
+    section_order: 2,
+    item_order: 3,
+    is_active: true,
+  };
+  let closed = false;
+  const props = {
+    item,
+    accessToken: "test-token",
+    onSaved: () => {
+      closed = true;
+    },
+    onClose() {},
+  };
+  let tree = runtime.render(Editor, props);
+  byId(tree, "faq-active").props.onChange(false);
+  byId(tree, "faq-item_order").props.onChange({ target: { value: "4" } });
+  tree = runtime.render(Editor, props);
+  await elements(tree)
+    .find((element) => element.type === "form")
+    .props.onSubmit({ preventDefault() {} });
+  assert.deepEqual(calls, [
+    [
+      42,
+      {
+        section_title: "Payments",
+        question: "How?",
+        answer: "Here",
+        section_order: 2,
+        item_order: 4,
+        is_active: false,
+      },
+      "test-token",
+    ],
+  ]);
+  assert.equal(closed, true);
+});
+
+test("FAQ search, visibility, and section filters compose and reset pagination", () => {
+  const runtime = harness();
+  const Panel = runtime.load(
+    "src/components/faqs/FaqQuestionsPanel.tsx",
+  ).default;
+  const Row = runtime.load("src/components/faqs/FaqQuestion.tsx").default;
+  const items = Array.from({ length: 12 }, (_, index) => ({
+    id: index,
+    section_title: index === 11 ? "Payments" : "Accounts",
+    question:
+      index === 11 ? "How do I pay a bill?" : `Account question ${index}`,
+    answer: "A useful answer",
+    is_active: index !== 11,
+  }));
+  const props = {
+    items,
+    selected: null,
+    loading: false,
+    error: "",
+    busyId: null,
+    onRefresh() {},
+    onCreate() {},
+    onEdit() {},
+    onDelete() {},
+    onSelectSection: (section) => {
+      props.selected = section;
+    },
+  };
+  const render = () => runtime.render(Panel, props);
+  const rows = (tree) =>
+    elements(tree).filter((element) => element.type === Row);
+  let tree = render();
+  assert.equal(rows(tree).length, 10);
+  elements(tree)
+    .find((element) => element.props.variant === "header")
+    .props.pagination.setPage(2);
+  tree = render();
+  assert.equal(rows(tree).length, 2);
+  elements(tree)
+    .find((element) => element.props["aria-label"] === messages.faqs.search)
+    .props.onChange({ target: { value: "pay a bill" } });
+  tree = render();
+  assert.equal(rows(tree).length, 1);
+  assert.equal(
+    elements(tree).find((element) => element.props.variant === "header").props
+      .pagination.page,
+    1,
+  );
+  elements(tree)
+    .find(
+      (element) =>
+        element.props["aria-label"] === messages.faqs.design.statusFilter,
+    )
+    .props.onChange({ target: { value: "active" } });
+  tree = render();
+  assert.equal(rows(tree).length, 0);
+  button(tree, messages.faqs.design.clearFilters).props.onClick();
+  props.selected = "Payments";
+  tree = render();
+  assert.equal(rows(tree).length, 1);
+  assert.equal(rows(tree)[0].props.item.is_active, false);
+});
+
+test("FAQ answers expand accessibly while edit and delete remain separate actions", () => {
+  const runtime = harness();
+  const Row = runtime.load("src/components/faqs/FaqQuestion.tsx").default;
+  const item = {
+    id: 4,
+    section_title: "Help",
+    question: "How does it work?",
+    answer: "A complete answer\nwith a second paragraph.",
+    is_active: true,
+  };
+  let edits = 0;
+  const props = { item, busy: false, onEdit: () => edits++, onDelete() {} };
+  let tree = runtime.render(Row, props);
+  const toggle = elements(tree).find(
+    (element) => element.props["aria-expanded"] !== undefined,
+  );
+  const answerId = toggle.props["aria-controls"];
+  assert.equal(byId(tree, answerId).props.hidden, true);
+  toggle.props.onClick();
+  tree = runtime.render(Row, props);
+  assert.equal(byId(tree, answerId).props.hidden, false);
+  assert.equal(byId(tree, answerId).props.children.props.children, item.answer);
+  elements(tree)
+    .find((element) => element.props.tone === "edit")
+    .props.onClick();
+  assert.equal(edits, 1);
+});
+
+test("FAQ header editing preserves long subtitles and saves through the existing API", async () => {
+  const calls = [];
+  const runtime = harness({
+    "@/lib/api/faqs": { updateFaqHeader: async (...args) => calls.push(args) },
+  });
+  const Header = runtime.load(
+    "src/components/faqs/FaqHeaderSettings.tsx",
+  ).default;
+  const settings = { title: "Axon FAQ", subtitle: "Original introduction" };
+  let saved = null;
+  const props = {
+    settings,
+    accessToken: "test-token",
+    onSaved: (value) => {
+      saved = value;
+    },
+  };
+  let tree = runtime.render(Header, props);
+  elements(tree)
+    .find((element) => element.props.title === messages.faqs.design.editHeader)
+    .props.onClick();
+  tree = runtime.render(Header, props);
+  assert.equal(button(tree, messages.faqs.saveHeader).props.disabled, true);
+  const subtitle = "Helpful answers across every supported banking service. "
+    .repeat(5)
+    .trim();
+  byId(tree, "faq-header-subtitle").props.onChange({
+    target: { value: subtitle },
+  });
+  tree = runtime.render(Header, props);
+  assert.equal(button(tree, messages.faqs.saveHeader).props.disabled, false);
+  await elements(tree)
+    .find((element) => element.type === "form")
+    .props.onSubmit({ preventDefault() {} });
+  assert.deepEqual(calls, [
+    [{ title: settings.title, subtitle }, "test-token"],
+  ]);
+  assert.deepEqual(saved, { title: settings.title, subtitle });
+});
+
+test("analytics quick ranges apply immediately and custom dates open on request", () => {
+  const runtime = harness();
+  const Filters = runtime.load(
+    "src/components/analytics/AnalyticsFilters.tsx",
+  ).default;
+  const calls = [];
+  const props = {
+    dated: false,
+    filters: {},
+    onApply: (filters) => calls.push(filters),
+  };
+  let tree = runtime.render(Filters, props);
+  assert.equal(byId(tree, "analytics-from"), undefined);
+  elements(tree)
+    .find((element) => element.props["aria-expanded"] !== undefined)
+    .props.onClick();
+  tree = runtime.render(Filters, props);
+  assert.ok(byId(tree, "analytics-from"));
+  elements(tree)
+    .find(
+      (element) =>
+        element.type === "button" &&
+        element.props.children === messages.analytics.design.last7Days,
+    )
+    .props.onClick();
+  tree = runtime.render(Filters, props);
+  assert.equal(byId(tree, "analytics-from"), undefined);
+  assert.equal(calls.length, 1);
+  const first = new Date(calls[0].start_time);
+  const last = new Date(calls[0].end_time);
+  assert.ok(last > first);
+  assert.equal(first.getHours(), 0);
+  assert.equal(last.getHours(), 23);
+});
+
+test("analytics endpoints apply only the filters supported by each summary", async () => {
+  const calls = [];
+  const runtime = harness({
+    "./client": {
+      ADMIN_API_BASE_URL: "/backend/admin",
+      apiRequest: async (...args) => {
+        calls.push(args);
+        return {};
+      },
+    },
+  });
+  const { getAnalyticsSummary } = runtime.load("src/lib/api/analytics.ts");
+  const filters = {
+    date: "2026-10-19",
+    start_time: "2026-10-01T00:00:00Z",
+    end_time: "2026-10-19T23:59:59Z",
+  };
+  for (const section of [
+    "users",
+    "chats",
+    "flows",
+    "nlp",
+    "performance",
+    "logs",
+  ])
+    await getAnalyticsSummary(section, "test-token", filters);
+  assert.deepEqual(
+    calls.map(([url]) => url),
+    ["user", "chat", "flow", "nlp", "performance", "log"].map(
+      (name) => `/dashboard-analytics/${name}-summary`,
+    ),
+  );
+  assert.equal(calls[0][1].query, undefined);
+  assert.deepEqual(calls[1][1].query, {
+    start_time: filters.start_time,
+    end_time: filters.end_time,
+  });
+  assert.deepEqual(calls[3][1].query, { date: filters.date });
+  assert.ok(
+    calls.every(
+      ([, options]) =>
+        options.bearerToken === "test-token" &&
+        options.baseUrl === "/backend/admin",
+    ),
+  );
+});
+
+test("analytics language charts preserve wrapped counts, shares, and readable language names", () => {
+  const runtime = harness();
+  const { languageRows, languageName, distributionRows } = runtime.load(
+    "src/components/analytics/analyticsData.ts",
+  );
+  const result = languageRows({
+    total: 14,
+    languages: {
+      ur: { count: 9, percentage: 64.29 },
+      en: { count: 5, percentage: 35.71 },
+    },
+  });
+  assert.equal(result.total, 14);
+  assert.deepEqual(
+    result.rows.map(({ key, count, percentage }) => [key, count, percentage]),
+    [
+      ["ur", 9, 64.29],
+      ["en", 5, 35.71],
+    ],
+  );
+  assert.equal(languageName("ur", "en"), "Urdu");
+  assert.equal(languageName("en", "en"), "English");
+  const partial = languageRows({ total: 10, languages: { en: { count: 8 } } });
+  assert.deepEqual(
+    partial.rows.map(({ key, count }) => [key, count]),
+    [
+      ["en", 8],
+      ["unknown", 2],
+    ],
+  );
+  assert.deepEqual(languageRows({ total: 0, languages: {} }), {
+    total: 0,
+    rows: [],
+  });
+  assert.deepEqual(
+    distributionRows([
+      { hour: 0, count: 0 },
+      { hour: 1, count: 3 },
+    ]).map(({ key, count }) => [key, count]),
+    [
+      ["0", 0],
+      ["1", 3],
+    ],
+  );
+});
+
+test("analytics detail tables keep nested diagnostics in aligned columns", () => {
+  const runtime = harness();
+  const { analyticsTableRows } = runtime.load(
+    "src/components/analytics/analyticsData.ts",
+  );
+  assert.deepEqual(
+    analyticsTableRows([
+      {
+        request_id: "req-1",
+        timing: { average: 45, p95: 90 },
+        error: "<script>raw text</script>",
+      },
+    ]),
+    [
+      {
+        request_id: "req-1",
+        "timing.average": 45,
+        "timing.p95": 90,
+        error: "<script>raw text</script>",
+      },
+    ],
+  );
+  assert.deepEqual(
+    analyticsTableRows({ transfer: { completed: 4, failed: 0 } }),
+    [{ name: "transfer", completed: 4, failed: 0 }],
+  );
+});
 
 test("log rows expand the complete JSON and collapse without changing the payload", () => {
   const runtime = harness();
@@ -512,6 +1026,45 @@ test("card edits preserve the real ID and inactive state; unchanged and reverted
   assert.deepEqual(calls, [
     [7, { type_name: "credit updated", is_active: false }, "test-token"],
   ]);
+});
+
+test("dashboard includes all ten overview metrics", () => {
+  const runtime = harness();
+  const Dashboard = runtime.load(
+    "src/components/dashboard/DashboardStats.tsx",
+  ).default;
+  const MetricCard = runtime.load(
+    "src/components/dashboard/AnalyticsMetricCard.tsx",
+  ).default;
+  const panels = [
+    "AnalyticsKpiCards",
+    "EngagementOverview",
+    "FlowOutcomes",
+  ].map((name) => runtime.load(`src/components/dashboard/${name}.tsx`).default);
+  const tree = runtime.render(Dashboard);
+  const children = elements(tree).filter((element) =>
+    panels.includes(element.type),
+  );
+  assert.equal(children.length, 3);
+  const metrics = children
+    .flatMap((element) => elements(runtime.render(element.type, element.props)))
+    .filter((element) => element.type === MetricCard);
+  assert.equal(metrics.length, 10);
+  assert.equal(new Set(metrics.map((element) => element.props.label)).size, 10);
+});
+
+test("FAQ proxy preserves the trailing slash before the generic backend rewrite", async () => {
+  const runtime = harness({ "next-intl/plugin": () => (config) => config });
+  const config = runtime.load("next.config.ts").default;
+  const routes = await config.rewrites();
+  const faqIndex = routes.findIndex(
+    (route) => route.source === "/backend/admin/faqs/",
+  );
+  assert.ok(faqIndex >= 0);
+  assert.ok(routes[faqIndex].destination.endsWith("/admin/faqs/"));
+  assert.ok(
+    faqIndex < routes.findIndex((route) => route.source === "/backend/:path*"),
+  );
 });
 
 test("analytics display API percentages without inventing trends or hiding zero outcomes", () => {

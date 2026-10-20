@@ -26,28 +26,24 @@ export default function AnalyticsKpiCards({
       key: "totalUsers",
       value: overview?.total_users,
       icon: GroupIcon,
-      note: "allTimeUsers",
       tone: "brand",
     },
     {
       key: "totalSessions",
       value: overview?.total_sessions,
       icon: ChatIcon,
-      note: "allTimeSessions",
       tone: "brand",
     },
     {
       key: "dailyActiveUsers",
       value: overview?.daily_active_users.count,
       icon: UserCircleIcon,
-      note: "today",
       tone: "brand",
     },
     {
       key: "activeSessions",
       value: overview?.active_sessions,
       icon: ChatIcon,
-      note: "concurrentSessions",
       tone: "success",
     },
   ] as const;
@@ -57,12 +53,14 @@ export default function AnalyticsKpiCards({
         <AnalyticsMetricCard
           key={card.key}
           label={t(card.key)}
-          value={card.value == null ? null : format.number(card.value)}
-          description={
-            card.key === "dailyActiveUsers" && growth != null
-              ? ""
-              : t(card.note)
+          badge={
+            card.key === "totalUsers" || card.key === "totalSessions" ? (
+              <span className="rounded-md bg-gray-100 px-2 py-0.5 text-theme-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                {t("allTime")}
+              </span>
+            ) : undefined
           }
+          value={card.value == null ? null : format.number(card.value)}
           icon={<card.icon />}
           tone={card.tone}
         >
