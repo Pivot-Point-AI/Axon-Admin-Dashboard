@@ -2,10 +2,12 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
+import type { MetricTrendData } from "./analyticsTrends";
 
 export interface AnalyticsPeriodPoint {
   label: string;
   value: number | null;
+  trend?: MetricTrendData | null;
 }
 
 interface AnalyticsPeriodChartProps {
@@ -55,15 +57,21 @@ export default function AnalyticsPeriodChart({
         .trim();
       const muted = theme.getPropertyValue("--color-gray-500").trim();
       const rtl = document.documentElement.dir === "rtl";
-      const padding = { start: 30, end: 12, top: 18, bottom: 30 };
-      const chartWidth = width - padding.start - padding.end;
-      const chartHeight = height - padding.top - padding.bottom;
+      context.font = `11px ${styles.fontFamily}`;
+      context.lineWidth = 1;
       const maximum = Math.max(
         5,
         Math.ceil(Math.max(0, ...points.map((p) => p.value ?? 0)) / 5) * 5,
       );
-      context.font = `11px ${styles.fontFamily}`;
-      context.lineWidth = 1;
+      let maxLabelWidth = 0;
+      for (let tick = 0; tick <= 5; tick++) {
+        const text = String(Math.round((maximum * tick) / 5));
+        maxLabelWidth = Math.max(maxLabelWidth, context.measureText(text).width);
+      }
+      const startPadding = Math.max(48, Math.ceil(maxLabelWidth) + 16);
+      const padding = { start: startPadding, end: 14, top: 18, bottom: 30 };
+      const chartWidth = width - padding.start - padding.end;
+      const chartHeight = height - padding.top - padding.bottom;
       for (let tick = 0; tick <= 5; tick++) {
         const y = padding.top + chartHeight * (1 - tick / 5);
         context.strokeStyle = grid;
@@ -74,8 +82,8 @@ export default function AnalyticsPeriodChart({
         context.fillStyle = muted;
         context.textAlign = "end";
         context.fillText(
-          String((maximum * tick) / 5),
-          padding.start - 10,
+          String(Math.round((maximum * tick) / 5)),
+          padding.start - 8,
           y + 4,
         );
       }

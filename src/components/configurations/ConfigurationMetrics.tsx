@@ -18,7 +18,21 @@ export default function ConfigurationMetrics({
   loading,
 }: ConfigurationMetricsProps) {
   const t = useTranslations("designSystem");
+  const c = useTranslations("metricCards");
   const format = useFormatter();
+  const numeric = configs.filter((item) =>
+    ["number", "integer"].includes(configKind(item)),
+  ).length;
+  const boolean = configs.filter(
+    (item) => configKind(item) === "boolean",
+  ).length;
+  const share = (count: number) =>
+    c("ofTotal", {
+      percent: format.number(configs.length ? count / configs.length : 0, {
+        style: "percent",
+        maximumFractionDigits: 1,
+      }),
+    });
   const dates = configs.flatMap((item) => {
     const date = item.updated_at ? new Date(item.updated_at).getTime() : NaN;
     return Number.isFinite(date) ? [date] : [];
@@ -29,20 +43,21 @@ export default function ConfigurationMetrics({
       value: configs.length,
       icon: <ListIcon />,
       tone: "purple",
+      description: c("settingsHint"),
     },
     {
       label: t("numericSettings"),
-      value: configs.filter((item) =>
-        ["number", "integer"].includes(configKind(item)),
-      ).length,
+      value: numeric,
       icon: <TableIcon />,
       tone: "brand",
+      description: share(numeric),
     },
     {
       label: t("booleanSettings"),
-      value: configs.filter((item) => configKind(item) === "boolean").length,
+      value: boolean,
       icon: <CheckCircleIcon />,
       tone: "success",
+      description: share(boolean),
     },
   ];
   if (dates.length)
@@ -55,6 +70,7 @@ export default function ConfigurationMetrics({
       }),
       icon: <TimeIcon />,
       tone: "warning",
+      description: c("recentChange"),
     });
   return <ManagementMetrics items={items} loading={loading} />;
 }

@@ -3,20 +3,20 @@
 import { useState } from "react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
-import { GlobeIcon } from "@/icons";
+import { ChatIcon, GlobeIcon, GroupIcon } from "@/icons";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
 import { languageName, languageRows } from "./analyticsData";
 
 const colors = [
-  "var(--color-brand-500)",
+  "var(--color-brand-600)",
   "var(--color-blue-light-400)",
   "var(--color-theme-purple-500)",
   "var(--color-success-500)",
   "var(--color-orange-400)",
   "var(--color-gray-400)",
 ];
-const bars = [
-  "bg-brand-500 dark:bg-brand-400",
+const dots = [
+  "bg-brand-600 dark:bg-brand-400",
   "bg-blue-light-400 dark:bg-blue-light-400",
   "bg-theme-purple-500 dark:bg-theme-purple-500",
   "bg-success-500 dark:bg-success-400",
@@ -36,6 +36,7 @@ export default function AnalyticsLanguageBreakdown({
   const format = useFormatter();
   const [expanded, setExpanded] = useState(false);
   const { rows, total } = languageRows(value);
+  const languageCount = rows.filter((row) => row.key !== "unknown").length;
   const gradient = rows
     .map((row, index) => {
       const previous = rows
@@ -63,73 +64,92 @@ export default function AnalyticsLanguageBreakdown({
               className="relative flex size-44 shrink-0 items-center justify-center rounded-full 2xl:size-48"
               style={{ background: `conic-gradient(${gradient})` }}
             >
-              <div className="absolute inset-6 flex flex-col items-center justify-center rounded-full bg-white dark:bg-gray-900">
-                <span className="text-title-sm font-semibold tracking-tight text-gray-900 tabular-nums dark:text-white">
+              <div className="absolute inset-6 flex flex-col items-center justify-center rounded-full bg-white shadow-xs dark:bg-gray-900">
+                <span className="text-2xl font-bold tracking-tight text-gray-900 tabular-nums dark:text-white">
                   {format.number(total)}
                 </span>
-                <span className="text-theme-xs text-gray-500 dark:text-gray-400">
-                  {t("design.users")}
+                <span className="mt-0.5 text-theme-xs font-normal text-gray-500 dark:text-gray-400">
+                  Total Users
                 </span>
               </div>
             </div>
-            <div className="min-w-40 flex-1 space-y-4">
+            <div className="min-w-40 flex-1 space-y-3">
               <div className="flex items-center justify-between text-theme-xs font-medium text-gray-400 dark:text-gray-500">
                 <span>{t("design.language")}</span>
                 <span>{t("design.usersAndShare")}</span>
               </div>
               {(expanded ? rows : rows.slice(0, 5)).map((row, index) => (
-                <div key={row.key}>
-                  <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span
-                        className={`size-2 shrink-0 rounded-full ${bars[index % bars.length]}`}
-                      />
-                      <span className="truncate font-medium text-gray-800 dark:text-gray-200">
-                        {row.key === "unknown"
-                          ? t("design.unspecified")
-                          : languageName(row.key, locale)}
-                      </span>
-                    </div>
-                    <span className="shrink-0 text-gray-700 tabular-nums dark:text-gray-300">
-                      {format.number(row.count)}{" "}
-                      <span className="ms-2 text-theme-xs text-gray-400 dark:text-gray-500">
-                        {format.number((row.percentage ?? 0) / 100, {
-                          style: "percent",
-                          maximumFractionDigits: 1,
-                        })}
-                      </span>
+                <div
+                  key={row.key}
+                  className="flex items-center justify-between gap-3 text-sm py-1"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span
+                      className={`size-2.5 shrink-0 rounded-full ${dots[index % dots.length]}`}
+                    />
+                    <span className="truncate font-medium text-gray-800 dark:text-gray-200">
+                      {row.key === "unknown"
+                        ? t("design.unspecified")
+                        : languageName(row.key, locale)}
                     </span>
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                    <div
-                      className={`h-full rounded-full ${bars[index % bars.length]}`}
-                      style={{
-                        width: `${Math.min(100, Math.max(0, row.percentage ?? 0))}%`,
-                      }}
-                    />
+                  <div className="flex shrink-0 items-baseline gap-2">
+                    <span className="font-semibold text-gray-800 tabular-nums dark:text-gray-200">
+                      {format.number(row.count)}
+                    </span>
+                    <span className="text-theme-xs text-gray-400 tabular-nums dark:text-gray-500">
+                      {format.number((row.percentage ?? 0) / 100, {
+                        style: "percent",
+                        maximumFractionDigits: 1,
+                      })}
+                    </span>
                   </div>
                 </div>
               ))}
+              {rows.length > 5 && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded(!expanded)}
+                  className="pt-1 text-theme-xs font-medium text-brand-600 hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-brand-400 dark:text-brand-300 dark:hover:text-brand-200"
+                >
+                  {t(expanded ? "design.showLess" : "design.showAll")}
+                </button>
+              )}
             </div>
           </div>
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-theme-purple-500/5 p-4 text-sm text-gray-500 dark:bg-theme-purple-500/10 dark:text-gray-400">
-            <span>
-              {t("design.languagesCount", {
-                count: rows.filter((row) => row.key !== "unknown").length,
-              })}
-            </span>
-            <span>
-              {t("design.totalUsers", { count: format.number(total) })}
-            </span>
-            {rows.length > 5 && (
-              <button
-                type="button"
-                onClick={() => setExpanded(!expanded)}
-                className="font-medium text-brand-600 hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-brand-400 dark:text-brand-300 dark:hover:text-brand-200"
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex items-center gap-3 rounded-xl bg-theme-purple-500/5 p-3.5 dark:bg-theme-purple-500/10">
+              <span
+                aria-hidden="true"
+                className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-theme-purple-500/15 text-theme-purple-500 dark:bg-theme-purple-500/20 dark:text-theme-purple-400"
               >
-                {t(expanded ? "design.showLess" : "design.showAll")}
-              </button>
-            )}
+                <ChatIcon className="size-4.5" />
+              </span>
+              <div>
+                <span className="block text-xl font-bold tracking-tight text-gray-950 tabular-nums dark:text-white">
+                  {languageCount}
+                </span>
+                <span className="block text-theme-xs text-gray-500 dark:text-gray-400">
+                  {t("design.languages")}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl bg-brand-50/60 p-3.5 dark:bg-brand-500/10">
+              <span
+                aria-hidden="true"
+                className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300"
+              >
+                <GroupIcon className="size-4.5" />
+              </span>
+              <div>
+                <span className="block text-xl font-bold tracking-tight text-gray-950 tabular-nums dark:text-white">
+                  {format.number(total)}
+                </span>
+                <span className="block text-theme-xs text-gray-500 dark:text-gray-400">
+                  {t("design.totalUsersLabel")}
+                </span>
+              </div>
+            </div>
           </div>
         </>
       )}

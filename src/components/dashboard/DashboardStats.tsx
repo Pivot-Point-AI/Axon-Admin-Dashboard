@@ -64,38 +64,55 @@ export default function DashboardStats({ heading }: DashboardStatsProps = {}) {
             {t("snapshot")}
           </h2>
         )}
-        <div className="flex flex-wrap items-center gap-3">
-          <p
-            role="status"
-            className="inline-flex items-center gap-2 rounded-lg border border-brand-100 bg-white px-3 py-2.5 text-theme-xs font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
-          >
-            <CalenderIcon aria-hidden="true" className="size-4" />
-            {loading
-              ? t("updating")
-              : updatedAt
-                ? t("updatedAt", {
-                    time: format.dateTime(updatedAt, {
+        <div className="flex max-w-full items-center gap-3 rounded-xl border border-brand-100 bg-white p-1.5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex min-w-0 items-center gap-2.5 ps-2 pe-1">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+              <CalenderIcon aria-hidden="true" className="size-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-theme-xs leading-4 text-gray-500 dark:text-gray-400">
+                {t("lastUpdatedLabel")}
+              </p>
+              <p
+                role="status"
+                className="mt-0.5 text-theme-xs leading-4 font-medium text-gray-800 dark:text-gray-200"
+              >
+                {loading ? (
+                  t("updating")
+                ) : updatedAt ? (
+                  <time
+                    dateTime={updatedAt.toISOString()}
+                    title={format.dateTime(updatedAt, {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  >
+                    {format.dateTime(updatedAt, {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
-                    }),
-                  })
-                : t("unavailable")}
-          </p>
+                    })}
+                  </time>
+                ) : (
+                  t("unavailable")
+                )}
+              </p>
+            </div>
+          </div>
           <Button
             size="sm"
             variant="primary"
-            className="gap-2 !text-white"
+            className="min-h-10 shrink-0 gap-2 !text-white"
             onClick={refresh}
             disabled={loading}
             startIcon={
               <RefreshIcon
                 aria-hidden="true"
-                className={`size-3.5 text-white ${loading ? "motion-safe:animate-spin" : ""}`}
+                className={`size-4 text-white ${loading ? "motion-safe:animate-spin" : ""}`}
               />
             }
           >
-            {t(error ? "retry" : "refresh")}
+            {t(loading ? "refreshing" : error ? "retry" : "refresh")}
           </Button>
         </div>
       </div>

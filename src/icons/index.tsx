@@ -66,3 +66,7 @@ export { default as GlobeIcon } from "./globe.svg";
 export { default as DatabaseIcon } from "./database.svg";
 export { default as ChartBarsIcon } from "./chart-bars.svg";
 export { default as PlayIcon } from "./play.svg";
+export { default as TrendLineIcon } from "./trend-line.svg";
+export { default as TrendWaveIcon } from "./trend-wave.svg";
+export { default as TrendStepIcon } from "./trend-step.svg";
+export { default as TrendFlatIcon } from "./trend-flat.svg";

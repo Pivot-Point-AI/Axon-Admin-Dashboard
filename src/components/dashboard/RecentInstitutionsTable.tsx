@@ -16,6 +16,7 @@ import { useAdminAuth } from "@/context/AdminAuthContext";
 import { ApiError } from "@/lib/api/client";
 import { getAllInstitutions } from "@/lib/api/institutions";
 import type { InstitutionItem } from "@/lib/api/types";
+import { BoxCubeIcon } from "@/icons";
 
 function licenseStatus(iso: string | null): {
   label: string;
@@ -62,29 +63,52 @@ export default function RecentInstitutionsTable() {
   }, [accessToken]);
 
   return (
-    <div className="axon-dashboard-institutions rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Institutions
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t("institutionsSubtitle")}
-          </p>
+    <section
+      aria-label={t("institutionsTitle")}
+      className="axon-dashboard-institutions flex h-full min-w-0 flex-col rounded-xl border border-brand-100 bg-white p-4 shadow-theme-xs sm:p-5 dark:border-gray-800 dark:bg-gray-900"
+    >
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span
+            aria-hidden="true"
+            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-light-50 text-blue-light-500 dark:bg-blue-light-500/15 dark:text-blue-light-300"
+          >
+            <BoxCubeIcon className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold text-gray-950 dark:text-white/90">
+              {t("institutionsTitle")}
+            </h3>
+            <p className="mt-1 text-theme-xs leading-5 text-gray-500 dark:text-gray-400">
+              {t("institutionsSubtitle")}
+            </p>
+          </div>
         </div>
         <Link
-          className="rounded-lg border border-brand-200 bg-white px-4 py-2.5 text-theme-xs font-medium text-brand-600 hover:bg-brand-50 dark:border-brand-700 dark:bg-gray-900 dark:text-brand-300 dark:hover:bg-brand-500/10"
+          className="inline-flex min-h-9 shrink-0 items-center rounded-lg border border-brand-100 bg-brand-25 px-3 py-2 text-theme-xs font-medium text-brand-600 hover:border-brand-200 hover:bg-brand-50 dark:border-brand-700 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20"
           href="/institutions"
         >
-          Manage all
+          {t("manageAll")}
         </Link>
       </div>
 
-      {error && <p className="text-sm text-error-500">{error}</p>}
+      {error && (
+        <p
+          role="alert"
+          className="mb-3 text-sm text-error-600 dark:text-error-400"
+        >
+          {error}
+        </p>
+      )}
 
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
+      <div
+        role="region"
+        aria-label={t("institutionsTitle")}
+        tabIndex={0}
+        className={`custom-scrollbar min-w-0 overflow-x-auto rounded-xl border border-gray-100 focus-visible:outline-2 focus-visible:outline-brand-400 dark:border-gray-800 ${institutions.length ? "flex-1" : ""}`}
+      >
+        <Table className={institutions.length ? "h-full" : undefined}>
+          <TableHeader className="h-11 border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
             <TableRow>
               <TableCell
                 isHeader
@@ -139,10 +163,10 @@ export default function RecentInstitutionsTable() {
                     <TableCell className="px-4 py-3 text-theme-xs text-gray-500 tabular-nums dark:text-gray-400">
                       {index + 1}
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">
+                    <TableCell className="max-w-48 px-4 py-3 text-sm font-medium break-words text-gray-800 dark:text-white/90">
                       {institution.institution_name}
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                    <TableCell className="px-4 py-3 text-theme-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
                       {institution.license_expires_at
                         ? new Date(
                             institution.license_expires_at,
@@ -167,6 +191,6 @@ export default function RecentInstitutionsTable() {
           </TableBody>
         </Table>
       </div>
-    </div>
+    </section>
   );
 }

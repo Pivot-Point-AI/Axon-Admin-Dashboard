@@ -48,8 +48,10 @@ export default function AnalyticsFilters({
             end_time: new Date(`${today}T23:59:59.999`).toISOString(),
           };
   };
-  const choices = dated ? [0, 1] : [0, 7, 30];
+  const choices = dated ? [0, 1] : [7, 14, 30];
+  const isDefaultRange = !dated && !filters.start_time && !filters.end_time;
   const selectedPreset = choices.find((days) => {
+    if (isDefaultRange && days === 7) return true;
     const next = preset(days);
     return dated
       ? (filters.date === today ? "today" : filters.date || "today") ===
@@ -117,10 +119,10 @@ export default function AnalyticsFilters({
                     ? days === 0
                       ? "design.today"
                       : "design.yesterday"
-                    : days === 0
-                      ? "design.allTime"
-                      : days === 7
-                        ? "design.last7Days"
+                    : days === 7
+                      ? "design.last7Days"
+                      : days === 14
+                        ? "design.last14Days"
                         : "design.last30Days",
                 )}
               </button>

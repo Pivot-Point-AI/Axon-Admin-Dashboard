@@ -1,6 +1,12 @@
 // Response types from the admin OpenAPI schema.
+interface AnalyticsTrendBlocks {
+  top_kpis?: Record<string, unknown>;
+}
 
-export interface UserStatsSummaryResponse {
+export interface UserStatsSummaryResponse extends AnalyticsTrendBlocks {
+  active_audience?: Record<string, unknown>;
+  audience_and_retention?: Array<Record<string, unknown>>;
+  new_user_acquisition?: Record<string, unknown>;
   total_users: number;
   active_sessions: number;
   total_sessions: number;
@@ -21,7 +27,8 @@ export interface UserStatsSummaryResponse {
   language_breakdown: Record<string, unknown>;
 }
 
-export interface ChatStatsSummaryResponse {
+export interface ChatStatsSummaryResponse extends AnalyticsTrendBlocks {
+  conversation_details?: Array<Record<string, unknown>>;
   start_time?: string | null;
   end_time?: string | null;
   total_messages: number;
@@ -36,7 +43,11 @@ export interface ChatStatsSummaryResponse {
   activity_by_day_of_week: Array<DayActivity>;
 }
 
-export interface FlowStatsSummaryResponse {
+export interface FlowStatsSummaryResponse extends AnalyticsTrendBlocks {
+  most_popular_journeys?: Array<Record<string, unknown>>;
+  journey_outcomes?: Array<Record<string, unknown>>;
+  journey_outcomes_detail?: Array<Record<string, unknown>>;
+  outcomes_at_a_glance?: Record<string, unknown>;
   total_initialized_flows: number;
   total_completed_flows: number;
   total_cancelled_flows: number;
@@ -51,7 +62,13 @@ export interface FlowStatsSummaryResponse {
   flow_breakdown_by_type: Record<string, unknown>;
 }
 
-export interface NlpStatsSummaryResponse {
+export interface NlpStatsSummaryResponse extends AnalyticsTrendBlocks {
+  confidence_distribution?: Record<string, unknown>;
+  why_ai_fallback_was_used?: Record<string, unknown>;
+  safety_blocks_by_risk?: Record<string, unknown>;
+  safety_blocks_by_reason?: Record<string, unknown>;
+  what_users_ask_for?: Record<string, unknown>;
+  fallbacks_and_safety?: Record<string, unknown>;
   date: string;
   total_classified_turns: number;
   average_intent_confidence: number;
@@ -66,7 +83,12 @@ export interface NlpStatsSummaryResponse {
   intent_distribution: Record<string, unknown>;
 }
 
-export interface PerformanceStatsSummaryResponse {
+export interface PerformanceStatsSummaryResponse extends AnalyticsTrendBlocks {
+  response_time_percentiles?: Record<string, unknown>;
+  speech_recognition_percentiles?: Record<string, unknown>;
+  ai_generation_percentiles?: Record<string, unknown>;
+  average_time_by_stage?: Record<string, number>;
+  slowest_interactions?: Array<Record<string, unknown>>;
   date: string;
   total_measured_turns: number;
   end_to_end_latency_ms: Record<string, unknown>;
@@ -77,7 +99,14 @@ export interface PerformanceStatsSummaryResponse {
   top_slowest_turns: Array<Record<string, unknown>>;
 }
 
-export interface LogStatsSummaryResponse {
+export interface LogStatsSummaryResponse extends AnalyticsTrendBlocks {
+  interaction_outcomes?: Record<string, unknown>;
+  conversation_channels?: Record<string, unknown>;
+  speech_recognition_events?: Record<string, unknown>;
+  token_usage_breakdown?: Record<string, unknown>;
+  actions_delivered?: Array<Record<string, unknown>>;
+  slow_interactions?: Array<Record<string, unknown>>;
+  recognized_errors?: Array<Record<string, unknown>>;
   found: boolean;
   date: string;
   turn_success_count?: number;

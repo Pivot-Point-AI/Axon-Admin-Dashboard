@@ -52,7 +52,7 @@ export default function AppHeader() {
   }, []);
 
   return (
-    <header className="axon-header sticky top-0 z-99999 flex min-h-16 w-full items-center gap-3 border-b border-brand-100/70 bg-white/95 px-4 backdrop-blur-lg sm:px-6 dark:border-gray-800 dark:bg-gray-900/95">
+    <header className="axon-header sticky top-0 z-99999 flex min-h-16 w-full items-center gap-3 border-b border-brand-100/70 bg-white/95 px-4 backdrop-blur-lg sm:px-6 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] dark:border-gray-800 dark:bg-gray-900/95">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
@@ -107,13 +107,7 @@ export default function AppHeader() {
           </ol>
         </nav>
       </div>
-      <div
-        className={
-          pathname === "/"
-            ? "me-auto hidden w-full max-w-lg md:block"
-            : "mx-auto hidden w-full max-w-lg px-4 md:block"
-        }
-      >
+      <div className="hidden w-full max-w-lg justify-self-center md:block">
         <div className="relative">
           <SearchOutlineIcon
             aria-hidden="true"
@@ -124,7 +118,7 @@ export default function AppHeader() {
             type="search"
             aria-label={t("searchPlaceholder")}
             placeholder={t("searchPlaceholder")}
-            className="h-10 w-full rounded-lg border border-brand-100/50 bg-gray-50 ps-10 pe-16 text-theme-xs text-gray-700 placeholder:text-gray-500 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/10 focus:outline-none dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-400"
+            className="h-11 w-full rounded-xl border border-brand-100/70 bg-gray-50 ps-10 pe-16 text-theme-xs text-gray-700 placeholder:text-gray-500 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/10 focus:outline-none dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-400"
           />
           <span
             aria-hidden="true"
@@ -139,7 +133,7 @@ export default function AppHeader() {
           </span>
         </div>
       </div>
-      <div className="ms-auto flex shrink-0 items-center gap-3">
+      <div className="ms-auto flex shrink-0 items-center gap-3 md:ms-0 md:justify-self-end">
         <ThemeToggleButton className="size-8 rounded-md border-transparent bg-transparent hover:bg-gray-100 dark:border-transparent dark:bg-transparent dark:hover:bg-gray-800" />
         <div className="border-s border-gray-200 ps-3 dark:border-gray-700">
           <UserDropdown />

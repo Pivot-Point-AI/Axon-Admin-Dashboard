@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import ManagementMetrics from "@/components/common/ManagementMetrics";
 import { BoxCubeIcon, CheckCircleIcon, CloseIcon } from "@/icons";
 import { asBoolean } from "@/utils/boolean";
@@ -15,6 +15,14 @@ export default function MasterDataMetrics({
   loading,
 }: MasterDataMetricsProps) {
   const t = useTranslations("designSystem");
+  const c = useTranslations("metricCards");
+  const format = useFormatter();
+  const active = items.filter((item) => asBoolean(item.is_active)).length;
+  const share = (count: number) =>
+    format.number(items.length ? count / items.length : 0, {
+      style: "percent",
+      maximumFractionDigits: 1,
+    });
   return (
     <ManagementMetrics
       loading={loading}
@@ -24,18 +32,21 @@ export default function MasterDataMetrics({
           value: items.length,
           icon: <BoxCubeIcon />,
           tone: "brand",
+          description: c("recordsHint"),
         },
         {
           label: t("activeRecords"),
-          value: items.filter((item) => asBoolean(item.is_active)).length,
+          value: active,
           icon: <CheckCircleIcon />,
           tone: "success",
+          description: c("ofTotal", { percent: share(active) }),
         },
         {
           label: t("inactiveRecords"),
-          value: items.filter((item) => !asBoolean(item.is_active)).length,
+          value: items.length - active,
           icon: <CloseIcon />,
           tone: "error",
+          description: c("ofTotal", { percent: share(items.length - active) }),
         },
       ]}
     />

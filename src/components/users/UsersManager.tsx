@@ -6,7 +6,7 @@ import useModal from "@/hooks/useModal";
 import EditUserModal from "./EditUserModal";
 import { useConfirm } from "@/context/FeedbackContext";
 import useRequiredFields from "@/hooks/useRequiredFields";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import ManagementMetrics from "@/components/common/ManagementMetrics";
 import { GroupIcon, UserCircleIcon, UserIcon, CheckCircleIcon } from "@/icons";
 import { useCallback, useEffect, useState } from "react";
@@ -45,6 +45,8 @@ export default function UsersManager() {
   const f = useTranslations("fixes");
   const confirm = useConfirm();
   const t = useTranslations("managementDesign");
+  const c = useTranslations("metricCards");
+  const format = useFormatter();
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const { accessToken } = useAdminAuth();
@@ -152,6 +154,13 @@ export default function UsersManager() {
   );
   const roleCount = (role: string) =>
     users.filter((user) => user.role.toUpperCase() === role).length;
+  const roleShare = (role: string) =>
+    c("ofTotal", {
+      percent: format.number(
+        users.length ? roleCount(role) / users.length : 0,
+        { style: "percent", maximumFractionDigits: 1 },
+      ),
+    });
 
   const pagination = usePagination(
     visibleUsers,
@@ -168,24 +177,28 @@ export default function UsersManager() {
             value: users.length,
             icon: <GroupIcon />,
             tone: "brand",
+            description: c("usersHint"),
           },
           {
             label: t("administrators"),
             value: roleCount("SUPER_ADMIN"),
             icon: <CheckCircleIcon />,
-            tone: "success",
+            tone: "purple",
+            description: roleShare("SUPER_ADMIN"),
           },
           {
             label: t("managers"),
             value: roleCount("MANAGER"),
             icon: <UserCircleIcon />,
             tone: "warning",
+            description: roleShare("MANAGER"),
           },
           {
             label: t("viewers"),
             value: roleCount("VIEWER"),
             icon: <UserIcon />,
-            tone: "purple",
+            tone: "success",
+            description: roleShare("VIEWER"),
           },
         ]}
       />

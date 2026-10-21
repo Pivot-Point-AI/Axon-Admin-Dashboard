@@ -30,12 +30,16 @@ const sectionIcons = {
 
 interface AnalyticsManagerProps {
   heading?: ReactNode;
+  initialSection?: AnalyticsSection;
 }
 
-export default function AnalyticsManager({ heading }: AnalyticsManagerProps) {
+export default function AnalyticsManager({
+  heading,
+  initialSection = "users",
+}: AnalyticsManagerProps) {
   const t = useTranslations("analytics");
   const { accessToken } = useAdminAuth();
-  const [section, setSection] = useState<AnalyticsSection>("users");
+  const [section, setSection] = useState<AnalyticsSection>(initialSection);
   const [telemetryDate, setTelemetryDate] = useState("today");
   const [rangeFilters, setRangeFilters] = useState<Filters>({});
   const navigationRef = useRef<HTMLElement>(null);

@@ -3,6 +3,8 @@
 import { useId, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
+import Pagination from "@/components/common/Pagination";
+import usePagination from "@/hooks/usePagination";
 import {
   Table,
   TableBody,
@@ -20,6 +22,7 @@ interface AnalyticsDataTableProps {
   value: unknown;
   visualization?: ReactNode;
   embedded?: boolean;
+  paginated?: boolean;
 }
 
 export default function AnalyticsDataTable({
@@ -27,11 +30,13 @@ export default function AnalyticsDataTable({
   value,
   visualization,
   embedded = false,
+  paginated = false,
 }: AnalyticsDataTableProps) {
   const t = useTranslations("analytics");
   const [expanded, setExpanded] = useState(false);
   const tableId = useId();
   const rows = analyticsTableRows(value);
+  const pagination = usePagination(rows, field, 5);
   const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))];
   const numericColumns = new Set(
     columns.filter(
@@ -80,7 +85,12 @@ export default function AnalyticsDataTable({
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {(expanded ? rows : rows.slice(0, 5)).map((row, index) => (
+              {(paginated
+                ? pagination.items
+                : expanded
+                  ? rows
+                  : rows.slice(0, 5)
+              ).map((row, index) => (
                 <TableRow key={index}>
                   {columns.map((column) => {
                     const value = row[column];
@@ -128,7 +138,10 @@ export default function AnalyticsDataTable({
           </Table>
         </div>
       )}
-      {rows.length > 5 && (
+      {paginated && rows.length > 0 && (
+        <Pagination pagination={pagination} variant="footer" />
+      )}
+      {!paginated && rows.length > 5 && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <p
             role="status"

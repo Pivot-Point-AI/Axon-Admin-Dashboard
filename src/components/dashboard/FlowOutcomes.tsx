@@ -10,6 +10,7 @@ import {
 import { Link } from "@/i18n/navigation";
 import type { DashboardOverviewResponse } from "@/lib/api/types";
 import AnalyticsMetricCard from "./AnalyticsMetricCard";
+import { metricTrend } from "@/components/analytics/analyticsTrends";
 
 interface FlowOutcomesProps {
   overview: DashboardOverviewResponse | null;
@@ -39,10 +40,10 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
           </div>
         </div>
         <Link
-          href="/flows"
+          href="/analytics?section=flows"
           className="inline-flex items-center gap-1 text-theme-xs font-semibold text-brand-600 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 dark:text-brand-300 dark:hover:text-brand-200"
         >
-          {t("manageFlows")}
+          {t("viewAll")}
           <ArrowRightIcon
             aria-hidden="true"
             className="size-3.5 rtl:rotate-180"
@@ -58,6 +59,10 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
           description={t("flowsInitiatedDescription")}
           icon={<PlayIcon />}
           tone="success"
+          trend={metricTrend(overview, "total_flows_initiated", [
+            "banking_journeys",
+          ])}
+          trendVariant="bar"
         />
         <AnalyticsMetricCard
           label={t("flowCompletionRate")}
@@ -66,6 +71,10 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
           icon={<CheckCircleIcon />}
           tone="brand"
           progress={overview?.flow_completion_rate_pct}
+          trend={metricTrend(overview, "flow_completion_rate_pct", [
+            "banking_journeys",
+          ])}
+          trendVariant="bar"
         />
         <AnalyticsMetricCard
           label={t("flowAbandonmentRate")}
@@ -74,6 +83,11 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
           icon={<CloseLineIcon />}
           tone="error"
           progress={overview?.flow_abandonment_rate_pct}
+          trend={metricTrend(overview, "flow_abandonment_rate_pct", [
+            "banking_journeys",
+          ])}
+          trendVariant="bar"
+          lowerIsBetter
         />
       </div>
       {overview?.total_flows_initiated === 0 && (

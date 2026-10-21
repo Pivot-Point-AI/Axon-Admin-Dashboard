@@ -8,6 +8,8 @@ interface ComponentCardProps {
   description?: string;
   className?: string;
   icon?: ReactNode;
+  compact?: boolean;
+  iconClassName?: string;
 }
 
 export default function ComponentCard({
@@ -17,26 +19,43 @@ export default function ComponentCard({
   description,
   className,
   icon,
+  compact = false,
+  iconClassName,
 }: ComponentCardProps) {
   return (
     <section
       className={cn(
-        "axon-panel min-w-0 rounded-xl border border-brand-100/70 bg-white p-4 shadow-theme-xs sm:p-5 dark:border-gray-800 dark:bg-gray-900",
+        "axon-panel min-w-0 rounded-xl border border-brand-100/70 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900",
+        !compact && "sm:p-5",
         className,
       )}
     >
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div
+        className={cn(
+          "flex flex-wrap justify-between gap-3",
+          compact ? "mb-4 items-start" : "mb-5 items-center",
+        )}
+      >
         <div className="flex min-w-0 flex-1 items-start gap-3">
           {icon && (
             <span
               aria-hidden="true"
-              className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300 [&>svg]:size-5"
+              className={cn(
+                "flex shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300 [&>svg]:size-5",
+                compact ? "size-9" : "size-10",
+                iconClassName,
+              )}
             >
               {icon}
             </span>
           )}
           <div className="min-w-0">
-            <h2 className="text-base leading-6 font-semibold text-gray-950 dark:text-white/90">
+            <h2
+              className={cn(
+                "leading-6 font-semibold text-gray-950 dark:text-white/90",
+                compact ? "text-sm" : "text-base",
+              )}
+            >
               {title}
             </h2>
             {description && (

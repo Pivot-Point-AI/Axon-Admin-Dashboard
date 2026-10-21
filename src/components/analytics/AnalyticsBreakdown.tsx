@@ -31,7 +31,9 @@ export default function AnalyticsBreakdown({
   const kind = chartKinds[field] ?? "ranking";
   const ordered = kind === "columns" || kind === "area";
   const rows = chartRows(field, value);
-  const visible = expanded || ordered ? rows : rows.slice(0, 6);
+  const journeys = field === "top_popular_flows";
+  const limit = journeys ? 5 : 6;
+  const visible = expanded || ordered ? rows : rows.slice(0, limit);
   const max = Math.max(1, ...rows.map((row) => row.count));
   const unit = field === "stage_averages_ms" ? t("design.milliseconds") : "";
   const label = (key: string) => {
@@ -58,6 +60,13 @@ export default function AnalyticsBreakdown({
       }
       className={`h-full ${className ?? ""}`}
       icon={kind === "donut" ? <PieChartIcon /> : <ChartBarsIcon />}
+      actions={
+        journeys ? (
+          <span className="rounded-lg border border-gray-200 px-3 py-2 text-theme-xs text-gray-600 dark:border-gray-700 dark:text-gray-400">
+            {t("design.allTime")}
+          </span>
+        ) : undefined
+      }
     >
       {!rows.length ? (
         <AnalyticsEmptyState />
@@ -99,6 +108,34 @@ export default function AnalyticsBreakdown({
           label={label}
           expanded={expanded}
         />
+      ) : journeys ? (
+        <div className="space-y-5 py-1">
+          {visible.map((row, index) => (
+            <div
+              key={row.key}
+              className="grid grid-cols-12 items-center gap-x-4 gap-y-2"
+            >
+              <span className="col-span-10 min-w-0 text-theme-xs break-words text-gray-700 capitalize sm:col-span-3 dark:text-gray-300">
+                {label(row.key)}
+              </span>
+              <span className="col-span-2 text-end text-theme-xs font-semibold text-gray-950 tabular-nums sm:col-span-1 sm:col-start-12 sm:row-start-1 dark:text-gray-100">
+                {format.number(row.count)}
+              </span>
+              <div
+                aria-hidden="true"
+                className="col-span-12 h-3 overflow-hidden rounded-full bg-gray-100 sm:col-span-8 sm:col-start-4 sm:row-start-1 dark:bg-gray-800"
+              >
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${(row.count / max) * 100}%`,
+                    background: chartColor(field, row.key, index),
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="space-y-5 py-1">
           {visible.map((row, index) => (
@@ -134,7 +171,7 @@ export default function AnalyticsBreakdown({
           <AnalyticsDataTable field={field} value={value} embedded />
         </AnalyticsDetails>
       )}
-      {!ordered && rows.length > 6 && (
+      {!ordered && rows.length > limit && (
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}

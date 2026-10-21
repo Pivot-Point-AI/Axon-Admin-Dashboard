@@ -6,9 +6,13 @@ import { ChevronDownIcon, TableIcon } from "@/icons";
 
 interface AnalyticsDetailsProps {
   children: ReactNode;
+  label?: string;
 }
 
-export default function AnalyticsDetails({ children }: AnalyticsDetailsProps) {
+export default function AnalyticsDetails({
+  children,
+  label,
+}: AnalyticsDetailsProps) {
   const t = useTranslations("analytics");
   return (
     <details className="group mt-4 border-t border-gray-100 pt-3 dark:border-gray-800">
@@ -17,7 +21,7 @@ export default function AnalyticsDetails({ children }: AnalyticsDetailsProps) {
           aria-hidden="true"
           className="size-4 text-gray-400 dark:text-gray-500"
         />
-        {t("design.viewData")}
+        {label ?? t("design.viewData")}
         <ChevronDownIcon
           aria-hidden="true"
           className="ms-auto size-4 shrink-0 transition-transform group-open:rotate-180"

@@ -91,6 +91,10 @@ export interface UpdateDashboardUserRequest {
 }
 
 export interface DashboardOverviewResponse {
+  top_kpis?: Record<string, unknown>;
+  audience_engagement?: Record<string, unknown>;
+  banking_journeys?: Record<string, unknown>;
+  license_overview?: Record<string, unknown>;
   total_users: number;
   active_sessions: number;
   daily_active_users: {

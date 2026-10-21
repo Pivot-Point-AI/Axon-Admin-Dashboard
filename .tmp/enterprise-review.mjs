@@ -1,0 +1,48 @@
+import {createRequire} from 'node:module';
+import assert from 'node:assert/strict';
+const require=createRequire(import.meta.url);
+const {chromium}=require('C:/Users/zuhoor/AppData/Local/npm-cache/_npx/e41f203b7505f1fb/node_modules/playwright-core');
+const timing={total_measured_turns:1600,end_to_end_latency_ms:{avg:2973.84,min:6.21,max:5887.64,p50:3516.25,p90:4770.04,p95:5142.48,p99:5738.61,count:1600},stt_transcription_latency_ms:{avg:0,min:0,max:0,p50:0,p90:0,p95:0,p99:0,count:1600},llm_generation_latency_ms:{avg:9.64,min:9.39,max:9.9,p50:9.64,p90:9.85,p95:9.87,p99:9.89,count:1600},stage_averages_ms:{speech_recognition:0,ai_generation:9.64,response:2973.84},slow_turns_count_above_1500ms:20,top_slowest_turns:[]};
+const browser=await chromium.launch({headless:true});
+try{
+  const context=await browser.newContext({viewport:{width:1536,height:1100}});
+  await context.addInitScript(()=>{localStorage.setItem('admin.auth',JSON.stringify({accessToken:'review-only',refreshToken:'review-only',userId:'review-only',username:'Review Admin',role:'SUPER_ADMIN',accessExpiresAt:Date.now()+3600000}));localStorage.setItem('theme-mode','light');});
+  let partial=false;
+  const requests=[];
+  await context.route('**/backend/**',route=>{requests.push(route.request().method());return route.fulfill({json:partial?{...timing,end_to_end_latency_ms:{p50:2500},stt_transcription_latency_ms:{avg:-1,average:7.5},llm_generation_latency_ms:null}:timing});});
+  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('http://localhost:3000/analytics?section=performance',{waitUntil:'networkidle',timeout:120000});
+  const section=page.getByRole('heading',{name:'Processing performance',exact:true}).locator('xpath=ancestor::section[1]');
+  const tab=stage=>section.getByRole('tab',{name:new RegExp('^'+stage)});
+  const selected=()=>section.getByRole('tab',{selected:true});
+  const panel=()=>section.getByRole('tabpanel');
+  assert.equal(await section.getByRole('tab').count(),3);
+  assert.match(await selected().innerText(),/^Response time/);
+  assert.match(await tab('Response time').innerText(),/2\.97\s*s/);
+  for(const item of await section.getByRole('tab').all())assert.ok(await item.evaluate(el=>document.getElementById(el.getAttribute('aria-controls'))));
+  assert.equal(await panel().locator('.bg-chart-primary').count(),4);
+  assert.equal(await page.getByRole('button',{name:'Refresh',exact:true}).evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(36, 86, 198)');
+  assert.match(await page.locator('.axon-sidebar').evaluate(el=>getComputedStyle(el).backgroundImage),/rgb\(16, 45, 78\)/);
+  await tab('Speech recognition').click();assert.match(await panel().innerText(),/Reported duration: 0 ms/);assert.equal(await panel().locator('.bg-chart-primary').count(),0);
+  await tab('AI generation').click();assert.equal(await panel().getByTitle('9.85 ms',{exact:true}).count(),1);
+  await tab('AI generation').press('Home');assert.match(await selected().innerText(),/^Response time/);
+  await selected().press('End');assert.match(await selected().innerText(),/^AI generation/);
+  await selected().press('ArrowRight');assert.match(await selected().innerText(),/^Response time/);
+  await panel().locator('summary').focus();await panel().locator('summary').press('Enter');assert.equal(await panel().getByText('2,973.84',{exact:true}).count(),1);
+  await tab('AI generation').click();assert.equal(await panel().locator('details[open]').count(),0);
+  await tab('Response time').click();await page.evaluate(()=>document.activeElement?.blur());
+  await section.screenshot({path:'.tmp/enterprise-performance.png'});
+  await page.screenshot({path:'.tmp/enterprise-performance-page.png',fullPage:true});
+  for(const width of [1280,1024,768,390]){await page.setViewportSize({width,height:1100});await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`overflow ${width}`);}
+  await section.screenshot({path:'.tmp/enterprise-performance-mobile.png'});
+  await page.evaluate(()=>{document.documentElement.classList.add('dark');document.documentElement.dir='rtl';});
+  await tab('Response time').focus();await tab('Response time').press('ArrowRight');assert.match(await selected().innerText(),/^AI generation/);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'dark RTL overflow');
+  await page.setViewportSize({width:1536,height:1100});await page.waitForTimeout(150);await section.screenshot({path:'.tmp/enterprise-performance-dark.png'});
+  partial=true;await page.goto('http://localhost:3000/analytics?section=performance',{waitUntil:'networkidle'});
+  assert.match(await tab('Response time').innerText(),/2\.5\s*s/);assert.match(await tab('Response time').innerText(),/Median duration/);
+  await tab('Speech recognition').click();assert.match(await selected().innerText(),/7\.5\s*ms/);assert.doesNotMatch(await panel().innerText(),/Fastest|Slowest|Reported duration: 0/);
+  await tab('AI generation').click();assert.equal(await panel().locator('details').count(),0);assert.match(await selected().innerText(),/No timing data available/);
+  assert.deepEqual(errors,[]);assert.ok(requests.every(method=>method==='GET'));
+  console.log('Passed: enterprise navy/blue palette, selectable stages, accessible keyboard navigation including RTL, precise expandable details, zero/partial/missing timings, responsive widths, dark mode, no overflow or runtime errors. Browser API responses used isolated fixtures.');
+}finally{await browser.close();}

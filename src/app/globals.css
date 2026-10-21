@@ -2,7 +2,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+:root {
+  --primary: var(--color-brand-500);
+  --chart-primary: var(--color-brand-500);
+  --chart-secondary: var(--color-theme-purple-500);
+  --chart-accent: var(--color-orange-400);
+  --surface-accent: var(--color-brand-25);
+}
+
 @theme {
+  --color-chart-primary: var(--chart-primary);
+  --color-chart-secondary: var(--chart-secondary);
+  --color-chart-accent: var(--chart-accent);
+  --color-surface-accent: var(--surface-accent);
   --font-*: initial;
   --font-outfit: var(--font-dashboard), Inter, sans-serif;
 

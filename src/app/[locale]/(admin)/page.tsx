@@ -36,9 +36,10 @@ export default async function DashboardHome({
 
       <InstitutionLicenseOverview />
 
-      <QuickLinks />
-
-      <RecentInstitutionsTable />
+      <div className="grid items-stretch gap-5 lg:grid-cols-2">
+        <QuickLinks />
+        <RecentInstitutionsTable />
+      </div>
     </div>
   );
 }

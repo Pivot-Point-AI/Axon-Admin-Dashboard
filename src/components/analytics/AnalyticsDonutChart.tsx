@@ -9,6 +9,7 @@ interface AnalyticsDonutChartProps {
   total?: number;
   label: (key: string) => string;
   expanded?: boolean;
+  color?: (key: string, index: number) => string;
 }
 
 export default function AnalyticsDonutChart({
@@ -16,6 +17,7 @@ export default function AnalyticsDonutChart({
   total: reportedTotal,
   label,
   expanded = false,
+  color,
 }: AnalyticsDonutChartProps) {
   const format = useFormatter();
   const t = useTranslations("analytics");
@@ -28,7 +30,7 @@ export default function AnalyticsDonutChart({
         angle: end,
         stops: [
           ...result.stops,
-          `${chartColors[index % chartColors.length]} ${result.angle}deg ${end}deg`,
+          `${color?.(row.key, index) ?? chartColors[index % chartColors.length]} ${result.angle}deg ${end}deg`,
         ],
       };
     },
@@ -64,7 +66,11 @@ export default function AnalyticsDonutChart({
               <span
                 aria-hidden="true"
                 className="size-2.5 shrink-0 rounded-full"
-                style={{ background: chartColors[index % chartColors.length] }}
+                style={{
+                  background:
+                    color?.(row.key, index) ??
+                    chartColors[index % chartColors.length],
+                }}
               />
               <span className="break-words">{label(row.key)}</span>
             </dt>

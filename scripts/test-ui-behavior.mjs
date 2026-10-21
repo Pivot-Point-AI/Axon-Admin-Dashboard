@@ -95,7 +95,10 @@ function harness(overrides = {}) {
           notify: () =>
             assert.fail("Local validation must not notify globally"),
         };
-      if (name.startsWith("@/components/"))
+      if (
+        name.startsWith("@/components/") &&
+        !fs.existsSync(path.resolve(__dirname, "../src", `${name.slice(2)}.ts`))
+      )
         return new Proxy(
           { __esModule: true, default: name },
           { get: (value, key) => value[key] ?? String(key) },
@@ -1160,6 +1163,243 @@ test("dashboard includes all ten overview metrics", () => {
     .filter((element) => element.type === MetricCard);
   assert.equal(metrics.length, 10);
   assert.equal(new Set(metrics.map((element) => element.props.label)).size, 10);
+});
+
+test("metric trends preserve reported percentages, zero history and missing samples", () => {
+  const { readMetricTrend } = harness().load(
+    "src/components/analytics/analyticsTrends.ts",
+  );
+  const source = {
+    change_pct: 0,
+    comparison_label: "last_hour",
+    sparkline: [0, null, 2, NaN, 0],
+    is_positive: false,
+  };
+  const trend = readMetricTrend(source);
+  assert.equal(trend.change, 0);
+  assert.equal(trend.direction, "flat");
+  assert.equal(trend.comparison, "last_hour");
+  assert.deepEqual(
+    trend.points.map((point) => point.value),
+    [0, null, 2, null, 0],
+  );
+  assert.equal(trend.favorable, false);
+  assert.ok(Number.isNaN(source.sparkline[3]));
+  assert.equal(readMetricTrend({ value: 40 }), null);
+  assert.equal(
+    readMetricTrend({ change_pct: Infinity, sparkline: [null, NaN] }),
+    null,
+  );
+});
+
+test("metric trend lookup matches API blocks and keeps the legacy DAU comparison", () => {
+  const { metricTrend } = harness().load(
+    "src/components/analytics/analyticsTrends.ts",
+  );
+  const data = {
+    top_kpis: {
+      total_unique_users: {
+        trend: { pct: 12.5, comparison: "last_month" },
+        sparkline: { values: [1, 2], labels: ["A", "B"] },
+      },
+    },
+    audience_and_retention: [{ key: "returning_users", change_pct: -3 }],
+    daily_active_users_growth: { growth_pct: -88.9, yesterday_count: 9 },
+  };
+  const users = metricTrend(data, "total_users");
+  assert.equal(users.change, 12.5);
+  assert.deepEqual(users.points, [
+    { value: 1, label: "A" },
+    { value: 2, label: "B" },
+  ]);
+  assert.equal(
+    metricTrend(data, "returning_users", ["audience_and_retention"]).change,
+    -3,
+  );
+  assert.equal(metricTrend(data, "daily_active_users").previousCount, 9);
+  assert.equal(metricTrend(data, "daily_active_users").comparison, "yesterday");
+  assert.equal(metricTrend(data, "total_sessions"), null);
+});
+
+test("reported history retains dates and constant mini charts are omitted", () => {
+  const runtime = harness();
+  const { metricHistory, readMetricTrend } = runtime.load(
+    "src/components/analytics/analyticsTrends.ts",
+  );
+  assert.deepEqual(
+    metricHistory(
+      {
+        active_audience: {
+          series: [
+            { date: "2026-10-20", count: 0 },
+            { date: "2026-10-21", count: 7 },
+          ],
+        },
+      },
+      "active_audience",
+    ),
+    [
+      { label: "2026-10-20", value: 0 },
+      { label: "2026-10-21", value: 7 },
+    ],
+  );
+  assert.deepEqual(metricHistory({}, "active_audience"), []);
+  const Sparkline = runtime.load(
+    "src/components/analytics/MetricSparkline.tsx",
+  ).default;
+  assert.equal(
+    runtime.render(Sparkline, {
+      points: readMetricTrend({ sparkline: [0, 0, 0] }).points,
+    }),
+    null,
+  );
+  assert.equal(
+    runtime.render(Sparkline, {
+      points: readMetricTrend({ sparkline: [7, 7, 7] }).points,
+    }),
+    null,
+  );
+  assert.equal(
+    runtime.render(Sparkline, {
+      points: readMetricTrend({ sparkline: [0, 1, 0] }).points,
+    }).type,
+    "canvas",
+  );
+});
+
+test("trend colors distinguish direction from improvement and treat zero as neutral", () => {
+  const { readMetricTrend, trendSentiment, lowerMetricIsBetter } =
+    harness().load("src/components/analytics/analyticsTrends.ts");
+  const falling = readMetricTrend({ change_pct: -2 });
+  assert.equal(trendSentiment(falling), "negative");
+  assert.equal(
+    trendSentiment(falling, lowerMetricIsBetter("flow_abandonment_rate_pct")),
+    "positive",
+  );
+  assert.equal(
+    trendSentiment(
+      readMetricTrend({ change_pct: 2 }),
+      lowerMetricIsBetter("average_response_time"),
+    ),
+    "negative",
+  );
+  assert.equal(
+    trendSentiment(readMetricTrend({ change_pct: 0, is_positive: true })),
+    "neutral",
+  );
+  assert.equal(
+    trendSentiment(readMetricTrend({ change_pct: -2, is_improvement: true })),
+    "positive",
+  );
+});
+
+test("trend badges show a neutral zero and preserve a reported comparison label", () => {
+  const runtime = harness();
+  const { readMetricTrend } = runtime.load(
+    "src/components/analytics/analyticsTrends.ts",
+  );
+  const { MetricTrendBadge } = runtime.load(
+    "src/components/analytics/MetricTrend.tsx",
+  );
+  const tree = runtime.render(MetricTrendBadge, {
+    trend: readMetricTrend({ change_pct: 0, comparison_label: "last_hour" }),
+  });
+  const text = elements(tree)
+    .flatMap((el) => React.Children.toArray(el.props.children))
+    .filter((child) => typeof child === "string");
+  assert.ok(text.includes("0%"));
+  assert.ok(text.includes("vs last hour"));
+  assert.ok(
+    elements(tree).some((el) => el.props.className?.includes("bg-gray-100")),
+  );
+});
+
+test("journey chart preserves zero, missing outcomes and reported totals without mutating the source", () => {
+  const runtime = harness();
+  const { journeyChartRows } = runtime.load(
+    "src/components/analytics/analyticsJourneyData.ts",
+  );
+  const source = {
+    bank_transfer: {
+      total: 36,
+      completed: 0,
+      cancelled: 0,
+      failed: 0,
+      abandoned: 36,
+      completion_rate_pct: 0,
+    },
+    add_beneficiary: {
+      total_initialized_flows: 22,
+      total_completed_flows: 2,
+      total_failed_flows: 2,
+      total_abandoned_flows: 18,
+    },
+    missing: { total: 0, initialized: 9, failed: -1 },
+  };
+  const original = JSON.stringify(source);
+  const rows = journeyChartRows(source);
+  assert.equal(rows[0].label, "bank transfer");
+  assert.deepEqual(rows[0].values, {
+    total: 36,
+    completed: 0,
+    cancelled: 0,
+    failed: 0,
+    abandoned: 36,
+  });
+  assert.deepEqual(rows[1].values, {
+    total: 22,
+    completed: 2,
+    cancelled: null,
+    failed: 2,
+    abandoned: 18,
+  });
+  assert.deepEqual(rows[2].values, {
+    total: 0,
+    completed: null,
+    cancelled: null,
+    failed: null,
+    abandoned: null,
+  });
+  assert.equal(JSON.stringify(source), original);
+  assert.equal(
+    journeyChartRows([{ flow_type: "show_list", total: 33 }])[0].label,
+    "show list",
+  );
+});
+
+test("journey View All opens its analytics section and invalid section links fall back to Audience", async () => {
+  const runtime = harness({
+    "next-intl/server": {
+      setRequestLocale: () => {},
+      getTranslations: async () => (key) => key,
+    },
+  });
+  const Flows = runtime.load(
+    "src/components/dashboard/FlowOutcomes.tsx",
+  ).default;
+  const link = elements(runtime.render(Flows, { overview: null })).find(
+    (element) => element.type === "a",
+  );
+  assert.equal(link.props.href, "/analytics?section=flows");
+  assert.ok(React.Children.toArray(link.props.children).includes("View All"));
+  const Page = runtime.load(
+    "src/app/[locale]/(admin)/(others-pages)/analytics/page.tsx",
+  ).default;
+  for (const [section, expected] of [
+    ["flows", "flows"],
+    ["users", "users"],
+    [undefined, "users"],
+    ["unknown", "users"],
+    ["toString", "users"],
+    [["flows", "users"], "users"],
+  ]) {
+    const tree = await Page({
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ section }),
+    });
+    assert.equal(tree.props.initialSection, expected);
+    assert.equal(tree.key, expected);
+  }
 });
 
 test("FAQ proxy preserves the trailing slash before the generic backend rewrite", async () => {

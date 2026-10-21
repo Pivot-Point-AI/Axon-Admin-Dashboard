@@ -18,8 +18,11 @@ import AnalyticsBreakdown from "./AnalyticsBreakdown";
 import AnalyticsDataTable from "./AnalyticsDataTable";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
 import AnalyticsAcquisition from "./AnalyticsAcquisition";
-import AnalyticsLatencyChart from "./AnalyticsLatencyChart";
-import AnalyticsJourneyChart from "./AnalyticsJourneyChart";
+import AnalyticsLatencyOverview from "./AnalyticsLatencyOverview";
+import AnalyticsJourneys from "./AnalyticsJourneys";
+import AnalyticsQuality from "./AnalyticsQuality";
+import AnalyticsPerformance from "./AnalyticsPerformance";
+import AnalyticsActivity from "./AnalyticsActivity";
 import AnalyticsComposition from "./AnalyticsComposition";
 import {
   chartFields,
@@ -28,6 +31,7 @@ import {
   sectionMetrics,
 } from "./analyticsPresentation";
 import { analyticsNumber, asAnalyticsRecord } from "./analyticsData";
+import { analyticsSummaryData } from "./analyticsSummaryData";
 
 interface AnalyticsSummaryProps {
   section: AnalyticsSection;
@@ -64,7 +68,7 @@ export default function AnalyticsSummary({
     )
       .then((result) => {
         if (!controller.signal.aborted) {
-          setData({ ...result });
+          setData(analyticsSummaryData(section, result));
           setUpdatedAt(new Date());
           setError("");
         }
@@ -78,7 +82,8 @@ export default function AnalyticsSummary({
       });
     return () => controller.abort();
   }, [section, accessToken, date, start_time, end_time, revision, t]);
-  const groups = metricGroups[section] ?? [];
+  const groups = section === "flows" ? [] : (metricGroups[section] ?? []);
+  const dedicatedLayout = section === "performance" || section === "logs";
   const hasComposition = (
     section === "chats"
       ? ["total_user_messages", "total_assistant_messages"]
@@ -88,6 +93,7 @@ export default function AnalyticsSummary({
   ).some((field) => analyticsNumber(data?.[field]) !== null);
   const usedFields = new Set([
     ...sectionMetrics[section],
+    ...(section === "flows" ? analyticsFields.flows : []),
     ...groups.flatMap((group) => group.fields),
     "found",
     "language_breakdown",
@@ -201,31 +207,28 @@ export default function AnalyticsSummary({
         data && (
           <div aria-busy={loading} className="space-y-5">
             <AnalyticsMetrics section={section} data={data} />
+            {section === "flows" && <AnalyticsJourneys data={data} />}
+            {section === "nlp" && <AnalyticsQuality data={data} date={date} />}
+            {section === "performance" && (
+              <AnalyticsPerformance data={data} date={date} />
+            )}
+            {section === "logs" && (
+              <AnalyticsActivity data={data} date={date} />
+            )}
             {section === "users" && (
-              <div className="grid items-stretch gap-4 xl:grid-cols-7">
-                <div className="min-w-0 xl:col-span-4">
+              <div className="grid items-stretch gap-5 lg:grid-cols-2">
+                <div className="min-w-0">
                   <AnalyticsAudienceActivity data={data} />
                 </div>
-                <div className="min-w-0 xl:col-span-3">
+                <div className="min-w-0">
                   <AnalyticsLanguageBreakdown value={data.language_breakdown} />
                 </div>
               </div>
             )}
-            {latency.length > 0 && (
-              <div className="grid items-start gap-5 lg:grid-cols-3">
-                {latency.map((field) => (
-                  <AnalyticsDataTable
-                    key={field}
-                    field={field}
-                    value={data[field]}
-                    visualization={
-                      <AnalyticsLatencyChart value={data[field]} />
-                    }
-                  />
-                ))}
-              </div>
+            {!dedicatedLayout && latency.length > 0 && (
+              <AnalyticsLatencyOverview fields={latency} data={data} />
             )}
-            {charts.length > 0 && (
+            {!dedicatedLayout && section !== "nlp" && charts.length > 0 && (
               <div className="grid items-stretch gap-5 xl:grid-cols-2">
                 {hasComposition && (
                   <AnalyticsComposition section={section} data={data} />
@@ -263,24 +266,20 @@ export default function AnalyticsSummary({
                 )}
               </div>
             )}
-            {tables.map((field) => (
-              <AnalyticsDataTable
-                key={field}
-                field={field}
-                visualization={
-                  field === "flow_breakdown_by_type" ? (
-                    <AnalyticsJourneyChart value={data[field]} />
-                  ) : undefined
-                }
-                value={
-                  typeof data[field] === "object"
-                    ? data[field]
-                    : data[field] == null
-                      ? []
-                      : [{ value: data[field] }]
-                }
-              />
-            ))}
+            {!dedicatedLayout &&
+              tables.map((field) => (
+                <AnalyticsDataTable
+                  key={field}
+                  field={field}
+                  value={
+                    typeof data[field] === "object"
+                      ? data[field]
+                      : data[field] == null
+                        ? []
+                        : [{ value: data[field] }]
+                  }
+                />
+              ))}
             {section === "users" &&
               Object.keys(
                 asAnalyticsRecord(data.daily_active_users_growth),

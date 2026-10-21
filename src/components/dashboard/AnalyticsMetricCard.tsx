@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { MetricTrendBadge } from "@/components/analytics/MetricTrend";
+import type { MetricTrendData } from "@/components/analytics/analyticsTrends";
 
 interface AnalyticsMetricCardProps {
   label: string;
@@ -9,6 +11,9 @@ interface AnalyticsMetricCardProps {
   tone?: "brand" | "success" | "purple" | "warning" | "pink" | "error";
   progress?: number;
   children?: ReactNode;
+  trend?: MetricTrendData | null;
+  trendVariant?: "line" | "bar";
+  lowerIsBetter?: boolean;
 }
 
 const tones = {
@@ -47,11 +52,13 @@ export default function AnalyticsMetricCard({
   tone = "brand",
   progress,
   children,
+  trend,
+  trendVariant = "line",
+  lowerIsBetter = false,
 }: AnalyticsMetricCardProps) {
   const palette = tones[tone];
-  const detailed = description.length > 0;
   const metricValue = (
-    <p className="text-2xl font-semibold tracking-tight text-gray-950 tabular-nums dark:text-white/90">
+    <p className="text-xl font-bold tracking-tight text-gray-950 tabular-nums sm:text-2xl dark:text-white shrink-0">
       {value ?? (
         <span
           aria-hidden="true"
@@ -64,71 +71,67 @@ export default function AnalyticsMetricCard({
     <article
       aria-label={label}
       aria-busy={value === null}
-      className={`axon-metric flex min-w-0 flex-col rounded-xl border border-brand-100 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900 ${detailed ? "min-h-36" : "min-h-32"}`}
+      className="axon-metric flex min-w-0 flex-col rounded-xl border border-gray-200/80 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
     >
-      <div
-        className={`flex gap-3 ${detailed ? "items-start" : "items-center"}`}
-      >
-        <span
-          aria-hidden="true"
-          className={`flex size-10 shrink-0 items-center justify-center rounded-xl [&>svg]:size-5 ${palette.icon}`}
-        >
-          {icon}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="min-w-0 text-theme-xs font-medium text-gray-700 dark:text-gray-300">
-              {label}
-            </h3>
-            {badge}
-          </div>
-          {detailed && <div className="mt-1">{metricValue}</div>}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span
+            aria-hidden="true"
+            className={`flex size-8 shrink-0 items-center justify-center rounded-lg [&>svg]:size-4 ${palette.icon}`}
+          >
+            {icon}
+          </span>
+          <h3 className="truncate text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+            {label}
+          </h3>
         </div>
+        {badge}
       </div>
-      {!detailed && (
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          {metricValue}
-          {children && (
-            <div className="flex flex-wrap items-center gap-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
-              {children}
-            </div>
-          )}
-        </div>
-      )}
-      {detailed && children && (
-        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
-          {children}
-        </div>
-      )}
+      <div className="mt-2.5 flex min-w-0 items-baseline gap-2">
+        {metricValue}
+        {trend && (
+          <div className="min-w-0 flex-1">
+            <MetricTrendBadge
+              trend={trend}
+              lowerIsBetter={lowerIsBetter}
+            />
+          </div>
+        )}
+        {children}
+      </div>
       {description && (
         <p className="mt-2 text-theme-xs leading-5 text-gray-500 dark:text-gray-400">
           {description}
         </p>
       )}
-      {progress != null && (
-        <div className="mt-auto flex items-center gap-3 pt-2">
-          <div
-            role="progressbar"
-            aria-label={label}
-            aria-valuenow={Math.min(100, Math.max(0, progress))}
-            aria-valuetext={value ?? undefined}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800"
-          >
+      {progress != null &&
+        !(
+          trendVariant === "bar" &&
+          trend?.points.some((point) => point.value !== null)
+        ) && (
+          <div className="mt-auto flex items-center gap-3 pt-2">
             <div
-              className={`h-full rounded-full motion-safe:transition-all motion-safe:duration-500 ${palette.bar}`}
-              style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
-            />
+              role="progressbar"
+              aria-label={label}
+              aria-valuenow={Math.min(100, Math.max(0, progress))}
+              aria-valuetext={value ?? undefined}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800"
+            >
+              <div
+                className={`h-full rounded-full motion-safe:transition-all motion-safe:duration-500 ${palette.bar}`}
+                style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+              />
+            </div>
+            <span
+              aria-hidden="true"
+              className="shrink-0 text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+            >
+              {value}
+            </span>
           </div>
-          <span
-            aria-hidden="true"
-            className="shrink-0 text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-          >
-            {value}
-          </span>
-        </div>
-      )}
+        )}
     </article>
   );
 }

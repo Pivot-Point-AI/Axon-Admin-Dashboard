@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export interface ManagementMetric {
   label: string;
@@ -6,6 +6,7 @@ export interface ManagementMetric {
   icon: ReactNode;
   tone: "brand" | "success" | "warning" | "purple" | "error";
   description?: string;
+  showTrendIcon?: boolean;
 }
 interface ManagementMetricsProps {
   items: ManagementMetric[];
@@ -30,33 +31,35 @@ export default function ManagementMetrics({
       className={`axon-management-metrics grid grid-cols-1 gap-4 sm:grid-cols-2 ${items.length === 3 ? "xl:grid-cols-3" : "xl:grid-cols-4"}`}
     >
       {items.map((item) => (
-        <div
+        <article
           key={item.label}
           aria-busy={loading}
-          className="axon-metric relative flex min-h-28 min-w-0 items-start gap-3 overflow-hidden rounded-xl border border-brand-100/70 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+          className="axon-metric flex min-w-0 flex-col rounded-xl border border-gray-200/80 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
         >
-          <div
-            aria-hidden="true"
-            className={`flex size-10 shrink-0 items-center justify-center rounded-xl [&>svg]:size-5 ${tones[item.tone]}`}
-          >
-            {item.icon}
-          </div>
-          <div className="min-w-0">
-            <p className="text-theme-xs font-medium text-gray-700 dark:text-gray-300">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              aria-hidden="true"
+              className={`flex size-8 shrink-0 items-center justify-center rounded-lg [&>svg]:size-4 ${tones[item.tone]}`}
+            >
+              {item.icon}
+            </div>
+            <p className="truncate text-theme-xs font-medium text-gray-500 dark:text-gray-400">
               {item.label}
             </p>
+          </div>
+          <div className="mt-2.5">
             <p
-              className={`mt-2 font-semibold tracking-tight break-words text-gray-950 tabular-nums dark:text-white/90 ${typeof item.value === "string" && item.value.length > 9 ? "text-xl" : "text-2xl"}`}
+              className={`leading-8 font-bold tracking-tight break-words text-gray-950 tabular-nums dark:text-white ${typeof item.value === "string" && item.value.length > 9 ? "text-lg" : "text-xl sm:text-2xl"}`}
             >
               {loading ? "\u2014" : item.value}
             </p>
-            {item.description && (
-              <p className="mt-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
-                {item.description}
-              </p>
-            )}
           </div>
-        </div>
+          {item.description && (
+            <p className="mt-2 text-theme-xs leading-5 text-gray-500 dark:text-gray-400">
+              {loading ? "\u2014" : item.description}
+            </p>
+          )}
+        </article>
       ))}
     </div>
   );

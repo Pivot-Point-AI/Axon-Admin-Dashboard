@@ -42,7 +42,7 @@ export default function UserDropdown() {
         onClick={toggleDropdown}
         className="dropdown-toggle flex items-center rounded-xl px-2 py-1 text-gray-800 transition-colors hover:bg-brand-50 dark:text-gray-200 dark:hover:bg-brand-500/10"
       >
-        <span className="size-9 shrink-0 overflow-hidden rounded-full ring-2 ring-brand-50 md:me-2.5 dark:ring-gray-700">
+        <span className="size-9 shrink-0 overflow-hidden rounded-full ring-2 ring-brand-50 lg:me-2.5 dark:ring-gray-700">
           <Image
             width={36}
             height={36}
@@ -51,7 +51,7 @@ export default function UserDropdown() {
           />
         </span>
 
-        <span className="me-3 hidden max-w-32 text-start md:block">
+        <span className="me-3 hidden max-w-32 text-start lg:block">
           <span className="block truncate text-theme-xs font-semibold text-gray-900 dark:text-gray-100">
             {displayName}
           </span>
@@ -63,7 +63,7 @@ export default function UserDropdown() {
         </span>
 
         <ChevronDownIcon
-          className={`hidden size-4 shrink-0 text-gray-500 transition-transform duration-200 md:block dark:text-gray-400 ${
+          className={`hidden size-4 shrink-0 text-gray-500 transition-transform duration-200 lg:block dark:text-gray-400 ${
             isOpen ? "rotate-180" : ""
           }`}
         />

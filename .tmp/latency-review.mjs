@@ -1,0 +1,45 @@
+import {createRequire} from 'node:module';
+import assert from 'node:assert/strict';
+const require=createRequire(import.meta.url);
+const {chromium}=require('C:/Users/zuhoor/AppData/Local/npm-cache/_npx/e41f203b7505f1fb/node_modules/playwright-core');
+const timing={total_measured_turns:1600,end_to_end_latency_ms:{avg:2973.84,min:6.21,max:5887.64,p50:3516.25,p90:4770.04,p95:5142.48,p99:5738.61,count:1600},stt_transcription_latency_ms:{avg:0,min:0,max:0,p50:0,p90:0,p95:0,p99:0,count:1600},llm_generation_latency_ms:{avg:9.64,min:9.39,max:9.9,p50:9.64,p90:9.85,p95:9.87,p99:9.89,count:1600},stage_averages_ms:{speech_recognition:0,ai_generation:9.64,response:2973.84},slow_turns_count_above_1500ms:20,top_slowest_turns:[]};
+const browser=await chromium.launch({headless:true});
+try {
+  const context=await browser.newContext({viewport:{width:1536,height:1100}});
+  await context.addInitScript(()=>{localStorage.setItem('admin.auth',JSON.stringify({accessToken:'review-only',refreshToken:'review-only',userId:'review-only',username:'Review Admin',role:'SUPER_ADMIN',accessExpiresAt:Date.now()+3600000}));localStorage.setItem('theme-mode','light');});
+  let partial=false;
+  const requests=[];
+  await context.route('**/backend/**',route=>{requests.push(route.request().method());let json=timing;if(partial)json={...timing,end_to_end_latency_ms:{p50:2500},stt_transcription_latency_ms:{avg:-1,average:7.5},llm_generation_latency_ms:null};return route.fulfill({json});});
+  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('http://localhost:3000/analytics?section=performance',{waitUntil:'networkidle',timeout:120000});
+  const card=name=>page.getByRole('heading',{name,exact:true}).locator('xpath=ancestor::section[1]');
+  const response=card('Response time'),speech=card('Speech recognition'),ai=card('AI generation');
+  assert.match(await response.innerText(),/2\.97\s*s/);
+  assert.match(await speech.innerText(),/Reported duration: 0 ms/);
+  assert.equal(await speech.locator('.bg-chart-primary').count(),0);
+  assert.equal(await response.locator('details[open]').count(),0);
+  const theme=await page.evaluate(()=>{const style=getComputedStyle(document.documentElement);return Object.fromEntries(['--primary','--chart-primary','--chart-secondary','--chart-accent','--surface-accent'].map(key=>[key,style.getPropertyValue(key).trim().toUpperCase()]));});
+  assert.deepEqual(theme,{'--primary':'#365B75','--chart-primary':'#5B7F99','--chart-secondary':'#8B859B','--chart-accent':'#B28B54','--surface-accent':'#F4F6F8'});
+  assert.equal(await page.getByRole('button',{name:'Refresh',exact:true}).evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(54, 91, 117)');
+  for(const chart of [response,ai])assert.ok((await chart.locator('.bg-chart-primary').evaluateAll(items=>items.map(el=>getComputedStyle(el).backgroundColor))).every(color=>color==='rgb(91, 127, 153)'));
+  assert.match(await page.locator('.axon-sidebar').evaluate(el=>getComputedStyle(el).backgroundImage),/rgb\(16, 45, 78\)/);
+  await response.locator('summary').focus();await response.locator('summary').press('Enter');
+  assert.equal(await response.locator('details[open]').count(),1);
+  assert.equal(await response.getByText('2,973.84',{exact:true}).count(),1);
+  await response.locator('summary').press('Enter');
+  await page.evaluate(()=>document.activeElement?.blur());
+  const grid=response.locator('..');
+  await grid.screenshot({path:'.tmp/latency-desktop.png'});
+  for(const width of [1280,1024,768,390]){await page.setViewportSize({width,height:1100});await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`overflow at ${width}`);}
+  await grid.screenshot({path:'.tmp/latency-mobile.png'});
+  await page.evaluate(()=>{document.documentElement.classList.add('dark');document.documentElement.dir='rtl';});await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'dark RTL overflow');
+  await page.setViewportSize({width:1536,height:1100});await page.waitForTimeout(150);await grid.screenshot({path:'.tmp/latency-dark-rtl.png'});
+  partial=true;await page.goto('http://localhost:3000/analytics?section=performance',{waitUntil:'networkidle'});
+  assert.match(await card('Response time').innerText(),/Median duration/);
+  assert.match(await card('Response time').innerText(),/2\.5\s*s/);
+  assert.match(await card('Speech recognition').innerText(),/7\.5\s*ms/);
+  assert.doesNotMatch(await card('Speech recognition').innerText(),/Fastest|Slowest|Reported duration: 0/);
+  assert.equal(await card('AI generation').locator('details').count(),0);
+  assert.deepEqual(errors,[]);assert.ok(requests.every(method=>method==='GET'));
+  console.log('Passed: exact supplied palette, primary button, navy sidebar, consistent percentile colors, readable units, zero/partial/missing timings, keyboard details, desktop/mobile/dark RTL, no overflow or runtime errors. All browser data used isolated fixtures.');
+}finally{await browser.close();}

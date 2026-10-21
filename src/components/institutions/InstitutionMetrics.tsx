@@ -1,6 +1,7 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import ManagementMetrics from "@/components/common/ManagementMetrics";
 import { BoxCubeIcon, CheckCircleIcon, CloseIcon, TimeIcon } from "@/icons";
 import type { InstitutionItem } from "@/lib/api/types";
@@ -15,7 +16,18 @@ export default function InstitutionMetrics({
   loading,
 }: InstitutionMetricsProps) {
   const t = useTranslations("designSystem");
-  const now = Date.now();
+  const c = useTranslations("metricCards");
+  const format = useFormatter();
+  const share = (count: number) =>
+    format.number(institutions.length ? count / institutions.length : 0, {
+      style: "percent",
+      maximumFractionDigits: 1,
+    });
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const soon = 30 * 24 * 60 * 60 * 1000;
   const active = institutions.filter((item) => item.is_active !== false).length;
   const expiring = institutions.filter((item) => {
@@ -37,12 +49,14 @@ export default function InstitutionMetrics({
           value: institutions.length,
           icon: <BoxCubeIcon />,
           tone: "brand",
+          description: c("institutionsHint"),
         },
         {
           label: t("activeInstitutions"),
           value: active,
           icon: <CheckCircleIcon />,
           tone: "success",
+          description: c("activeShare", { percent: share(active) }),
         },
         {
           label: t("expiringSoon"),
@@ -56,6 +70,7 @@ export default function InstitutionMetrics({
           value: expired,
           icon: <CloseIcon />,
           tone: "error",
+          description: c("ofTotal", { percent: share(expired) }),
         },
       ]}
     />
