@@ -1,5 +1,6 @@
 "use client";
 
+import useReveal from "./useReveal";
 import { useCallback, useId, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import AnalyticsChartCanvas, {
@@ -17,6 +18,7 @@ interface AnalyticsTrendChartProps {
   curve?: "smooth" | "straight";
   axisSteps?: number;
   compactAxis?: boolean;
+  tall?: boolean;
 }
 
 export default function AnalyticsTrendChart({
@@ -26,17 +28,20 @@ export default function AnalyticsTrendChart({
   curve = "smooth",
   axisSteps = 4,
   compactAxis = false,
+  tall = false,
 }: AnalyticsTrendChartProps) {
   const t = useTranslations("analytics.design");
   const format = useFormatter();
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const reveal = useReveal(
+    `${points.length}:${points[0]?.timestamp}:${points.at(-1)?.timestamp}:${series.map((item) => item.key).join()}`,
+  );
   const hintId = useId();
   const dateLabel = useCallback(
     (timestamp: number) =>
       format.dateTime(timestamp, {
         month: "short",
         day: "2-digit",
-        timeZone: "UTC",
       }),
     [format],
   );
@@ -120,6 +125,11 @@ export default function AnalyticsTrendChart({
         );
       }
       // Draw each contiguous reported series; missing observations remain gaps.
+      ctx.save();
+      ctx.beginPath();
+      if (rtl) ctx.rect(width * (1 - reveal), 0, width * reveal, height);
+      else ctx.rect(0, 0, width * reveal, height);
+      ctx.clip();
       for (const { key, token } of series) {
         let index = 0;
         while (index < points.length) {
@@ -171,6 +181,7 @@ export default function AnalyticsTrendChart({
           index++;
         }
       }
+      ctx.restore();
       if (hoverIndex !== null && points[hoverIndex]) {
         ctx.strokeStyle = color("gray-400");
         ctx.setLineDash([3, 4]);
@@ -190,6 +201,7 @@ export default function AnalyticsTrendChart({
       dateLabel,
       format,
       hoverIndex,
+      reveal,
     ],
   );
 
@@ -208,7 +220,7 @@ export default function AnalyticsTrendChart({
           </span>
         ))}
       </div>
-      <div className="relative h-44">
+      <div className={`relative ${tall ? "h-96" : "h-44"}`}>
         <p id={hintId} className="sr-only">
           {t("trendKeyboardHint")}
         </p>

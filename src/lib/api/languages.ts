@@ -28,17 +28,20 @@ export function updateLanguage(
   body: LanguageUpdateModel,
   bearerToken: string,
 ) {
-  return apiRequest<unknown>(
-    `/languages/${encodeURIComponent(languageCode)}`,
-    { method: "PUT", body, bearerToken, baseUrl: ADMIN_API_BASE_URL },
-  );
+  return apiRequest<unknown>(`/languages/${encodeURIComponent(languageCode)}`, {
+    method: "PUT",
+    body,
+    bearerToken,
+    baseUrl: ADMIN_API_BASE_URL,
+  });
 }
 
 export function removeLanguage(languageCode: string, bearerToken: string) {
-  return apiRequest<unknown>(
-    `/languages/${encodeURIComponent(languageCode)}`,
-    { method: "DELETE", bearerToken, baseUrl: ADMIN_API_BASE_URL },
-  );
+  return apiRequest<unknown>(`/languages/${encodeURIComponent(languageCode)}`, {
+    method: "DELETE",
+    bearerToken,
+    baseUrl: ADMIN_API_BASE_URL,
+  });
 }
 
 export function updatePrimaryLanguage(

@@ -1,5 +1,9 @@
 "use client";
 
+import useReveal from "./useReveal";
+import CountUpText from "@/components/common/CountUpText";
+import AnalyticsSliceHover from "./AnalyticsSliceHover";
+import AnalyticsSliceLabels from "./AnalyticsSliceLabels";
 import { useCallback } from "react";
 import { useFormatter } from "next-intl";
 import AnalyticsChartCanvas, {
@@ -11,7 +15,8 @@ interface AnalyticsRingProps {
   total: number;
   label: string;
   color: (key: string, index: number) => string;
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl";
+  nameOf?: (key: string) => string;
 }
 
 export default function AnalyticsRing({
@@ -20,12 +25,26 @@ export default function AnalyticsRing({
   label,
   color: token,
   size = "md",
+  nameOf = (key) => key,
 }: AnalyticsRingProps) {
   const format = useFormatter();
+  const reveal = useReveal(rows.map((row) => row.count).join(","));
   const draw = useCallback(
     ({ ctx, width, height, color, dark }: AnalyticsCanvasFrame) => {
       const size = Math.min(width, height);
-      const thickness = size * 0.17;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(width / 2, height / 2);
+      ctx.arc(
+        width / 2,
+        height / 2,
+        size,
+        -Math.PI / 2,
+        -Math.PI / 2 + Math.PI * 2 * reveal,
+      );
+      ctx.closePath();
+      ctx.clip();
+      const thickness = size * 0.26;
       const radius = size / 2 - 2 - thickness / 2;
       let angle = -Math.PI / 2;
       ctx.lineWidth = thickness;
@@ -49,23 +68,33 @@ export default function AnalyticsRing({
         ctx.stroke();
         angle += slice;
       });
+      ctx.restore();
     },
-    [rows, total, token],
+    [rows, total, token, reveal],
   );
   return (
     <div
-      className={`relative shrink-0 ${size === "lg" ? "size-48" : "size-44"}`}
+      className={`relative shrink-0 ${size === "xl" ? "size-72" : size === "lg" ? "size-48" : "size-44"}`}
     >
       <AnalyticsChartCanvas
         draw={draw}
         aria-hidden="true"
         className="size-full"
       />
-      <div className="pointer-events-none absolute inset-10 flex flex-col items-center justify-center text-center">
-        <span className="text-2xl font-bold text-gray-950 tabular-nums dark:text-white">
-          {format.number(total)}
+      <AnalyticsSliceLabels rows={rows} total={total} radius={0.74} />
+      <AnalyticsSliceHover
+        rows={rows}
+        total={total}
+        label={nameOf}
+        hole={0.48}
+      />
+      <div className="pointer-events-none absolute inset-[26%] flex flex-col items-center justify-center text-center">
+        <span
+          className={`font-bold ${size === "xl" ? "text-xl" : "text-lg"} text-gray-950 tabular-nums dark:text-white`}
+        >
+          <CountUpText text={format.number(total)} />
         </span>
-        <span className="text-theme-xs text-gray-500 dark:text-gray-400">
+        <span className="max-w-full text-[0.6875rem] leading-3 break-words text-gray-500 dark:text-gray-400">
           {label}
         </span>
       </div>

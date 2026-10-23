@@ -1,5 +1,6 @@
 "use client";
 
+import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import { useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
 import { ChatIcon, CheckCircleIcon } from "@/icons";
@@ -28,10 +29,8 @@ export default function AnalyticsComposition({
   });
   if (!values.length) return null;
   const sum = values.reduce((value, row) => value + row.count, 0);
-  const total =
-    section === "chats"
-      ? Math.max(sum, analyticsNumber(data.total_messages) ?? 0)
-      : sum;
+  // The ring splits only the two groups shown, so it always adds up to 100%.
+  const total = sum;
   const rows = values.map((row) => ({
     ...row,
     percentage: total > 0 ? (row.count / total) * 100 : null,
@@ -47,12 +46,23 @@ export default function AnalyticsComposition({
           : "design.turnOutcomesDescription",
       )}
       icon={section === "chats" ? <ChatIcon /> : <CheckCircleIcon />}
+      actions={<AnalyticsJourneyPeriod />}
       className="h-full"
     >
       <AnalyticsDonutChart
         rows={rows}
+        variant="donut"
         total={total}
         label={(key) => t(`fields.${key}`)}
+        color={(key, index) =>
+          key === "turn_failed_count"
+            ? "var(--color-error-500)"
+            : section === "chats"
+              ? ["var(--color-brand-600)", "var(--color-blue-light-400)"][
+                  index % 2
+                ]
+              : "var(--color-success-500)"
+        }
       />
     </ComponentCard>
   );

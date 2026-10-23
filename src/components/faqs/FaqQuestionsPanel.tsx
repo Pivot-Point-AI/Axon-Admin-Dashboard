@@ -6,7 +6,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Pagination from "@/components/common/Pagination";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
-import { DocsIcon, PlusIcon, RefreshIcon, SearchOutlineIcon } from "@/icons";
+import { DocsIcon, PlusIcon, SearchOutlineIcon } from "@/icons";
 import usePagination from "@/hooks/usePagination";
 import FaqQuestion from "./FaqQuestion";
 import type { FAQItem } from "./faqData";
@@ -17,7 +17,6 @@ interface FaqQuestionsPanelProps {
   loading: boolean;
   error: string;
   busyId: number | null;
-  onRefresh: () => void;
   onCreate: () => void;
   onEdit: (item: FAQItem) => void;
   onDelete: (item: FAQItem) => void;
@@ -30,7 +29,6 @@ export default function FaqQuestionsPanel({
   loading,
   error,
   busyId,
-  onRefresh,
   onCreate,
   onEdit,
   onDelete,
@@ -66,21 +64,6 @@ export default function FaqQuestionsPanel({
       description={t("design.listHint")}
       actions={
         <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-11"
-            disabled={loading || busyId !== null}
-            startIcon={
-              <RefreshIcon
-                aria-hidden="true"
-                className={`size-4 ${loading ? "motion-safe:animate-spin" : ""}`}
-              />
-            }
-            onClick={onRefresh}
-          >
-            {t("refresh")}
-          </Button>
           <Button
             size="sm"
             className="h-11"

@@ -1,8 +1,8 @@
 "use client";
+import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import { useTranslations } from "next-intl";
 import { ChartBarsIcon } from "@/icons";
 import AnalyticsChartCard from "./AnalyticsChartCard";
-import AnalyticsDataTable from "./AnalyticsDataTable";
 import AnalyticsGroupedColumns from "./AnalyticsGroupedColumns";
 import { telemetryDistribution } from "./analyticsTelemetryData";
 
@@ -41,11 +41,7 @@ export default function AnalyticsActivityColumns({
       title={t(stt ? "speechTitle" : "tokensTitle")}
       description={t(stt ? "speechDescription" : "tokensDescription")}
       icon={<ChartBarsIcon />}
-      details={
-        rows.length ? (
-          <AnalyticsDataTable field={field} value={value} embedded />
-        ) : undefined
-      }
+      actions={<AnalyticsJourneyPeriod />}
     >
       {stt && (
         <div className="mb-3 flex flex-wrap gap-x-4 gap-y-2 text-theme-xs text-gray-500 dark:text-gray-400">

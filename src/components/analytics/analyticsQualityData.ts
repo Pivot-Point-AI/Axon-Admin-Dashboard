@@ -1,3 +1,4 @@
+import { analyticsTimestamp } from "./analyticsPeriods";
 import {
   analyticsNumber,
   analyticsTableRows,
@@ -14,6 +15,11 @@ export type QualityField =
   | "intent_distribution";
 export const qualityKey = (key: string) =>
   key.toLowerCase().replace(/[\s-]+/g, "_");
+// "high_confidence_ge_80" → "high"; keeps other keys untouched.
+export const confidenceLevel = (key: string) =>
+  ["high", "medium", "low"].find((level) =>
+    qualityKey(key).startsWith(level),
+  ) ?? qualityKey(key);
 export function qualityRows(
   field: QualityField,
   value: unknown,
@@ -41,7 +47,10 @@ export function qualityColor(
   key: string,
   index: number,
 ): string {
-  const level = qualityKey(key);
+  const level =
+    field === "intent_confidence_buckets"
+      ? confidenceLevel(key)
+      : qualityKey(key);
   if (field === "guardrail_violations_by_risk")
     return (
       {
@@ -53,17 +62,17 @@ export function qualityColor(
     );
   if (field === "intent_confidence_buckets")
     return (
-      { high: "brand-500", medium: "theme-purple-500", low: "blue-light-400" }[
+      { high: "brand-600", medium: "blue-light-400", low: "orange-400" }[
         level
       ] ?? "brand-400"
     );
   if (["other", "others", "unknown"].includes(level)) return "gray-400";
   return [
-    "brand-500",
-    "theme-purple-500",
+    "brand-600",
     "blue-light-400",
-    "orange-400",
     "success-500",
+    "orange-400",
+    "theme-purple-500",
   ][index % 5];
 }
 
@@ -100,7 +109,8 @@ export function safetyTrendPoints(
   )
     .flatMap((row) => {
       const date = row.date ?? row.day ?? row.timestamp ?? row.name;
-      const timestamp = typeof date === "string" ? Date.parse(date) : NaN;
+      const timestamp =
+        typeof date === "string" ? analyticsTimestamp(date) : NaN;
       if (!Number.isFinite(timestamp)) return [];
       const point: AnalyticsTrendPoint = { timestamp };
       for (const level of ["critical", "high", "medium", "low"]) {

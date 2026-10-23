@@ -1,9 +1,9 @@
 "use client";
+import AnalyticsCardScope from "./AnalyticsCardScope";
 import { useTranslations } from "next-intl";
 import { ChartBarsIcon } from "@/icons";
 import AnalyticsChartCard from "./AnalyticsChartCard";
-import AnalyticsDataTable from "./AnalyticsDataTable";
-import AnalyticsPerformanceProcessing from "./AnalyticsPerformanceProcessing";
+import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import AnalyticsPerformanceDistribution from "./AnalyticsPerformanceDistribution";
 import AnalyticsRankingChart from "./AnalyticsRankingChart";
 import AnalyticsReportedTrend from "./AnalyticsReportedTrend";
@@ -12,7 +12,6 @@ import { telemetryDistribution } from "./analyticsTelemetryData";
 
 interface AnalyticsPerformanceProps {
   data: Record<string, unknown>;
-  date?: string;
 }
 const colors = [
   "brand-500",
@@ -22,11 +21,9 @@ const colors = [
 ];
 export default function AnalyticsPerformance({
   data,
-  date,
 }: AnalyticsPerformanceProps) {
   const t = useTranslations("analytics.telemetry");
   const common = useTranslations("analytics.design");
-  const stages = telemetryDistribution(data.stage_averages_ms);
   const label = (key: string) =>
     t.has(`stageLabels.${key}`)
       ? t(`stageLabels.${key}`)
@@ -34,45 +31,49 @@ export default function AnalyticsPerformance({
   return (
     <div className="space-y-4">
       <div className="grid items-stretch gap-4 lg:grid-cols-2">
-        <AnalyticsPerformanceProcessing
-          data={data}
-          reportDate={!date || date === "today" ? common("today") : date}
-        />
-        <AnalyticsPerformanceDistribution data={data} />
-        <AnalyticsChartCard
-          title={t("stageTitle")}
-          description={t("stageDescription")}
-          icon={<ChartBarsIcon />}
-          details={
-            stages.length ? (
-              <AnalyticsDataTable
-                field="stage_averages_ms"
-                value={data.stage_averages_ms}
-                embedded
+        <AnalyticsCardScope section="performance" data={data}>
+          {(d) => (
+            <AnalyticsChartCard
+              title={t("stageTitle")}
+              description={t("stageDescription")}
+              icon={<ChartBarsIcon />}
+              actions={<AnalyticsJourneyPeriod />}
+            >
+              <AnalyticsRankingChart
+                rows={telemetryDistribution(d.stage_averages_ms)}
+                label={label}
+                color={(_, index) => colors[index % colors.length]}
+                unit={common("milliseconds")}
               />
-            ) : undefined
-          }
-        >
-          <AnalyticsRankingChart
-            rows={stages}
-            label={label}
-            color={(_, index) => colors[index % colors.length]}
-            unit={common("milliseconds")}
-          />
-        </AnalyticsChartCard>
-        <AnalyticsReportedTrend
-          title={t("responseTrendTitle")}
-          description={t("responseTrendDescription")}
-          source={data.response_time_trend}
-          field="end_to_end_latency_ms"
-          compactAxis
-          series={[
-            { key: "average", label: t("averageResponse"), token: "brand-500" },
-            { key: "p95", label: t("p95"), token: "theme-purple-500" },
-          ]}
-        />
+            </AnalyticsChartCard>
+          )}
+        </AnalyticsCardScope>
+        <AnalyticsCardScope section="performance" data={data}>
+          {(d) => (
+            <AnalyticsReportedTrend
+              title={t("responseTrendTitle")}
+              description={t("responseTrendDescription")}
+              source={d.response_time_trend}
+              snapshot={d}
+              compactAxis
+              series={[
+                {
+                  key: "average",
+                  label: t("averageResponse"),
+                  token: "brand-500",
+                },
+                { key: "p95", label: t("p95"), token: "theme-purple-500" },
+              ]}
+            />
+          )}
+        </AnalyticsCardScope>
       </div>
-      <AnalyticsSlowInteractions value={data.top_slowest_turns} />
+      <AnalyticsCardScope section="performance" data={data}>
+        {(d) => <AnalyticsPerformanceDistribution data={d} />}
+      </AnalyticsCardScope>
+      <AnalyticsCardScope section="performance" data={data}>
+        {(d) => <AnalyticsSlowInteractions value={d.top_slowest_turns} />}
+      </AnalyticsCardScope>
     </div>
   );
 }

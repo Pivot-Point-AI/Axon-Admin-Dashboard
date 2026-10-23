@@ -1,9 +1,19 @@
 "use client";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { TableIcon } from "@/icons";
 import AnalyticsChartCard from "./AnalyticsChartCard";
-import AnalyticsDataTable from "./AnalyticsDataTable";
-import AnalyticsEmptyState from "./AnalyticsEmptyState";
+import AnalyticsHistoryState from "./AnalyticsHistoryState";
+import AnalyticsJourneyPeriod, {
+  type JourneyPeriod,
+} from "./AnalyticsJourneyPeriod";
+import useDailyAnalyticsHistory from "./useDailyAnalyticsHistory";
+import {
+  periodFilters,
+  customPeriodFilters,
+  filterPeriodPoints,
+  filterCustomPoints,
+} from "./analyticsPeriods";
 import AnalyticsRankingChart from "./AnalyticsRankingChart";
 import AnalyticsTrendChart from "./AnalyticsTrendChart";
 import { analyticsTableRows } from "./analyticsData";
@@ -45,21 +55,44 @@ export default function AnalyticsActivityErrors({
   const rows = Array.isArray(data.errors)
     ? Object.entries(counts).map(([key, count]) => ({ key, count }))
     : [];
-  const history = telemetryHistory(data.error_trend ?? data.errors_trend, [
-    "total",
-    "api",
-    "validation",
-    "timeout",
-  ]);
+  const [period, setPeriod] = useState<JourneyPeriod>("last7Days");
+  const [customRange, setCustomRange] = useState<{
+    start: string;
+    end: string;
+  } | null>(null);
+  const reported = useMemo(
+    () =>
+      telemetryHistory(data.error_trend ?? data.errors_trend, [
+        "total",
+        "api",
+        "validation",
+        "timeout",
+      ]),
+    [data],
+  );
+  const filters = customRange
+    ? customPeriodFilters(customRange.start, customRange.end)
+    : periodFilters(period);
+  const daily = useDailyAnalyticsHistory("logs", filters, reported, data);
+  const history = customRange
+    ? filterCustomPoints(daily.points, customRange.start, customRange.end)
+    : filterPeriodPoints(daily.points, period);
   return (
     <AnalyticsChartCard
       title={t("errorsTitle")}
       description={t("errorsDescription")}
       icon={<TableIcon />}
-      details={
-        errors.length ? (
-          <AnalyticsDataTable field="errors" value={data.errors} embedded />
-        ) : undefined
+      actions={
+        <AnalyticsJourneyPeriod
+          value={customRange ? "customRange" : period}
+          start={customRange?.start}
+          end={customRange?.end}
+          onChange={(next) => {
+            setCustomRange(null);
+            setPeriod(next);
+          }}
+          onCustomChange={(start, end) => setCustomRange({ start, end })}
+        />
       }
     >
       <div className="grid items-start gap-6 lg:grid-cols-3">
@@ -93,7 +126,9 @@ export default function AnalyticsActivityErrors({
               ]}
             />
           ) : (
-            <AnalyticsEmptyState
+            <AnalyticsHistoryState
+              loading={daily.loading}
+              failed={daily.failed}
               message={
                 Array.isArray(data.errors) && !errors.length
                   ? t("noErrors")

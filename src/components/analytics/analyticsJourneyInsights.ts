@@ -1,3 +1,4 @@
+import { analyticsTimestamp } from "./analyticsPeriods";
 import {
   analyticsNumber,
   analyticsTableRows,
@@ -6,11 +7,11 @@ import {
 import { metricTrend } from "./analyticsTrends";
 
 export const journeyColors = [
-  "brand-500",
-  "theme-purple-500",
+  "brand-600",
   "blue-light-400",
   "success-500",
   "orange-400",
+  "theme-purple-500",
   "gray-400",
 ];
 
@@ -215,7 +216,8 @@ export function journeyTrendPoints(
   const history = analyticsTableRows(source)
     .flatMap((row) => {
       const date = row.date ?? row.day ?? row.timestamp ?? row.name;
-      const timestamp = typeof date === "string" ? Date.parse(date) : NaN;
+      const timestamp =
+        typeof date === "string" ? analyticsTimestamp(date) : NaN;
       if (!Number.isFinite(timestamp)) return [];
       const started = count(
         row.started,
@@ -241,7 +243,7 @@ export function journeyTrendPoints(
     for (const point of metricTrend(data, field)?.points ?? []) {
       if (!point.label || !/^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(point.label))
         continue;
-      const timestamp = Date.parse(point.label);
+      const timestamp = analyticsTimestamp(point.label);
       if (
         !Number.isFinite(timestamp) ||
         point.value === null ||

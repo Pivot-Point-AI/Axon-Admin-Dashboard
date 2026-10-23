@@ -60,7 +60,9 @@ export default function AnalyticsRankingChart({
               className="bg-linear-to-e h-full rounded-full from-white/15 to-transparent dark:from-white/10"
               style={{
                 width: `${scale > 0 ? (row.count / scale) * 100 : 0}%`,
-                backgroundColor: `var(--color-${color(row.key, index)})`,
+                backgroundColor: shares
+                  ? "var(--color-blue-light-500)"
+                  : `var(--color-${color(row.key, index)})`,
               }}
             />
           </div>

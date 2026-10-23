@@ -1,8 +1,8 @@
 "use client";
+import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import { useFormatter, useTranslations } from "next-intl";
 import { PieChartIcon } from "@/icons";
 import AnalyticsChartCard from "./AnalyticsChartCard";
-import AnalyticsDataTable from "./AnalyticsDataTable";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
 import AnalyticsRing from "./AnalyticsRing";
 import { telemetryDistribution } from "./analyticsTelemetryData";
@@ -21,10 +21,10 @@ export default function AnalyticsActivityChannels({
   const total = rows.reduce((sum, row) => sum + row.count, 0);
   const color = (key: string, index: number) =>
     ["voice", "audio"].includes(key)
-      ? "brand-500"
+      ? "brand-600"
       : key === "text"
-        ? "theme-purple-500"
-        : ["brand-500", "theme-purple-500", "blue-light-400"][index % 3];
+        ? "blue-light-400"
+        : ["brand-600", "blue-light-400", "success-500"][index % 3];
   const label = (key: string) =>
     t.has(`labels.${key}`) ? t(`labels.${key}`) : key.replaceAll("_", " ");
   return (
@@ -32,11 +32,7 @@ export default function AnalyticsActivityChannels({
       title={t("channelsTitle")}
       description={t("channelsDescription")}
       icon={<PieChartIcon />}
-      details={
-        rows.length ? (
-          <AnalyticsDataTable field="sources" value={value} embedded />
-        ) : undefined
-      }
+      actions={<AnalyticsJourneyPeriod />}
     >
       {!rows.length ? (
         <AnalyticsEmptyState />
@@ -47,6 +43,7 @@ export default function AnalyticsActivityChannels({
             total={total}
             label={t("total")}
             color={color}
+            nameOf={label}
             size="lg"
           />
           <dl className="w-full min-w-0 flex-1 divide-y divide-gray-100 dark:divide-gray-800">

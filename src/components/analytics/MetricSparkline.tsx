@@ -5,7 +5,14 @@ import { useFormatter, useTranslations } from "next-intl";
 import type { MetricTrendPoint } from "./analyticsTrends";
 
 export type SparklineTone =
-  "brand" | "secondary" | "success" | "purple" | "warning" | "pink" | "error";
+  | "blueLight"
+  | "brand"
+  | "secondary"
+  | "success"
+  | "purple"
+  | "warning"
+  | "pink"
+  | "error";
 interface MetricSparklineProps {
   points: MetricTrendPoint[];
   tone?: SparklineTone;
@@ -13,6 +20,7 @@ interface MetricSparklineProps {
   size?: "compact" | "card";
 }
 const colors = {
+  blueLight: "--color-blue-light-500",
   brand: "--color-brand-500",
   secondary: "--color-theme-purple-500",
   success: "--color-success-500",

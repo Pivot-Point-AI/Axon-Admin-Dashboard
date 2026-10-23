@@ -1,5 +1,7 @@
 "use client";
 
+import { RowsPerPage } from "@/components/common/Pagination";
+import PageRefresh from "@/components/common/PageRefresh";
 import Pagination from "@/components/common/Pagination";
 import usePagination from "@/hooks/usePagination";
 import useModal from "@/hooks/useModal";
@@ -169,6 +171,7 @@ export default function UsersManager() {
 
   return (
     <div className="space-y-5">
+      <PageRefresh loading={loading} error={!!error} onRefresh={load} />
       <ManagementMetrics
         loading={loading || !!error}
         items={[
@@ -229,15 +232,18 @@ export default function UsersManager() {
               ))}
             </select>
           </div>
-          <Button
-            size="sm"
-            startIcon={
-              <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
-            }
-            onClick={openCreate}
-          >
-            New User
-          </Button>
+          <div className="flex items-center gap-3">
+            <RowsPerPage pagination={pagination} disabled={loading} />
+            <Button
+              size="sm"
+              startIcon={
+                <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
+              }
+              onClick={openCreate}
+            >
+              New User
+            </Button>
+          </div>
         </div>
 
         {error && (
@@ -250,6 +256,7 @@ export default function UsersManager() {
           variant="header"
           pagination={pagination}
           disabled={loading}
+          showRows={false}
         />
         <div className="overflow-x-auto">
           <Table>
@@ -318,7 +325,7 @@ export default function UsersManager() {
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm">
                       <span
-                        className={`inline-flex rounded-full px-3 py-1.5 text-theme-xs font-medium ${user.role === "SUPER_ADMIN" ? "bg-theme-purple-500/10 text-theme-purple-500 dark:bg-theme-purple-500/20 dark:text-theme-purple-500" : user.role === "MANAGER" ? "bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400" : "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"}`}
+                        className={`text-theme-xs font-medium ${user.role === "SUPER_ADMIN" ? "text-theme-purple-500 dark:text-theme-purple-500" : user.role === "MANAGER" ? "text-orange-600 dark:text-orange-400" : "text-brand-600 dark:text-brand-300"}`}
                       >
                         {user.role}
                       </span>

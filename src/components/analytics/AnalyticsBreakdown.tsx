@@ -1,12 +1,13 @@
 "use client";
 
+import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
+import AnalyticsViewAll from "./AnalyticsViewAll";
 import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
 import { analyticsTableRows } from "./analyticsData";
 import AnalyticsDataTable from "./AnalyticsDataTable";
-import AnalyticsDetails from "./AnalyticsDetails";
 import AnalyticsColumnChart from "./AnalyticsColumnChart";
 import AnalyticsDonutChart from "./AnalyticsDonutChart";
 import AnalyticsPeriodChart from "./AnalyticsPeriodChart";
@@ -29,12 +30,17 @@ export default function AnalyticsBreakdown({
   const format = useFormatter();
   const [expanded, setExpanded] = useState(false);
   const kind = chartKinds[field] ?? "ranking";
+  const showUnderlyingData =
+    field !== "peak_activity_hours" && field !== "activity_by_day_of_week";
+  const isActivity =
+    field === "peak_activity_hours" || field === "activity_by_day_of_week";
   const ordered = kind === "columns" || kind === "area";
   const rows = chartRows(field, value);
   const journeys = field === "top_popular_flows";
   const limit = journeys ? 5 : 6;
   const visible = expanded || ordered ? rows : rows.slice(0, limit);
   const max = Math.max(1, ...rows.map((row) => row.count));
+  const total = rows.reduce((sum, row) => sum + row.count, 0);
   const unit = field === "stage_averages_ms" ? t("design.milliseconds") : "";
   const label = (key: string) => {
     if (
@@ -48,7 +54,11 @@ export default function AnalyticsBreakdown({
       ? t(`columns.${key}`)
       : key.replaceAll("_", " ");
   };
-  if (!rows.length && analyticsTableRows(value).length > 0)
+  if (
+    showUnderlyingData &&
+    !rows.length &&
+    analyticsTableRows(value).length > 0
+  )
     return <AnalyticsDataTable field={field} value={value} />;
   return (
     <ComponentCard
@@ -61,11 +71,62 @@ export default function AnalyticsBreakdown({
       className={`h-full ${className ?? ""}`}
       icon={kind === "donut" ? <PieChartIcon /> : <ChartBarsIcon />}
       actions={
-        journeys ? (
-          <span className="rounded-lg border border-gray-200 px-3 py-2 text-theme-xs text-gray-600 dark:border-gray-700 dark:text-gray-400">
-            {t("design.allTime")}
-          </span>
-        ) : undefined
+        isActivity ? (
+          rows.length > 0 && (
+            <AnalyticsViewAll
+              title={t(`fields.${field}`)}
+              description={
+                t.has(`design.chartDescriptions.${field}`)
+                  ? t(`design.chartDescriptions.${field}`)
+                  : undefined
+              }
+              icon={<ChartBarsIcon />}
+              hidePeriod
+              columns={[
+                t(
+                  field === "peak_activity_hours"
+                    ? "design.hourColumn"
+                    : "design.dayColumn",
+                ),
+                t("columns.count"),
+                "%",
+              ]}
+              entries={rows.map((row) => ({
+                key: row.key,
+                label: label(row.key),
+                color: "brand-500",
+                values: [
+                  format.number(row.count),
+                  format.number(total > 0 ? row.count / total : 0, {
+                    style: "percent",
+                    maximumFractionDigits: 1,
+                  }),
+                ],
+                bar: max > 0 ? row.count / max : 0,
+              }))}
+            >
+              {field === "peak_activity_hours" ? (
+                <AnalyticsColumnChart
+                  rows={rows}
+                  label={label}
+                  color={(key, index) => chartColor(field, key, index)}
+                  tall
+                />
+              ) : (
+                <AnalyticsPeriodChart
+                  points={rows.map((row) => ({
+                    label: label(row.key).slice(0, 3),
+                    value: row.count,
+                  }))}
+                  color="purple"
+                  tall
+                />
+              )}
+            </AnalyticsViewAll>
+          )
+        ) : (
+          <AnalyticsJourneyPeriod />
+        )
       }
     >
       {!rows.length ? (
@@ -75,6 +136,7 @@ export default function AnalyticsBreakdown({
           rows={rows}
           label={label}
           color={(key, index) => chartColor(field, key, index)}
+          tall={field === "peak_activity_hours"}
         />
       ) : kind === "area" ? (
         <div>
@@ -84,6 +146,7 @@ export default function AnalyticsBreakdown({
               value: row.count,
             }))}
             color="purple"
+            tall
           />
           <dl className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
             {rows.map((row) => (
@@ -126,7 +189,7 @@ export default function AnalyticsBreakdown({
                 className="col-span-12 h-3 overflow-hidden rounded-full bg-gray-100 sm:col-span-8 sm:col-start-4 sm:row-start-1 dark:bg-gray-800"
               >
                 <div
-                  className="h-full rounded-full"
+                  className="axon-grow-x h-full rounded-full"
                   style={{
                     width: `${(row.count / max) * 100}%`,
                     background: chartColor(field, row.key, index),
@@ -155,7 +218,7 @@ export default function AnalyticsBreakdown({
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                 <div
-                  className="h-full rounded-full"
+                  className="axon-grow-x h-full rounded-full"
                   style={{
                     width: `${(row.count / max) * 100}%`,
                     background: chartColor(field, row.key, index),
@@ -165,11 +228,6 @@ export default function AnalyticsBreakdown({
             </div>
           ))}
         </div>
-      )}
-      {rows.length > 0 && (
-        <AnalyticsDetails>
-          <AnalyticsDataTable field={field} value={value} embedded />
-        </AnalyticsDetails>
       )}
       {!ordered && rows.length > limit && (
         <button

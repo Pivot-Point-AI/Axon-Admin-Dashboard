@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
+import { ChartBarsIcon } from "@/icons";
 import type { MetricTrendData } from "./analyticsTrends";
 
 export interface AnalyticsPeriodPoint {
@@ -14,6 +15,8 @@ interface AnalyticsPeriodChartProps {
   points: AnalyticsPeriodPoint[];
   variant?: "area" | "bar";
   color?: "brand" | "purple";
+  fillHeight?: boolean;
+  tall?: boolean;
 }
 
 // Plot only the reported aggregate windows. No daily history is interpolated.
@@ -21,6 +24,8 @@ export default function AnalyticsPeriodChart({
   points,
   variant = "area",
   color: accent = "brand",
+  fillHeight = false,
+  tall = false,
 }: AnalyticsPeriodChartProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const coordinates = useRef<{ x: number; y: number; value: number | null }[]>(
@@ -31,6 +36,8 @@ export default function AnalyticsPeriodChart({
   const t = useTranslations("analytics");
   const tooltipId = useId();
   const activePoint = activeIndex === null ? null : points[activeIndex];
+  // Nothing recorded for this period: say so instead of drawing an empty plot.
+  const empty = points.every((point) => !point.value);
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
@@ -66,7 +73,10 @@ export default function AnalyticsPeriodChart({
       let maxLabelWidth = 0;
       for (let tick = 0; tick <= 5; tick++) {
         const text = String(Math.round((maximum * tick) / 5));
-        maxLabelWidth = Math.max(maxLabelWidth, context.measureText(text).width);
+        maxLabelWidth = Math.max(
+          maxLabelWidth,
+          context.measureText(text).width,
+        );
       }
       const startPadding = Math.max(48, Math.ceil(maxLabelWidth) + 16);
       const padding = { start: startPadding, end: 14, top: 18, bottom: 30 };
@@ -241,7 +251,7 @@ export default function AnalyticsPeriodChart({
   }, [points, variant, accent, activeIndex]);
   // The same reported values are available through pointer, touch, and keyboard input.
   return (
-    <div className="relative">
+    <div className={`relative ${fillHeight ? "h-full min-h-64" : ""}`}>
       <canvas
         ref={ref}
         tabIndex={0}
@@ -299,8 +309,19 @@ export default function AnalyticsPeriodChart({
                   ],
           );
         }}
-        className="block h-52 w-full rounded-lg font-outfit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
+        className={`block w-full rounded-lg font-outfit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 ${fillHeight ? "absolute inset-0 h-full" : tall ? "h-72" : "h-52"} ${empty ? "opacity-40" : ""}`}
       />
+      {empty && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <span className="axon-fade-in inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white/90 px-4 py-2.5 text-sm font-medium text-gray-600 shadow-theme-xs backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/90 dark:text-gray-300">
+            <ChartBarsIcon
+              aria-hidden="true"
+              className="size-4 text-gray-400 dark:text-gray-500"
+            />
+            {t("empty")}
+          </span>
+        </div>
+      )}
       {activePoint && (
         <div
           id={tooltipId}

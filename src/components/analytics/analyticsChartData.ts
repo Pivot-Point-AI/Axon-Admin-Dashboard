@@ -52,11 +52,11 @@ export function chartRows(field: string, value: unknown): DistributionRow[] {
 }
 
 export const chartColors = [
-  "var(--color-brand-500)",
-  "var(--color-theme-purple-500)",
+  "var(--color-brand-600)",
   "var(--color-blue-light-400)",
   "var(--color-success-500)",
   "var(--color-orange-400)",
+  "var(--color-theme-purple-500)",
   "var(--color-theme-pink-500)",
 ];
 

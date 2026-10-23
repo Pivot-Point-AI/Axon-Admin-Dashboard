@@ -1,5 +1,6 @@
 "use client";
 
+import CountUpText from "@/components/common/CountUpText";
 import { useFormatter, useTranslations } from "next-intl";
 
 interface AnalyticsValueProps {
@@ -22,10 +23,13 @@ export default function AnalyticsValue({
     field === "average_intent_confidence";
   if (typeof value === "number")
     return (
-      <span>
-        {format.number(
+      <CountUpText
+        text={format.number(
+          // Confidence arrives as a 0–1 share in some responses, 0–100 in others.
           field === "average_intent_confidence"
-            ? value
+            ? value > 1
+              ? value / 100
+              : value
             : percent
               ? value / 100
               : value,
@@ -34,7 +38,7 @@ export default function AnalyticsValue({
             maximumFractionDigits: 2,
           },
         )}
-      </span>
+      />
     );
   return <span className="break-words">{String(value)}</span>;
 }

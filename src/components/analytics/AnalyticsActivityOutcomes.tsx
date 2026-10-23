@@ -1,9 +1,12 @@
 "use client";
+import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import { useFormatter, useTranslations } from "next-intl";
 import { CheckCircleIcon } from "@/icons";
 import AnalyticsChartCard from "./AnalyticsChartCard";
-import AnalyticsDataTable from "./AnalyticsDataTable";
+import AnalyticsEmptyState from "./AnalyticsEmptyState";
+import AnalyticsGauge from "./AnalyticsGauge";
 import AnalyticsGroupedColumns from "./AnalyticsGroupedColumns";
+import { useAnalyticsPeriod } from "./AnalyticsPeriodContext";
 import { asAnalyticsRecord } from "./analyticsData";
 import { telemetryHistory, telemetryNumber } from "./analyticsTelemetryData";
 
@@ -18,6 +21,7 @@ export default function AnalyticsActivityOutcomes({
   const t = useTranslations("analytics.telemetry");
   const common = useTranslations("analytics.design");
   const format = useFormatter();
+  const reporting = useAnalyticsPeriod();
   const outcomes = asAnalyticsRecord(data.interaction_outcomes);
   const history = telemetryHistory(
     data.interaction_outcomes_trend ?? outcomes.history,
@@ -36,7 +40,11 @@ export default function AnalyticsActivityOutcomes({
     : [
         {
           key: "reported",
-          label: !date || date === "today" ? common("today") : date,
+          label: reporting?.period
+            ? common(reporting.period)
+            : !date || date === "today"
+              ? common("today")
+              : date,
           values: {
             successful: telemetryNumber(
               data.turn_success_count,
@@ -51,6 +59,10 @@ export default function AnalyticsActivityOutcomes({
           },
         },
       ];
+  const single = rows[0]?.values;
+  const successful = history.length ? 0 : (single?.successful ?? 0);
+  const failed = history.length ? 0 : (single?.failed ?? 0);
+  const rate = successful + failed > 0 ? successful / (successful + failed) : 0;
   return (
     <AnalyticsChartCard
       title={t("outcomesTitle")}
@@ -58,26 +70,54 @@ export default function AnalyticsActivityOutcomes({
         history.length ? "outcomesHistoryDescription" : "outcomesDescription",
       )}
       icon={<CheckCircleIcon />}
-      details={
-        <AnalyticsDataTable
-          field="turn_success_count"
-          value={
-            history.length
-              ? (data.interaction_outcomes_trend ?? outcomes.history)
-              : rows.map((row) => ({ ...row.values }))
-          }
-          embedded
-        />
-      }
+      actions={<AnalyticsJourneyPeriod />}
     >
-      <AnalyticsGroupedColumns
-        axisSteps={4}
-        rows={rows}
-        series={[
-          { key: "successful", label: t("successful"), token: "brand-500" },
-          { key: "failed", label: t("failed"), token: "theme-purple-500" },
-        ]}
-      />
+      {history.length ? (
+        <AnalyticsGroupedColumns
+          axisSteps={4}
+          rows={rows}
+          series={[
+            { key: "successful", label: t("successful"), token: "brand-500" },
+            { key: "failed", label: t("failed"), token: "theme-purple-500" },
+          ]}
+        />
+      ) : successful + failed > 0 ? (
+        // A single reported total has no time axis, so show the success rate.
+        <div className="flex flex-col items-center gap-9 py-2">
+          <AnalyticsGauge
+            rate={rate}
+            caption={common("successRate")}
+            good="success-500"
+            bad="error-500"
+          />
+          <dl className="grid w-full max-w-sm grid-cols-2 gap-3">
+            {(
+              [
+                ["successful", successful, "bg-success-500"],
+                ["failed", failed, "bg-error-500"],
+              ] as const
+            ).map(([key, count, dot]) => (
+              <div
+                key={key}
+                className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-white/3"
+              >
+                <dt className="flex items-center gap-2 text-theme-xs text-gray-500 dark:text-gray-400">
+                  <span
+                    aria-hidden="true"
+                    className={`size-2 rounded-full ${dot}`}
+                  />
+                  {t(key)}
+                </dt>
+                <dd className="mt-1 text-xl font-bold text-gray-950 tabular-nums dark:text-white">
+                  {format.number(count)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ) : (
+        <AnalyticsEmptyState />
+      )}
     </AnalyticsChartCard>
   );
 }

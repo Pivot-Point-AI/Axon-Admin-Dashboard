@@ -5,10 +5,12 @@ import { PieChartIcon } from "@/icons";
 
 interface AnalyticsEmptyStateProps {
   message?: string;
+  description?: string;
 }
 
 export default function AnalyticsEmptyState({
   message,
+  description,
 }: AnalyticsEmptyStateProps) {
   const t = useTranslations("analytics");
   return (
@@ -19,9 +21,11 @@ export default function AnalyticsEmptyState({
       <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
         {message ?? t("empty")}
       </p>
-      <p className="mt-1 max-w-sm text-theme-xs leading-5 text-gray-500 dark:text-gray-400">
-        {t("design.emptyHint")}
-      </p>
+      {description && (
+        <p className="mt-1 max-w-sm text-theme-xs leading-5 text-gray-500 dark:text-gray-400">
+          {description}
+        </p>
+      )}
     </div>
   );
 }

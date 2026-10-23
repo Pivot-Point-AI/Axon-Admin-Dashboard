@@ -1,0 +1,59 @@
+"use client";
+
+import { useFormatter, useTranslations } from "next-intl";
+import { ChatIcon, DatabaseIcon, GroupIcon, UserIcon } from "@/icons";
+import AnalyticsMetricCard from "@/components/dashboard/AnalyticsMetricCard";
+import {
+  analyticsNumber,
+  asAnalyticsRecord,
+} from "@/components/analytics/analyticsData";
+import { metricTrend } from "@/components/analytics/analyticsTrends";
+
+interface AudienceKpiCardsProps {
+  data: unknown;
+  /** Another response to take a comparison from when `data` has none. */
+  fallback?: unknown;
+}
+
+const cards = [
+  { field: "total_users", label: "totalUsers", icon: GroupIcon },
+  { field: "total_sessions", label: "totalSessions", icon: DatabaseIcon },
+  { field: "daily_active_users", label: "dailyActiveUsers", icon: UserIcon },
+  { field: "active_sessions", label: "activeSessions", icon: ChatIcon },
+] as const;
+
+export default function AudienceKpiCards({
+  data,
+  fallback,
+}: AudienceKpiCardsProps) {
+  const t = useTranslations("dashboardAnalytics");
+  const format = useFormatter();
+  const root = asAnalyticsRecord(data);
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {cards.map(({ field, label, icon: Icon }) => {
+        const raw = root[field];
+        const value =
+          analyticsNumber(raw) ?? analyticsNumber(asAnalyticsRecord(raw).count);
+        return (
+          <AnalyticsMetricCard
+            key={field}
+            label={t(label)}
+            icon={<Icon />}
+            value={
+              value === null
+                ? data == null
+                  ? null
+                  : "0"
+                : format.number(value)
+            }
+            trend={
+              metricTrend(data, field) ??
+              (fallback ? metricTrend(fallback, field) : null)
+            }
+          />
+        );
+      })}
+    </div>
+  );
+}

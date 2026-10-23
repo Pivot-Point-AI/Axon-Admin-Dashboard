@@ -1,5 +1,7 @@
 "use client";
 
+import { RowsPerPage } from "@/components/common/Pagination";
+import PageRefresh from "@/components/common/PageRefresh";
 import Pagination from "@/components/common/Pagination";
 import StatusBadge from "@/components/common/StatusBadge";
 import { asBoolean } from "@/utils/boolean";
@@ -22,7 +24,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAdminAuth } from "@/context/AdminAuthContext";
-import { CheckCircleIcon, PencilIcon, PlusIcon, TrashBinIcon } from "@/icons/index";
+import {
+  CheckCircleIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashBinIcon,
+} from "@/icons/index";
 import { ApiError } from "@/lib/api/client";
 import {
   createLanguage,
@@ -111,9 +118,7 @@ export default function LanguagesManager() {
       setLanguages(data);
       const primary = data.find(
         (l) =>
-          l.is_primary === true ||
-          l.primary === true ||
-          l.is_default === true,
+          l.is_primary === true || l.primary === true || l.is_default === true,
       );
       if (primary?.language_code) {
         setPrimaryCode(String(primary.language_code).toLowerCase());
@@ -276,19 +281,23 @@ export default function LanguagesManager() {
 
   return (
     <div className="axon-management-panel w-full rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+      <PageRefresh loading={loading} error={!!error} onRefresh={load} />
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Languages
         </h3>
-        <Button
-          size="sm"
-          startIcon={
-            <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
-          }
-          onClick={openCreate}
-        >
-          New Language
-        </Button>
+        <div className="flex items-center gap-3">
+          <RowsPerPage pagination={pagination} disabled={loading} />
+          <Button
+            size="sm"
+            startIcon={
+              <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
+            }
+            onClick={openCreate}
+          >
+            New Language
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -297,7 +306,12 @@ export default function LanguagesManager() {
         </div>
       )}
 
-      <Pagination variant="header" pagination={pagination} disabled={loading} />
+      <Pagination
+        variant="header"
+        pagination={pagination}
+        disabled={loading}
+        showRows={false}
+      />
       <div className="w-full overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
         <Table className="w-full">
           <TableHeader className="border-b border-gray-100 bg-gray-50/70 dark:border-gray-800 dark:bg-white/2">
@@ -356,18 +370,17 @@ export default function LanguagesManager() {
             ) : (
               pagination.items.map((language, index) => {
                 const code = String(language.language_code ?? index);
-                const isPrimary =
-                  primaryCode
-                    ? code.toLowerCase() === primaryCode.toLowerCase()
-                    : Boolean(
-                        language.is_primary ||
-                          language.primary ||
-                          language.is_default,
-                      );
+                const isPrimary = primaryCode
+                  ? code.toLowerCase() === primaryCode.toLowerCase()
+                  : Boolean(
+                      language.is_primary ||
+                      language.primary ||
+                      language.is_default,
+                    );
                 return (
                   <TableRow key={code}>
                     <TableCell className="px-4 py-3 text-sm font-medium">
-                      <span className="inline-block rounded-md bg-gray-100 px-2.5 py-1 font-mono text-theme-xs font-semibold text-gray-800 dark:bg-white/5 dark:text-gray-200">
+                      <span className="font-mono inline-block rounded-md bg-gray-100 px-2.5 py-1 text-theme-xs font-semibold text-gray-800 dark:bg-white/5 dark:text-gray-200">
                         {code}
                       </span>
                     </TableCell>
@@ -527,6 +540,4 @@ export default function LanguagesManager() {
       </Modal>
     </div>
   );
-
 }
-

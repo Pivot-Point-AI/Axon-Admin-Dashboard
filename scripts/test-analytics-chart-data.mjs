@@ -28,6 +28,8 @@ function load(name) {
   return loadedModule.exports;
 }
 const journeys = load("analyticsJourneyInsights");
+const chartData = load("analyticsChartData");
+const trends = load("analyticsTrends");
 const quality = load("analyticsQualityData");
 const summaries = load("analyticsSummaryData");
 const telemetry = load("analyticsTelemetryData");
@@ -279,4 +281,424 @@ test("safety trends require real dated observations and preserve zero versus mis
   assert.equal(points[0].high, 8);
   assert.equal(points[1].high, 0);
   assert.equal(points[1].medium, null);
+});
+
+const periods = load("analyticsPeriods");
+
+test("analytics presets use inclusive calendar dates and distinguish yesterday", () => {
+  const now = new Date(2026, 9, 22, 15, 30);
+  const expected = {
+    today: ["2026-10-22", "2026-10-22"],
+    yesterday: ["2026-10-21", "2026-10-21"],
+    last7Days: ["2026-10-16", "2026-10-22"],
+    last14Days: ["2026-10-09", "2026-10-22"],
+    last30Days: ["2026-09-23", "2026-10-22"],
+  };
+  for (const [preset, [start, end]] of Object.entries(expected)) {
+    const filters = periods.periodFilters(preset, now);
+    assert.equal(filters.start_date, start);
+    assert.equal(filters.end_date, end);
+    assert.equal(periods.selectedPeriod(filters, now), preset);
+    assert.equal(new Date(filters.start_time).getHours(), 0);
+    assert.equal(new Date(filters.end_time).getHours(), 23);
+  }
+  assert.deepEqual(periods.periodFilters("allTime", now), {
+    period: "all_time",
+  });
+  assert.equal(periods.selectedPeriod({}, now), "allTime");
+});
+
+test("date filtering rejects stale and future observations rather than anchoring to the last sample", () => {
+  const now = new Date(2026, 9, 22, 15);
+  const observations = [
+    "2025-10-22",
+    "2026-10-15",
+    "2026-10-16",
+    "2026-10-21",
+    "2026-10-22",
+    "2026-10-23",
+  ].map((date) => ({ date, timestamp: periods.analyticsTimestamp(date) }));
+  assert.deepEqual(
+    periods.filterPeriodPoints(observations, "today", now).map((p) => p.date),
+    ["2026-10-22"],
+  );
+  assert.deepEqual(
+    periods
+      .filterPeriodPoints(observations, "yesterday", now)
+      .map((p) => p.date),
+    ["2026-10-21"],
+  );
+  assert.deepEqual(
+    periods
+      .filterPeriodPoints(observations, "last7Days", now)
+      .map((p) => p.date),
+    ["2026-10-16", "2026-10-21", "2026-10-22"],
+  );
+  assert.equal(
+    periods.filterPeriodPoints(observations, "allTime", now).length,
+    6,
+  );
+  assert.equal(periods.filterPeriodPoints([], "today", now).length, 0);
+});
+
+test("custom dates include both endpoints and remain separate from presets", () => {
+  const filters = periods.customPeriodFilters("2026-10-02", "2026-10-05");
+  assert.equal(
+    periods.selectedPeriod(filters, new Date(2026, 9, 22)),
+    undefined,
+  );
+  const points = [
+    { timestamp: new Date(2026, 9, 1, 23, 59, 59).getTime() },
+    { timestamp: new Date(2026, 9, 2).getTime() },
+    { timestamp: new Date(2026, 9, 5, 23, 59, 59, 999).getTime() },
+    { timestamp: new Date(2026, 9, 6).getTime() },
+  ];
+  assert.deepEqual(
+    periods.filterCustomPoints(points, "2026-10-02", "2026-10-05"),
+    points.slice(1, 3),
+  );
+});
+
+test("range arithmetic handles month and year boundaries", () => {
+  const range = periods.periodFilters("last14Days", new Date(2027, 0, 5));
+  assert.equal(range.start_date, "2026-12-23");
+  assert.equal(range.end_date, "2027-01-05");
+});
+
+test("all summary requests forward supported date filters to the API", async () => {
+  const filename = path.resolve(directory, "../../lib/api/analytics.ts");
+  const calls = [];
+  const loadedModule = { exports: {} };
+  const { outputText } = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+    },
+  });
+  new Function("require", "module", "exports", outputText)(
+    () => ({
+      ADMIN_API_BASE_URL: "/backend/admin",
+      apiRequest: (endpoint, options) => {
+        calls.push({ endpoint, ...options });
+        return Promise.resolve({});
+      },
+    }),
+    loadedModule,
+    loadedModule.exports,
+  );
+  const filters = periods.periodFilters("last14Days", new Date(2026, 9, 22));
+  for (const section of ["users", "flows", "chats"]) {
+    await loadedModule.exports.getAnalyticsSummary(
+      section,
+      "test-token",
+      filters,
+    );
+    const query = calls.at(-1).query;
+    assert.equal(query.start_date, "2026-10-09");
+    assert.equal(query.end_date, "2026-10-22");
+    if (section === "chats") assert.equal(query.start_time, filters.start_time);
+  }
+  for (const section of ["nlp", "performance", "logs"]) {
+    await loadedModule.exports.getAnalyticsSummary(section, "test-token", {
+      date: "yesterday",
+    });
+    assert.deepEqual(calls.at(-1).query, { date: "yesterday" });
+  }
+  await loadedModule.exports.getAnalyticsSummary(
+    "users",
+    "test-token",
+    periods.periodFilters("allTime"),
+  );
+  assert.equal(calls.at(-1).query.period, "all_time");
+  assert.equal(calls.at(-1).query.start_date, undefined);
+});
+
+const daily = load("analyticsDailyHistory");
+
+test("daily history requires an explicit calendar range and resolves individual telemetry dates", () => {
+  const now = new Date(2026, 9, 22, 15);
+  assert.deepEqual(daily.historyDates({ period: "all_time" }, now), []);
+  assert.deepEqual(daily.historyDates({ date: "today" }, now), ["2026-10-22"]);
+  assert.deepEqual(daily.historyDates({ date: "yesterday" }, now), [
+    "2026-10-21",
+  ]);
+  assert.deepEqual(
+    daily.historyDates(
+      { start_date: "2026-10-20", end_date: "2026-10-22" },
+      now,
+    ),
+    ["2026-10-20", "2026-10-21", "2026-10-22"],
+  );
+  assert.deepEqual(
+    daily.historyDates(
+      { start_date: "2026-10-22", end_date: "2026-10-20" },
+      now,
+    ),
+    [],
+  );
+});
+
+test("daily summaries supply real journey counts, safety levels and response-time percentiles", () => {
+  assert.deepEqual(
+    daily.dailyTrendPoint("flows", "2026-10-22", {
+      total_initialized_flows: 12,
+      total_completed_flows: 0,
+      total_abandoned_flows: 3,
+    }),
+    {
+      timestamp: periods.analyticsTimestamp("2026-10-22"),
+      started: 12,
+      completed: 0,
+      abandoned: 3,
+    },
+  );
+  const safety = daily.dailyTrendPoint("nlp", "2026-10-22", {
+    date: "2026-10-22",
+    safety_blocks_by_risk: { high: 0, medium: 4 },
+  });
+  assert.equal(safety.high, 0);
+  assert.equal(safety.medium, 4);
+  assert.equal(safety.low, null);
+  const latency = daily.dailyTrendPoint("performance", "2026-10-22", {
+    date: "2026-10-22",
+    response_time_percentiles: { avg: 320, p95: 850 },
+  });
+  assert.equal(latency.average, 320);
+  assert.equal(latency.p95, 850);
+  assert.equal(
+    daily.dailyTrendPoint("performance", "2026-10-22", {
+      date: "2026-10-21",
+      end_to_end_latency_ms: { avg: 123 },
+    }),
+    null,
+  );
+  assert.equal(
+    daily.dailyTrendPoint("nlp", "2026-10-22", {
+      found: false,
+      guardrail_violations_by_risk: { high: 0 },
+    }),
+    null,
+  );
+});
+
+test("history loads separate dates with bounded concurrency and keeps missing days as gaps", async () => {
+  const dates = daily.historyDates({
+    start_date: "2026-10-01",
+    end_date: "2026-10-14",
+  });
+  let inFlight = 0,
+    peak = 0;
+  const requested = [];
+  const history = await daily.loadDailyHistory(
+    "flows",
+    dates,
+    async (date) => {
+      requested.push(date);
+      peak = Math.max(peak, ++inFlight);
+      await new Promise((resolve) => setImmediate(resolve));
+      inFlight--;
+      return date === "2026-10-05"
+        ? { found: false }
+        : {
+            total_initialized_flows: Number(date.slice(-2)),
+            total_completed_flows: 0,
+          };
+    },
+    new AbortController().signal,
+  );
+  assert.equal(requested.length, 14);
+  assert.equal(new Set(requested).size, 14);
+  assert.ok(peak <= 4);
+  assert.equal(history.length, 14);
+  assert.equal(history[0].started, 1);
+  assert.equal(history[4].started, null);
+  assert.equal(history[13].started, 14);
+});
+
+test("missing daily telemetry stays empty and request failures or cancellation never become fake zeroes", async () => {
+  const dates = ["2026-10-21", "2026-10-22"];
+  assert.deepEqual(
+    await daily.loadDailyHistory(
+      "performance",
+      dates,
+      async () => ({ found: false }),
+      new AbortController().signal,
+    ),
+    [],
+  );
+  await assert.rejects(
+    daily.loadDailyHistory(
+      "nlp",
+      dates,
+      async () => {
+        throw new Error("Failed to load daily telemetry");
+      },
+      new AbortController().signal,
+    ),
+    /Failed to load/,
+  );
+  const controller = new AbortController();
+  controller.abort();
+  let calls = 0;
+  await assert.rejects(
+    daily.loadDailyHistory(
+      "flows",
+      dates,
+      async () => {
+        calls++;
+        return {};
+      },
+      controller.signal,
+    ),
+    { name: "AbortError" },
+  );
+  assert.equal(calls, 0);
+});
+
+test("daily safety and error charts use reported totals, including genuine zero activity", () => {
+  const zero = daily.dailyTrendPoint("nlp", "2026-10-22", {
+    date: "2026-10-22",
+    guardrail_violations_count: 0,
+    guardrail_violations_by_risk: {},
+  });
+  assert.equal(zero.total, 0);
+  assert.equal(zero.high, 0);
+  const unknownRisk = daily.dailyTrendPoint("nlp", "2026-10-22", {
+    guardrail_violations_count: 3,
+  });
+  assert.equal(unknownRisk.total, 3);
+  assert.equal(unknownRisk.high, null);
+  const riskAlias = daily.dailyTrendPoint("nlp", "2026-10-22", {
+    guardrail_violations_by_risk: { HIGH_RISK: 4 },
+  });
+  assert.equal(riskAlias.high, 4);
+  const errors = daily.dailyTrendPoint("logs", "2026-10-22", {
+    errors: [
+      { error_type: "api_error" },
+      { type: "timeout" },
+      { category: "validation" },
+      { type: "other_error" },
+    ],
+  });
+  assert.equal(errors.total, 4);
+  assert.equal(errors.api, 1);
+  assert.equal(errors.validation, 1);
+  assert.equal(errors.timeout, 1);
+  assert.equal(errors.others, 1);
+  const noErrors = daily.dailyTrendPoint("logs", "2026-10-22", { errors: [] });
+  assert.equal(noErrors.total, 0);
+  assert.equal(daily.dailyTrendPoint("logs", "2026-10-22", {}), null);
+});
+
+test("current chat and audience block names feed the existing charts", () => {
+  const chats = summaries.analyticsSummaryData("chats", {
+    activity_by_hour: {
+      hours: [
+        { hour: 13, count: 4 },
+        { hour: 9, count: 2 },
+      ],
+    },
+    activity_by_weekday: [
+      { day_index: 1, day_name: "Monday", count: 5 },
+      { day_index: 0, day_name: "Sunday", count: 1 },
+    ],
+  });
+  assert.deepEqual(
+    chartData
+      .chartRows("peak_activity_hours", chats.peak_activity_hours)
+      .map((row) => [row.key, row.count]),
+    [
+      ["9", 2],
+      ["13", 4],
+    ],
+  );
+  assert.deepEqual(
+    chartData
+      .chartRows("activity_by_day_of_week", chats.activity_by_day_of_week)
+      .map((row) => row.key),
+    ["Sunday", "Monday"],
+  );
+  const users = summaries.analyticsSummaryData("users", {
+    language_preferences: {
+      total: 16,
+      items: [
+        { language: "ur", users: 10, share_pct: 62.5 },
+        { language: "en", users: 6, share_pct: 37.5 },
+      ],
+    },
+  });
+  assert.deepEqual(
+    chartData
+      .chartRows("language_breakdown", users.language_breakdown)
+      .map((row) => [row.key, row.count, row.percentage]),
+    [
+      ["ur", 10, 62.5],
+      ["en", 6, 37.5],
+    ],
+  );
+  // The older field names still win when both are present.
+  assert.deepEqual(
+    summaries.analyticsSummaryData("chats", {
+      peak_activity_hours: { 12: 3 },
+      activity_by_hour: { hours: [{ hour: 1, count: 9 }] },
+    }).peak_activity_hours,
+    { 12: 3 },
+  );
+});
+
+test("headline figures reported only inside KPI blocks fill the flat fields", () => {
+  const users = summaries.analyticsSummaryData("users", {
+    top_kpis: {
+      total_unique_users: { value: 45, trend: { change_pct: 40.6 } },
+      total_sessions: { value: 3594 },
+    },
+    audience_and_retention: [
+      { label: "Returning Users", value: 35 },
+      { label: "One-time Users", value: 10 },
+    ],
+  });
+  assert.equal(users.total_users, 45);
+  assert.equal(users.total_sessions, 3594);
+  assert.equal(users.returning_users, 35);
+  assert.equal(users.one_time_users, 10);
+  // A reported top-level figure is never overwritten.
+  assert.equal(
+    summaries.analyticsSummaryData("users", {
+      total_users: 7,
+      top_kpis: { total_users: { value: 45 } },
+    }).total_users,
+    7,
+  );
+});
+
+test("breakdown rows are named by whichever text field they carry", () => {
+  const rows = chartData.chartRows("intent_confidence_buckets", [
+    { confidence_level: "High confidence", count: 837 },
+    { confidence_level: "Medium confidence", count: 0 },
+    { confidence_level: "Low confidence", count: 166 },
+  ]);
+  assert.deepEqual(rows.map((row) => row.key).sort(), [
+    "High confidence",
+    "Low confidence",
+    "Medium confidence",
+  ]);
+});
+
+test("a comparison phrase is found under whatever field carries it", () => {
+  const trend = trends.readMetricTrend({
+    value: 11,
+    growth_pct: -8.3,
+    note: "vs last week",
+  });
+  assert.equal(trend.comparison, "vs last week");
+});
+
+test("a figure-led phrase becomes the display text, not a doubled comparison", () => {
+  const trend = trends.readMetricTrend({
+    value: 1,
+    growth_pct: -80,
+    note: "-80.0% vs yesterday",
+  });
+  assert.equal(trend.display, "-80.0% vs yesterday");
+  assert.equal(trend.comparison, null);
 });

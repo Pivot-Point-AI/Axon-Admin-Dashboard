@@ -9,10 +9,12 @@ import { metricTrend } from "@/components/analytics/analyticsTrends";
 
 interface EngagementOverviewProps {
   overview: DashboardOverviewResponse | null;
+  periodLabel: string;
 }
 
 export default function EngagementOverview({
   overview,
+  periodLabel,
 }: EngagementOverviewProps) {
   const t = useTranslations("dashboardAnalytics");
   const format = useFormatter();
@@ -23,7 +25,6 @@ export default function EngagementOverview({
       description: "engagedDescription",
       value: overview?.engaged_sessions_rate_pct,
       icon: ChartBarsIcon,
-      tone: "brand",
     },
     {
       key: "returningUserRate",
@@ -31,7 +32,6 @@ export default function EngagementOverview({
       description: "returningDescription",
       value: overview?.returning_user_rate_pct,
       icon: RefreshIcon,
-      tone: "purple",
     },
     {
       key: "stickinessRatio",
@@ -39,18 +39,17 @@ export default function EngagementOverview({
       description: "stickinessDescription",
       value: overview?.stickiness_ratio_pct,
       icon: GroupIcon,
-      tone: "pink",
     },
   ] as const;
   return (
     <section aria-label={t("engagementTitle")}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-base font-semibold text-gray-900 dark:text-white/90">
             {t("engagementTitle")}
           </h2>
           <span className="rounded-md bg-gray-100 px-2 py-0.5 text-theme-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-            {t("allTime")}
+            {periodLabel}
           </span>
         </div>
         <Link
@@ -79,7 +78,7 @@ export default function EngagementOverview({
             }
             description={t(metric.description)}
             icon={<metric.icon />}
-            tone={metric.tone}
+            iconStart
             progress={metric.value}
             trend={metricTrend(overview, metric.field, ["audience_engagement"])}
           />

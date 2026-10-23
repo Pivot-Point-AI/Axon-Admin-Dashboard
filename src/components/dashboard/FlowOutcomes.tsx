@@ -14,9 +14,13 @@ import { metricTrend } from "@/components/analytics/analyticsTrends";
 
 interface FlowOutcomesProps {
   overview: DashboardOverviewResponse | null;
+  periodLabel: string;
 }
 
-export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
+export default function FlowOutcomes({
+  overview,
+  periodLabel,
+}: FlowOutcomesProps) {
   const t = useTranslations("dashboardAnalytics");
   const format = useFormatter();
   const percent = (value: number | undefined) =>
@@ -30,12 +34,12 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
     <section aria-label={t("flowTitle")}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white/90">
               {t("flowTitle")}
             </h2>
             <span className="rounded-md bg-gray-100 px-2 py-0.5 text-theme-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-              {t("allTime")}
+              {periodLabel}
             </span>
           </div>
         </div>
@@ -58,7 +62,7 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
           }
           description={t("flowsInitiatedDescription")}
           icon={<PlayIcon />}
-          tone="success"
+          iconStart
           trend={metricTrend(overview, "total_flows_initiated", [
             "banking_journeys",
           ])}
@@ -69,7 +73,7 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
           value={percent(overview?.flow_completion_rate_pct)}
           description={t("flowCompletionDescription")}
           icon={<CheckCircleIcon />}
-          tone="brand"
+          iconStart
           progress={overview?.flow_completion_rate_pct}
           trend={metricTrend(overview, "flow_completion_rate_pct", [
             "banking_journeys",
@@ -81,7 +85,7 @@ export default function FlowOutcomes({ overview }: FlowOutcomesProps) {
           value={percent(overview?.flow_abandonment_rate_pct)}
           description={t("flowAbandonmentDescription")}
           icon={<CloseLineIcon />}
-          tone="error"
+          iconStart
           progress={overview?.flow_abandonment_rate_pct}
           trend={metricTrend(overview, "flow_abandonment_rate_pct", [
             "banking_journeys",

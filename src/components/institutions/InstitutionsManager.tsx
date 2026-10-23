@@ -1,6 +1,7 @@
 "use client";
 
-import Pagination from "@/components/common/Pagination";
+import PageRefresh from "@/components/common/PageRefresh";
+import Pagination, { RowsPerPage } from "@/components/common/Pagination";
 import InstitutionMetrics from "./InstitutionMetrics";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import usePagination from "@/hooks/usePagination";
@@ -297,20 +298,15 @@ export default function InstitutionsManager() {
 
   return (
     <>
+      <PageRefresh
+        loading={loading}
+        error={!!error}
+        onRefresh={loadInstitutions}
+      />
       <PageBreadcrumb
         pageTitle="Institutions"
         description={m("institutionsSubtitle")}
-      >
-        <Button
-          size="sm"
-          startIcon={
-            <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
-          }
-          onClick={openCreate}
-        >
-          New Institution
-        </Button>
-      </PageBreadcrumb>
+      />
 
       <div className="mb-5">
         <InstitutionMetrics
@@ -325,11 +321,23 @@ export default function InstitutionsManager() {
           </div>
         )}
 
-        <Pagination
-          variant="header"
-          pagination={pagination}
-          disabled={loading}
-        />
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+            Manage Institutions
+          </h3>
+          <div className="flex flex-wrap items-center gap-3">
+            <RowsPerPage pagination={pagination} disabled={loading} />
+            <Button
+              size="sm"
+              startIcon={
+                <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
+              }
+              onClick={openCreate}
+            >
+              New Institution
+            </Button>
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-gray-800">

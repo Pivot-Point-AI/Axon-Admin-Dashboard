@@ -1,4 +1,3 @@
-import InstitutionLicenseOverview from "@/components/dashboard/InstitutionLicenseOverview";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import QuickLinks from "@/components/dashboard/QuickLinks";
 import RecentInstitutionsTable from "@/components/dashboard/RecentInstitutionsTable";
@@ -33,8 +32,6 @@ export default async function DashboardHome({
           </div>
         }
       />
-
-      <InstitutionLicenseOverview />
 
       <div className="grid items-stretch gap-5 lg:grid-cols-2">
         <QuickLinks />

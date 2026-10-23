@@ -1,3 +1,4 @@
+import { analyticsTimestamp } from "./analyticsPeriods";
 import {
   analyticsNumber,
   analyticsTableRows,
@@ -56,7 +57,8 @@ export function telemetryHistory(
   return telemetryRows(value)
     .flatMap((row) => {
       const date = row.date ?? row.day ?? row.timestamp ?? row.name;
-      const timestamp = typeof date === "string" ? Date.parse(date) : NaN;
+      const timestamp =
+        typeof date === "string" ? analyticsTimestamp(date) : NaN;
       if (!Number.isFinite(timestamp)) return [];
       const point: AnalyticsTrendPoint = { timestamp };
       for (const key of keys)

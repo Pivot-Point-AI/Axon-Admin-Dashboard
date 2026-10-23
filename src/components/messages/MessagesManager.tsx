@@ -1,5 +1,7 @@
 "use client";
 
+import { RowsPerPage } from "@/components/common/Pagination";
+import PageRefresh from "@/components/common/PageRefresh";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import Pagination from "@/components/common/Pagination";
@@ -13,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import usePagination from "@/hooks/usePagination";
-import { PencilIcon, RefreshIcon } from "@/icons";
+import { PencilIcon } from "@/icons";
 import { ApiError } from "@/lib/api/client";
 import { getLanguages } from "@/lib/api/languages";
 import { getMessages, updateMessage } from "@/lib/api/messages";
@@ -117,11 +119,18 @@ export default function MessagesManager() {
 
   return (
     <div className="axon-management-panel rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
+      <PageRefresh
+        loading={loading}
+        error={!!error}
+        onRefresh={load}
+        disabled={editing}
+      />
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           {t("title")}
         </h3>
         <div className="flex items-center gap-3">
+          <RowsPerPage pagination={pagination} disabled={loading} />
           <Button
             size="sm"
             variant={editing ? "outline" : "primary"}
@@ -130,20 +139,6 @@ export default function MessagesManager() {
             startIcon={<PencilIcon className="size-4" />}
           >
             {t(editing ? "cancelEditing" : "edit")}
-          </Button>
-          <Button
-            size="sm"
-            variant="primary"
-            className="!text-white"
-            onClick={load}
-            disabled={loading || editing}
-            startIcon={
-              <RefreshIcon
-                className={`size-4 text-white ${loading ? "motion-safe:animate-spin" : ""}`}
-              />
-            }
-          >
-            {t(loading ? "refreshing" : "refresh")}
           </Button>
         </div>
       </div>
@@ -160,7 +155,12 @@ export default function MessagesManager() {
           {error}
         </div>
       )}
-      <Pagination variant="header" pagination={pagination} disabled={loading} />
+      <Pagination
+        variant="header"
+        pagination={pagination}
+        disabled={loading}
+        showRows={false}
+      />
       <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
         <Table>
           <TableHeader className="border-b border-gray-100 bg-gray-50/70 dark:border-gray-800 dark:bg-white/2">

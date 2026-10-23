@@ -1,4 +1,5 @@
 "use client";
+import AnalyticsCardScope from "./AnalyticsCardScope";
 import AnalyticsActivityOutcomes from "./AnalyticsActivityOutcomes";
 import AnalyticsActivityChannels from "./AnalyticsActivityChannels";
 import AnalyticsActivityColumns from "./AnalyticsActivityColumns";
@@ -17,17 +18,35 @@ export default function AnalyticsActivity({
   return (
     <div className="space-y-4">
       <div className="grid items-stretch gap-4 lg:grid-cols-2">
-        <AnalyticsActivityOutcomes data={data} date={date} />
-        <AnalyticsActivityChannels value={data.sources} />
-        <AnalyticsActivityColumns field="stt_events" value={data.stt_events} />
-        <AnalyticsActivityColumns
-          field="token_usage"
-          value={data.token_usage}
-        />
+        <AnalyticsCardScope section="logs" data={data}>
+          {(d) => <AnalyticsActivityOutcomes data={d} date={date} />}
+        </AnalyticsCardScope>
+        <AnalyticsCardScope section="logs" data={data}>
+          {(d) => <AnalyticsActivityChannels value={d.sources} />}
+        </AnalyticsCardScope>
+        <AnalyticsCardScope section="logs" data={data}>
+          {(d) => (
+            <AnalyticsActivityColumns field="stt_events" value={d.stt_events} />
+          )}
+        </AnalyticsCardScope>
+        <AnalyticsCardScope section="logs" data={data}>
+          {(d) => (
+            <AnalyticsActivityColumns
+              field="token_usage"
+              value={d.token_usage}
+            />
+          )}
+        </AnalyticsCardScope>
       </div>
-      <AnalyticsActivityActions data={data} />
-      <AnalyticsSlowInteractions value={data.slow_turns} />
-      <AnalyticsActivityErrors data={data} />
+      <AnalyticsCardScope section="logs" data={data}>
+        {(d) => <AnalyticsActivityActions data={d} />}
+      </AnalyticsCardScope>
+      <AnalyticsCardScope section="logs" data={data}>
+        {(d) => <AnalyticsSlowInteractions value={d.slow_turns} />}
+      </AnalyticsCardScope>
+      <AnalyticsCardScope section="logs" data={data}>
+        {(d) => <AnalyticsActivityErrors data={d} />}
+      </AnalyticsCardScope>
     </div>
   );
 }

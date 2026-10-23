@@ -39,7 +39,9 @@ function harness(overrides = {}) {
       effects.push(effect);
     },
     useLayoutEffect() {},
+    useContext: (context) => context._currentValue,
     useCallback: (fn) => fn,
+    useMemo: (factory) => factory(),
     useRef: (value) => ({ current: value }),
     useId: () => "test-id",
   };
@@ -95,6 +97,8 @@ function harness(overrides = {}) {
           notify: () =>
             assert.fail("Local validation must not notify globally"),
         };
+      if (name === "@/components/analytics/AnalyticsPeriodContext")
+        return load("src/components/analytics/AnalyticsPeriodContext.tsx");
       if (
         name.startsWith("@/components/") &&
         !fs.existsSync(path.resolve(__dirname, "../src", `${name.slice(2)}.ts`))
@@ -516,8 +520,10 @@ test("FAQ header editing preserves long subtitles and saves through the existing
   assert.deepEqual(saved, { title: settings.title, subtitle });
 });
 
-test("analytics quick ranges apply immediately and custom dates open on request", () => {
-  const runtime = harness();
+test("analytics page filters forward presets and custom dates through the shared picker", () => {
+  const runtime = harness({
+    "./AnalyticsPeriodSelect": { __esModule: true, default: "period-picker" },
+  });
   const Filters = runtime.load(
     "src/components/analytics/AnalyticsFilters.tsx",
   ).default;
@@ -527,28 +533,31 @@ test("analytics quick ranges apply immediately and custom dates open on request"
     filters: {},
     onApply: (filters) => calls.push(filters),
   };
-  let tree = runtime.render(Filters, props);
-  assert.equal(byId(tree, "analytics-from"), undefined);
-  elements(tree)
-    .find((element) => element.props["aria-expanded"] !== undefined)
-    .props.onClick();
-  tree = runtime.render(Filters, props);
-  assert.ok(byId(tree, "analytics-from"));
-  elements(tree)
-    .find(
-      (element) =>
-        element.type === "button" &&
-        element.props.children === messages.analytics.design.last7Days,
-    )
-    .props.onClick();
-  tree = runtime.render(Filters, props);
-  assert.equal(byId(tree, "analytics-from"), undefined);
-  assert.equal(calls.length, 1);
-  const first = new Date(calls[0].start_time);
-  const last = new Date(calls[0].end_time);
-  assert.ok(last > first);
-  assert.equal(first.getHours(), 0);
-  assert.equal(last.getHours(), 23);
+  const tree = runtime.render(Filters, props);
+  const picker = elements(tree).find(
+    (element) => element.type === "period-picker",
+  );
+  assert.equal(picker.props.value, "allTime");
+  picker.props.onChange("last7Days");
+  assert.equal(calls[0].period, "last_7_days");
+  assert.equal(new Date(calls[0].start_time).getHours(), 0);
+  assert.equal(new Date(calls[0].end_time).getHours(), 23);
+  picker.props.onCustomChange("2026-10-01", "2026-10-15");
+  assert.equal(calls[1].start_date, "2026-10-01");
+  assert.equal(calls[1].end_date, "2026-10-15");
+  const dated = runtime.render(Filters, {
+    ...props,
+    dated: true,
+    filters: { date: "today" },
+  });
+  const datedPicker = elements(dated).find(
+    (element) => element.type === "period-picker",
+  );
+  assert.deepEqual(datedPicker.props.options, ["today", "yesterday"]);
+  datedPicker.props.onChange("yesterday");
+  assert.deepEqual(calls[2], { date: "yesterday" });
+  datedPicker.props.onCustomChange("2026-10-02", "2026-10-02");
+  assert.deepEqual(calls[3], { date: "2026-10-02" });
 });
 
 test("analytics endpoints apply only the filters supported by each summary", async () => {
@@ -565,6 +574,8 @@ test("analytics endpoints apply only the filters supported by each summary", asy
   const { getAnalyticsSummary } = runtime.load("src/lib/api/analytics.ts");
   const filters = {
     date: "2026-10-19",
+    start_date: "2026-10-01",
+    end_date: "2026-10-19",
     start_time: "2026-10-01T00:00:00Z",
     end_time: "2026-10-19T23:59:59Z",
   };
@@ -583,8 +594,16 @@ test("analytics endpoints apply only the filters supported by each summary", asy
       (name) => `/dashboard-analytics/${name}-summary`,
     ),
   );
-  assert.equal(calls[0][1].query, undefined);
+  assert.deepEqual(calls[0][1].query, {
+    period: "all_time",
+    start_date: filters.start_date,
+    end_date: filters.end_date,
+  });
+  assert.deepEqual(calls[2][1].query, calls[0][1].query);
   assert.deepEqual(calls[1][1].query, {
+    period: undefined,
+    start_date: filters.start_date,
+    end_date: filters.end_date,
     start_time: filters.start_time,
     end_time: filters.end_time,
   });
@@ -1158,9 +1177,21 @@ test("dashboard includes all ten overview metrics", () => {
     panels.includes(element.type),
   );
   assert.equal(children.length, 3);
+  const SharedCards = runtime.load(
+    "src/components/common/AudienceKpiCards.tsx",
+  ).default;
   const metrics = children
     .flatMap((element) => elements(runtime.render(element.type, element.props)))
-    .filter((element) => element.type === MetricCard);
+    .flatMap((element) =>
+      element.type === "@/components/common/AudienceKpiCards"
+        ? elements(runtime.render(SharedCards, element.props))
+        : [element],
+    )
+    .filter(
+      (element) =>
+        element.type === MetricCard ||
+        element.type === "@/components/dashboard/AnalyticsMetricCard",
+    );
   assert.equal(metrics.length, 10);
   assert.equal(new Set(metrics.map((element) => element.props.label)).size, 10);
 });
@@ -1436,11 +1467,29 @@ test("analytics display API percentages without inventing trends or hiding zero 
   const MetricCard = runtime.load(
     "src/components/dashboard/AnalyticsMetricCard.tsx",
   ).default;
+  const SharedCards = runtime.load(
+    "src/components/common/AudienceKpiCards.tsx",
+  ).default;
+  const Badge = runtime.load(
+    "src/components/analytics/MetricTrend.tsx",
+  ).MetricTrendBadge;
   const expandCards = (tree) => [
     tree,
-    ...elements(tree)
-      .filter((element) => element.type === MetricCard)
-      .map((element) => runtime.render(MetricCard, element.props)),
+    ...elements(tree).flatMap((element) => {
+      if (element.type === "@/components/common/AudienceKpiCards")
+        return expandCards(runtime.render(SharedCards, element.props));
+      if (
+        element.type === MetricCard ||
+        element.type === "@/components/dashboard/AnalyticsMetricCard"
+      )
+        return expandCards(runtime.render(MetricCard, element.props));
+      if (element.type === "MetricTrendBadge" || element.type === Badge)
+        return expandCards(runtime.render(Badge, element.props));
+      // The counter shows its final text, so read it from the prop.
+      if (element.type === "@/components/common/CountUpText")
+        return [React.createElement("span", null, element.props.text)];
+      return [];
+    }),
   ];
   let tree = runtime.render(Cards, { overview });
   const copy = (tree) =>
@@ -1626,8 +1675,8 @@ test("all requested page sizes render and paginate the correct slices", () => {
     pagination = render();
     assert.deepEqual(pagination.items, rows.slice(size, size * 2));
   }
-  const Controls = runtime.load("src/components/common/Pagination.tsx").default;
-  const tree = runtime.render(Controls, { pagination });
+  const { RowsPerPage } = runtime.load("src/components/common/Pagination.tsx");
+  const tree = runtime.render(RowsPerPage, { pagination });
   assert.deepEqual(
     elements(tree)
       .filter((el) => el.type === "option")
@@ -1715,11 +1764,22 @@ test("table summaries and page-size selectors stay in the header while navigatio
   };
   let tree = runtime.render(Controls, { pagination, variant: "header" });
   assert.equal(tree.props["aria-label"], "Table controls");
-  const select = elements(tree).find((el) => el.type === "select");
-  assert.ok(select);
   assert.equal(button(tree, "Next"), undefined);
+  const { RowsPerPage } = runtime.load("src/components/common/Pagination.tsx");
+  const select = elements(runtime.render(RowsPerPage, { pagination })).find(
+    (el) => el.type === "select",
+  );
+  assert.ok(select);
   select.props.onChange({ target: { value: "30" } });
   assert.deepEqual(changes, [["size", 30]]);
+  assert.equal(
+    runtime.render(Controls, {
+      pagination,
+      variant: "header",
+      showRows: false,
+    }),
+    null,
+  );
   tree = runtime.render(Controls, { pagination, variant: "footer" });
   assert.equal(
     elements(tree).some((el) => el.type === "select"),
@@ -1818,7 +1878,11 @@ test("one Messages Edit button enables all rows; drafts survive pagination and i
   button(tree, "Edit").props.onClick();
   tree = render();
   assert.ok(rows(tree).every((row) => row.props.editing === true));
-  assert.equal(button(tree, "Refresh").props.disabled, true);
+  assert.equal(
+    elements(tree).find((el) => el.type === "@/components/common/PageRefresh")
+      .props.disabled,
+    true,
+  );
   let [first, second] = rows(tree);
   first.props.onChange({
     ...first.props.draft,
@@ -2003,4 +2067,236 @@ test("message parameter insertion respects the cursor, selections, and surroundi
     text: "{amount} Send",
     caret: 8,
   });
+});
+
+test("analytics range picker applies presets and validates custom From/To dates", () => {
+  const runtime = harness();
+  const Picker = runtime.load(
+    "src/components/analytics/AnalyticsPeriodSelect.tsx",
+  ).default;
+  const presets = [],
+    ranges = [];
+  const props = {
+    value: "allTime",
+    onChange: (value) => presets.push(value),
+    onCustomChange: (from, to) => ranges.push([from, to]),
+  };
+  const render = () => runtime.render(Picker, props);
+  let tree = render();
+  const trigger = (tree) =>
+    elements(tree).find(
+      (element) => element.props["aria-haspopup"] === "dialog",
+    );
+  trigger(tree).props.onClick();
+  tree = render();
+  assert.equal(trigger(tree).props["aria-expanded"], true);
+  elements(tree)
+    .find(
+      (element) =>
+        element.type === "button" &&
+        element.props.children?.[0] === messages.analytics.design.yesterday,
+    )
+    .props.onClick();
+  assert.deepEqual(presets, ["yesterday"]);
+  tree = render();
+  assert.equal(trigger(tree).props["aria-expanded"], false);
+  trigger(tree).props.onClick();
+  tree = render();
+  elements(tree)
+    .find(
+      (element) =>
+        element.type === "button" && element.props["aria-expanded"] === false,
+    )
+    .props.onClick();
+  tree = render();
+  byId(tree, "test-id-from").props.onChange("2020-02-20");
+  byId(tree, "test-id-to").props.onChange("2020-02-10");
+  tree = render();
+  assert.equal(button(tree, messages.analytics.apply).props.disabled, true);
+  elements(tree)
+    .find((element) => element.type === "form")
+    .props.onSubmit({ preventDefault() {} });
+  assert.equal(ranges.length, 0);
+  byId(tree, "test-id-to").props.onChange("2020-02-25");
+  tree = render();
+  assert.equal(button(tree, messages.analytics.apply).props.disabled, false);
+  elements(tree)
+    .find((element) => element.type === "form")
+    .props.onSubmit({ preventDefault() {} });
+  assert.deepEqual(ranges, [["2020-02-20", "2020-02-25"]]);
+  tree = render();
+  assert.equal(trigger(tree).props["aria-expanded"], false);
+});
+
+test("Audience and Dashboard share the same four KPI labels, order and real values", () => {
+  const runtime = harness();
+  const Cards = runtime.load(
+    "src/components/common/AudienceKpiCards.tsx",
+  ).default;
+  const data = {
+    total_users: 45,
+    total_sessions: 3562,
+    daily_active_users: 4,
+    active_sessions: 5,
+  };
+  const cards = elements(runtime.render(Cards, { data })).filter(
+    (element) => element.type === "@/components/dashboard/AnalyticsMetricCard",
+  );
+  assert.deepEqual(
+    cards.map((card) => card.props.label),
+    [
+      messages.dashboardAnalytics.totalUsers,
+      messages.dashboardAnalytics.totalSessions,
+      messages.dashboardAnalytics.dailyActiveUsers,
+      messages.dashboardAnalytics.activeSessions,
+    ],
+  );
+  assert.deepEqual(
+    cards.map((card) => card.props.value),
+    ["45", "3,562", "4", "5"],
+  );
+  const { sectionMetrics } = runtime.load(
+    "src/components/analytics/analyticsPresentation.ts",
+  );
+  assert.deepEqual(sectionMetrics.users, Object.keys(data));
+  const missing = elements(runtime.render(Cards, { data: {} })).filter(
+    (element) => element.type === "@/components/dashboard/AnalyticsMetricCard",
+  );
+  assert.ok(missing.every((card) => card.props.value === "0"));
+});
+
+test("numeric trends use real current and previous values without inventing missing percentages", () => {
+  const runtime = harness();
+  const { readMetricTrend, metricTrend } = runtime.load(
+    "src/components/analytics/analyticsTrends.ts",
+  );
+  assert.equal(readMetricTrend({ count: 15, previous_count: 10 }).change, 50);
+  assert.equal(readMetricTrend({ count: 5, previous_count: 10 }).change, -50);
+  assert.equal(readMetricTrend({ count: 0, previous_count: 0 }).change, 0);
+  assert.equal(
+    readMetricTrend({ count: 5, previous_count: 0, direction: "up" }).change,
+    null,
+  );
+  assert.equal(
+    metricTrend(
+      {
+        returning_users: 10,
+        audience_and_retention: [
+          { field: "returning_users", previous_count: 8, direction: "up" },
+        ],
+      },
+      "returning_users",
+      ["audience_and_retention"],
+    ).change,
+    25,
+  );
+  const Badge = runtime.load(
+    "src/components/analytics/MetricTrend.tsx",
+  ).MetricTrendBadge;
+  const missing = runtime.render(Badge, {
+    trend: readMetricTrend({ direction: "up" }),
+  });
+  // Direction only: just the arrow, no invented percentage and no dash.
+  assert.ok(elements(missing).some((element) => element.type === "svg"));
+  assert.equal(
+    elements(missing).some(
+      (element) => element.props.title === messages.metricTrends.missing,
+    ),
+    false,
+  );
+  assert.equal(
+    elements(missing).some(
+      (element) => element.props.children === "Increasing",
+    ),
+    false,
+  );
+});
+
+test("history graph selectors default to the last seven days", () => {
+  for (const name of ["AnalyticsSafetyTrend", "AnalyticsReportedTrend"]) {
+    const runtime = harness();
+    const Chart = runtime.load(`src/components/analytics/${name}.tsx`).default;
+    const tree = runtime.render(
+      Chart,
+      name === "AnalyticsSafetyTrend"
+        ? { data: {} }
+        : {
+            title: "Response time",
+            description: "",
+            field: "end_to_end_latency_ms",
+            source: [],
+            series: [],
+          },
+    );
+    assert.equal(tree.props.actions.props.value, "last7Days");
+  }
+});
+
+test("analytics places the universal date filter next to refresh and expands conversation activity", async () => {
+  const payload = {
+    total_messages: 10,
+    total_sessions: 2,
+    total_user_messages: 4,
+    total_assistant_messages: 6,
+    peak_activity_hours: { 12: 2 },
+    activity_by_day_of_week: { Monday: 2 },
+  };
+  const runtime = harness({
+    "@/lib/api/analytics": { getAnalyticsSummary: async () => payload },
+  });
+  const Summary = runtime.load(
+    "src/components/analytics/AnalyticsSummary.tsx",
+  ).default;
+  const props = {
+    section: "chats",
+    accessToken: "test-token",
+    filters: {},
+    navigation: React.createElement("nav"),
+    filterControls: React.createElement(
+      "button",
+      { id: "universal-period" },
+      "Last 7 days",
+    ),
+  };
+  runtime.render(Summary, props);
+  await runtime.runEffects();
+  const tree = runtime.render(Summary, props);
+  const header = React.Children.toArray(tree.props.children)[0];
+  assert.equal(
+    elements(tree).filter((element) => element.props.id === "universal-period")
+      .length,
+    1,
+  );
+  assert.ok(byId(header, "universal-period"));
+  // The refresh control is icon-only; its name lives in the title.
+  const refresh = elements(header).find(
+    (element) => element.props.title === messages.analytics.refresh,
+  );
+  assert.ok(refresh);
+  // Every filtered card sits in its own period scope (render-prop child).
+  const scoped = (node) =>
+    node?.type?.name === "AnalyticsCardScope"
+      ? node.props.children(payload)
+      : node;
+  const activity = elements(tree)
+    .filter((element) => element.type?.name === "AnalyticsCardScope")
+    .map((element) => element.props.children(payload))
+    .filter((element) => element?.type?.name === "AnalyticsBreakdown");
+  assert.deepEqual(
+    activity.map((element) => element.props.field),
+    ["peak_activity_hours", "activity_by_day_of_week"],
+  );
+  const pair = elements(tree).find(
+    (element) =>
+      element.type === "div" &&
+      React.Children.toArray(element.props.children).some(
+        (child) => scoped(child)?.type?.name === "AnalyticsComposition",
+      ),
+  );
+  assert.ok(pair);
+  assert.ok(
+    React.Children.toArray(pair.props.children).some(
+      (child) => child.type?.name === "AnalyticsMetricList",
+    ),
+  );
 });

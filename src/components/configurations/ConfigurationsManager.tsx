@@ -1,10 +1,12 @@
 "use client";
 
+import { RowsPerPage } from "@/components/common/Pagination";
+import PageRefresh from "@/components/common/PageRefresh";
 import Pagination from "@/components/common/Pagination";
 import usePagination from "@/hooks/usePagination";
 import { useTranslations } from "next-intl";
 
-import { PencilIcon, RefreshIcon } from "@/icons";
+import { PencilIcon } from "@/icons";
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
@@ -115,6 +117,12 @@ export default function ConfigurationsManager() {
 
   return (
     <div className="space-y-5">
+      <PageRefresh
+        loading={loading}
+        error={!!error}
+        onRefresh={load}
+        disabled={editing}
+      />
       <ConfigurationMetrics configs={configs} loading={loading || !!error} />
       <div className="axon-management-panel rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
@@ -149,6 +157,7 @@ export default function ConfigurationsManager() {
                 ),
               )}
             </select>
+            <RowsPerPage pagination={pagination} disabled={loading} />
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -159,20 +168,6 @@ export default function ConfigurationsManager() {
               startIcon={<PencilIcon className="size-4" />}
             >
               {e(editing ? "cancelEditing" : "edit")}
-            </Button>
-            <Button
-              size="sm"
-              variant="primary"
-              className="!text-white"
-              onClick={load}
-              disabled={loading || editing}
-              startIcon={
-                <RefreshIcon
-                  className={`size-4 text-white ${loading ? "motion-safe:animate-spin" : ""}`}
-                />
-              }
-            >
-              {e(loading ? "refreshing" : "refresh")}
             </Button>
           </div>
         </div>
@@ -187,6 +182,7 @@ export default function ConfigurationsManager() {
           variant="header"
           pagination={pagination}
           disabled={loading}
+          showRows={false}
         />
         <div className="overflow-x-auto">
           <Table>

@@ -4,63 +4,62 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
 import { PieChartIcon } from "@/icons";
-import AnalyticsDataTable from "./AnalyticsDataTable";
-import AnalyticsDetails from "./AnalyticsDetails";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
+import AnalyticsHistoryState from "./AnalyticsHistoryState";
+import useDailyAnalyticsHistory from "./useDailyAnalyticsHistory";
 import AnalyticsJourneyPeriod, {
   type JourneyPeriod,
 } from "./AnalyticsJourneyPeriod";
+import { useAnalyticsPeriod } from "./AnalyticsPeriodContext";
+import {
+  filterPeriodPoints,
+  filterCustomPoints,
+  periodFilters,
+  customPeriodFilters,
+} from "./analyticsPeriods";
 import AnalyticsTrendChart from "./AnalyticsTrendChart";
-import { analyticsTableRows } from "./analyticsData";
 import { qualityColor, safetyTrendPoints } from "./analyticsQualityData";
 
 interface AnalyticsSafetyTrendProps {
   data: Record<string, unknown>;
 }
 
-const BASE_TIMESTAMP = Date.parse("2026-10-21T12:00:00Z");
-
 export default function AnalyticsSafetyTrend({
   data,
 }: AnalyticsSafetyTrendProps) {
   const t = useTranslations("analytics.quality");
+  const common = useTranslations("analytics");
+  const reporting = useAnalyticsPeriod();
   const [period, setPeriod] = useState<JourneyPeriod>("last7Days");
+  const [customRange, setCustomRange] = useState<{
+    start: string;
+    end: string;
+  } | null>(null);
   const wireHistory = useMemo(() => safetyTrendPoints(data), [data]);
-  const history = useMemo(() => {
-    if (wireHistory.length) return wireHistory;
-    const high = [3, 4, 5, 8, 6, 4.5, 5.5];
-    const medium = [0.5, 1.5, 2, 3, 2, 1.2, 1.8];
-    const low = [0, 0, 0, 1, 0, 0, 0];
-    return high.map((hVal, idx) => {
-      const dayOffset = 7 - 1 - idx;
-      const timestamp = BASE_TIMESTAMP - dayOffset * 86400000;
-      return {
-        timestamp,
-        critical: null,
-        high: hVal,
-        medium: medium[idx],
-        low: low[idx],
-      };
-    });
-  }, [wireHistory]);
-
-  const points = useMemo(() => {
-    const days = Number(period.match(/\d+/)?.[0] ?? 7);
-    const cutoff =
-      (history[history.length - 1]?.timestamp ?? 0) - (days - 1) * 86400000;
-    return history.filter(
-      (point) => period === "allTime" || point.timestamp >= cutoff,
-    );
-  }, [history, period]);
-  const series = ["critical", "high", "medium", "low"]
+  const filters = customRange
+    ? customPeriodFilters(customRange.start, customRange.end)
+    : period === "allTime" && reporting?.filters.date
+      ? reporting.filters
+      : periodFilters(period);
+  const daily = useDailyAnalyticsHistory("nlp", filters, wireHistory, data);
+  const history = daily.points;
+  const points = customRange
+    ? filterCustomPoints(history, customRange.start, customRange.end)
+    : filterPeriodPoints(history, period);
+  const series = ["total", "critical", "high", "medium", "low"]
     .filter((level) => history.some((point) => point[level] !== null))
     .map((key, index) => ({
       key,
-      token: qualityColor("guardrail_violations_by_risk", key, index),
-      label: t(`risk.${key}`),
+      token:
+        key === "total"
+          ? "blue-light-500"
+          : qualityColor("guardrail_violations_by_risk", key, index),
+      label: key === "total" ? common("columns.total") : t(`risk.${key}`),
     }));
-  const reported = data.guardrail_violations_trend ?? data.safety_blocks_trend;
-  const reasons = analyticsTableRows(data.guardrail_violations_by_reason);
+  // Days are reported but every count is zero: say so rather than draw a flat line.
+  const noneRecorded = points.every((point) =>
+    series.every(({ key }) => !point[key]),
+  );
   return (
     <ComponentCard
       compact
@@ -69,14 +68,20 @@ export default function AnalyticsSafetyTrend({
       icon={<PieChartIcon />}
       actions={
         <AnalyticsJourneyPeriod
-          value={period}
-          onChange={setPeriod}
+          value={customRange ? "customRange" : period}
+          start={customRange?.start}
+          end={customRange?.end}
+          onCustomChange={(start, end) => setCustomRange({ start, end })}
+          onChange={(next) => {
+            setCustomRange(null);
+            setPeriod(next);
+          }}
         />
       }
       className="flex h-full flex-col"
     >
       <div className="flex-1">
-        {points.length ? (
+        {points.length && !noneRecorded ? (
           <AnalyticsTrendChart
             key={period}
             title={t("trendTitle")}
@@ -85,28 +90,16 @@ export default function AnalyticsSafetyTrend({
             curve="straight"
             axisSteps={5}
           />
+        ) : noneRecorded && points.length ? (
+          <AnalyticsEmptyState />
         ) : (
-          <AnalyticsEmptyState message={t("trendUnavailable")} />
+          <AnalyticsHistoryState
+            loading={daily.loading}
+            failed={daily.failed}
+            message={t("trendUnavailable")}
+          />
         )}
       </div>
-      {(history.length > 0 || reasons.length > 0) && (
-        <AnalyticsDetails>
-          {history.length > 0 && (
-            <AnalyticsDataTable
-              field="guardrail_violations_by_risk"
-              value={reported}
-              embedded
-            />
-          )}
-          {reasons.length > 0 && (
-            <AnalyticsDataTable
-              field="guardrail_violations_by_reason"
-              value={data.guardrail_violations_by_reason}
-              embedded
-            />
-          )}
-        </AnalyticsDetails>
-      )}
     </ComponentCard>
   );
 }

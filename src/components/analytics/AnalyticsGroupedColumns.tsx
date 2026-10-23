@@ -82,7 +82,8 @@ export default function AnalyticsGroupedColumns({
             }
           >
             <div
-              className="relative grid h-full"
+              key={JSON.stringify(rows)}
+              className="axon-reveal-up relative grid h-full"
               style={{
                 gridTemplateColumns: `repeat(${rows.length}, minmax(0, 1fr))`,
               }}
@@ -121,7 +122,7 @@ export default function AnalyticsGroupedColumns({
           </AnalyticsJourneyPlot>
           <div
             aria-hidden="true"
-            className="mt-3 grid ps-8 text-center text-theme-xs leading-4 text-gray-500 dark:text-gray-400"
+            className="mt-3 grid ps-11 text-center text-theme-xs leading-4 text-gray-500 dark:text-gray-400"
             style={{
               gridTemplateColumns: `repeat(${rows.length}, minmax(0, 1fr))`,
             }}

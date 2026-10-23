@@ -10,6 +10,8 @@ export interface MetricTrendData {
   direction: "up" | "down" | "flat" | null;
   comparison: string | null;
   previousCount: number | null;
+  /** The server's own text for the change, for example "+12%". */
+  display: string | null;
   favorable: boolean | null;
   points: MetricTrendPoint[];
 }
@@ -42,6 +44,8 @@ const aliases: Record<string, string[]> = {
     "today_returning_user_rate",
   ],
   stickiness_ratio_pct: [
+    "daily_to_monthly_activity",
+    "daily_to_monthly",
     "user_stickiness",
     "stickiness_ratio",
     "stickinessRatio",
@@ -86,6 +90,22 @@ const aliases: Record<string, string[]> = {
   turn_success_count: ["successful_interactions", "successful_turns"],
   turn_failed_count: ["failed_interactions", "failed_turns"],
   recorded_errors: ["recognized_errors", "error_count", "errors_count"],
+  returning_users: ["returning_users"],
+  one_time_users: ["one_time_users"],
+  average_sessions_per_user: ["sessions_per_user"],
+  dormant_users_30d: ["inactive_for_30_days", "inactive_30_days"],
+  total_user_messages: ["user_messages"],
+  total_assistant_messages: ["assistant_messages"],
+  total_cancelled_flows: ["cancelled_by_users", "cancelled_journeys"],
+  total_failed_flows: ["failed_journeys"],
+  total_abandoned_flows: ["abandoned_journeys"],
+  abandoned_flows_count: ["total_drop_offs", "drop_offs"],
+  flow_drop_off_rate_pct: ["drop_off_rate"],
+  average_steps_per_completed_flow: ["steps_to_completion"],
+  total_classified_turns: ["classified_turns", "interactions_classified"],
+  llm_fallback_count: ["ai_fallbacks"],
+  guardrail_violations_count: ["safety_blocks"],
+  total_measured_turns: ["measured_interactions"],
 };
 const normalize = (key: string) => key.toLowerCase().replace(/[^a-z0-9]/g, "");
 const firstNumber = (...values: unknown[]) =>
@@ -158,6 +178,28 @@ export function readMetricTrend(value: unknown): MetricTrendData | null {
   const metric = asAnalyticsRecord(value);
   const trend = asAnalyticsRecord(metric.trend);
   const growth = asAnalyticsRecord(metric.growth);
+  const previousCount = firstNumber(
+    metric.yesterday_count,
+    metric.previous_count,
+    metric.previous_value,
+    trend.previous_count,
+    growth.yesterday_count,
+  );
+  const currentCount = firstNumber(
+    metric.current_count,
+    metric.current_value,
+    metric.count,
+    metric.value,
+    growth.current_count,
+  );
+  const calculatedChange =
+    currentCount !== null && previousCount !== null
+      ? previousCount !== 0
+        ? ((currentCount - previousCount) / Math.abs(previousCount)) * 100
+        : currentCount === 0
+          ? 0
+          : null
+      : null;
   const change = firstNumber(
     metric.change_pct,
     metric.growth_pct,
@@ -170,6 +212,7 @@ export function readMetricTrend(value: unknown): MetricTrendData | null {
     growth.growth_pct,
     growth.change_pct,
     growth.pct,
+    calculatedChange,
   );
   const reportedDirection = firstString(
     trend.direction,
@@ -196,6 +239,19 @@ export function readMetricTrend(value: unknown): MetricTrendData | null {
   const history =
     metric.sparkline ?? trend.sparkline ?? metric.history ?? trend.history;
   const points = readMetricHistory(history);
+  // Text that reads like a comparison, whatever the field is called. When it
+  // starts with a figure ("-80.0% vs yesterday") it is the server's own display
+  // of the change; otherwise it is just the comparison wording.
+  const phrase = [metric, trend, growth]
+    .flatMap((block) => Object.values(block))
+    .find(
+      (value): value is string =>
+        typeof value === "string" &&
+        /\bvs\.?(?:\s|$)|compared|yesterday|last (?:week|month|period)|previous/i.test(
+          value,
+        ),
+    );
+  const phraseHasFigure = phrase ? /^[\s↑↓▲▼↗↘—–+-]*\d/.test(phrase) : false;
   const comparison = firstString(
     metric.comparison_label,
     metric.change_label,
@@ -208,6 +264,7 @@ export function readMetricTrend(value: unknown): MetricTrendData | null {
     trend.vs,
     metric.compared_to,
     growth.comparison_label,
+    phrase && !phraseHasFigure ? phrase : null,
   );
   if (direction === null && !points.some((point) => point.value !== null))
     return null;
@@ -215,11 +272,24 @@ export function readMetricTrend(value: unknown): MetricTrendData | null {
     change,
     direction,
     comparison,
-    previousCount: firstNumber(
-      metric.yesterday_count,
-      metric.previous_count,
-      trend.previous_count,
-      growth.yesterday_count,
+    previousCount,
+    display: firstString(
+      trend.display,
+      trend.display_value,
+      metric.trend_display,
+      metric.change_display,
+      growth.display,
+      // A row's own `display` is the comparison text, unless it merely repeats
+      // the current figure.
+      typeof metric.display === "string" &&
+        !(
+          currentCount !== null &&
+          !/^[+-]/.test(metric.display.trim()) &&
+          Number(metric.display.replace(/[^\d.]/g, "")) === currentCount
+        )
+        ? metric.display
+        : null,
+      phrase && phraseHasFigure ? phrase : null,
     ),
     favorable: firstBoolean(
       trend.is_positive,
@@ -233,34 +303,39 @@ export function readMetricTrend(value: unknown): MetricTrendData | null {
   };
 }
 
-export function metricTrend(
-  data: unknown,
+function blockEntries(
+  root: Record<string, unknown>,
+  block: string,
+): [string, unknown][] {
+  const outer = asAnalyticsRecord(root[block]);
+  const source = outer.metrics ?? outer.kpis ?? outer.summary ?? root[block];
+  return Array.isArray(source)
+    ? source.map((item) => {
+        const row = asAnalyticsRecord(item);
+        return [
+          firstString(
+            row.key,
+            row.field,
+            row.metric,
+            row.id,
+            row.name,
+            row.label,
+            row.title,
+          ) ?? "",
+          item,
+        ];
+      })
+    : Object.entries(asAnalyticsRecord(source));
+}
+
+function findMetric(
+  root: Record<string, unknown>,
   field: string,
-  blocks: string[] = ["top_kpis"],
-): MetricTrendData | null {
-  const root = asAnalyticsRecord(data);
+  blocks: string[],
+): Record<string, unknown> | null {
   const keys = new Set([field, ...(aliases[field] ?? [])].map(normalize));
-  for (const block of blocks) {
-    const outer = asAnalyticsRecord(root[block]);
-    const source = outer.metrics ?? outer.kpis ?? outer.summary ?? root[block];
-    const entries: [string, unknown][] = Array.isArray(source)
-      ? source.map((item) => {
-          const row = asAnalyticsRecord(item);
-          return [
-            firstString(
-              row.key,
-              row.field,
-              row.metric,
-              row.id,
-              row.name,
-              row.label,
-              row.title,
-            ) ?? "",
-            item,
-          ];
-        })
-      : Object.entries(asAnalyticsRecord(source));
-    for (const [key, entry] of entries) {
+  for (const block of blocks)
+    for (const [key, entry] of blockEntries(root, block)) {
       const record = asAnalyticsRecord(entry);
       if (
         [
@@ -273,10 +348,51 @@ export function metricTrend(
         ].some(
           (value) => typeof value === "string" && keys.has(normalize(value)),
         )
-      ) {
-        const result = readMetricTrend(entry);
-        if (result) return result;
-      }
+      )
+        return typeof entry === "number" ? { value: entry } : record;
+    }
+  return null;
+}
+
+/** Current figure for a metric reported inside a KPI block rather than at the
+ * top level of the response. */
+export function metricValue(
+  data: unknown,
+  field: string,
+  blocks: string[] = ["top_kpis"],
+): number | null {
+  const record = findMetric(asAnalyticsRecord(data), field, blocks);
+  return record
+    ? firstNumber(
+        record.current_value,
+        record.current_count,
+        record.value,
+        record.count,
+      )
+    : null;
+}
+
+export function metricTrend(
+  data: unknown,
+  field: string,
+  blocks: string[] = ["top_kpis"],
+): MetricTrendData | null {
+  const root = asAnalyticsRecord(data);
+  for (const block of blocks) {
+    const record = findMetric(root, field, [block]);
+    if (record) {
+      const result = readMetricTrend({
+        ...record,
+        current_value: firstNumber(
+          record.current_value,
+          record.current_count,
+          record.value,
+          record.count,
+          root[field],
+          asAnalyticsRecord(root[field]).count,
+        ),
+      });
+      if (result) return result;
     }
   }
   const direct =

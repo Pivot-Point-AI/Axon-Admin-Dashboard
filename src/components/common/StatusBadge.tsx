@@ -19,9 +19,8 @@ export default function StatusBadge({
   } as const;
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-theme-xs font-medium whitespace-nowrap ${active ? "bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-400" : "bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400"}`}
+      className={`text-theme-xs font-medium whitespace-nowrap ${active ? "text-success-700 dark:text-success-400" : "text-error-600 dark:text-error-400"}`}
     >
-      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
       {t(labels[kind][active ? 1 : 0])}
     </span>
   );

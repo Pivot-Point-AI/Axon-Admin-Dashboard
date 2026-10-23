@@ -41,7 +41,7 @@ export default function ComponentCard({
             <span
               aria-hidden="true"
               className={cn(
-                "flex shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300 [&>svg]:size-5",
+                "flex shrink-0 items-center justify-center rounded-xl bg-blue-light-50 text-blue-light-500 dark:bg-blue-light-500/15 dark:text-blue-light-300 [&>svg]:size-5",
                 compact ? "size-9" : "size-10",
                 iconClassName,
               )}
@@ -49,10 +49,10 @@ export default function ComponentCard({
               {icon}
             </span>
           )}
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h2
               className={cn(
-                "leading-6 font-semibold text-gray-950 dark:text-white/90",
+                "leading-6 font-bold text-gray-950 dark:text-white/90",
                 compact ? "text-sm" : "text-base",
               )}
             >

@@ -9,12 +9,14 @@ interface AnalyticsColumnChartProps {
   rows: DistributionRow[];
   label: (key: string) => string;
   color?: (key: string, index: number) => string;
+  tall?: boolean;
 }
 
 export default function AnalyticsColumnChart({
   rows,
   label,
   color,
+  tall = false,
 }: AnalyticsColumnChartProps) {
   const format = useFormatter();
   const t = useTranslations("analytics");
@@ -55,7 +57,8 @@ export default function AnalyticsColumnChart({
             ))}
           </div>
           <div
-            className={`relative flex h-48 items-end px-2 ${dense ? "gap-1.5" : "gap-3"}`}
+            key={rows.map((row) => row.count).join()}
+            className={`axon-reveal-up relative flex ${tall ? "h-72" : "h-48"} items-end px-2 ${dense ? "gap-1.5" : "gap-3"}`}
           >
             {rows.map((row, index) => (
               <div

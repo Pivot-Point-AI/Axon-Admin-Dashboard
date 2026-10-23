@@ -28,10 +28,7 @@ export function getAllInstitutions(bearerToken: string, limit = 500) {
   });
 }
 
-export function getInstitutionById(
-  institutionId: string,
-  bearerToken: string,
-) {
+export function getInstitutionById(institutionId: string, bearerToken: string) {
   return apiRequest<InstitutionItem>(
     `/institutions/${encodeURIComponent(institutionId)}`,
     { bearerToken, baseUrl: ADMIN_API_BASE_URL },

@@ -1,11 +1,12 @@
 "use client";
 
+import { RowsPerPage } from "@/components/common/Pagination";
+import PageRefresh from "@/components/common/PageRefresh";
 import Pagination from "@/components/common/Pagination";
 import { useTranslations } from "next-intl";
 import { asBoolean } from "@/utils/boolean";
 import usePagination from "@/hooks/usePagination";
 import { useCallback, useEffect, useState } from "react";
-import Button from "@/components/ui/button/Button";
 import Switch from "@/components/form/input/Switch";
 import {
   Table,
@@ -14,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RefreshIcon } from "@/icons";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { ApiError } from "@/lib/api/client";
 import { getFlows, updateFlow } from "@/lib/api/flows";
@@ -73,24 +73,12 @@ export default function FlowsManager() {
 
   return (
     <div className="axon-management-panel rounded-xl border border-brand-100 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-gray-900">
+      <PageRefresh loading={loading} error={!!error} onRefresh={load} />
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Conversation Flows
         </h3>
-        <Button
-          size="sm"
-          variant="primary"
-          className="!text-white"
-          onClick={load}
-          disabled={loading}
-          startIcon={
-            <RefreshIcon
-              className={`size-4 text-white ${loading ? "motion-safe:animate-spin" : ""}`}
-            />
-          }
-        >
-          Refresh
-        </Button>
+        <RowsPerPage pagination={pagination} disabled={loading} />
       </div>
 
       {error && (
@@ -99,7 +87,12 @@ export default function FlowsManager() {
         </div>
       )}
 
-      <Pagination variant="header" pagination={pagination} disabled={loading} />
+      <Pagination
+        variant="header"
+        pagination={pagination}
+        disabled={loading}
+        showRows={false}
+      />
       <div className="overflow-x-auto">
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-gray-800">

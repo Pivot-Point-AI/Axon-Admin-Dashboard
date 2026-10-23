@@ -42,7 +42,7 @@ export default function FaqQuestion({
           <span className="rounded-md bg-brand-50 px-2 py-0.5 text-theme-xs font-medium break-words text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
             {item.section_title}
           </span>
-          <Badge size="sm" color={active ? "success" : "light"}>
+          <Badge variant="text" size="sm" color={active ? "success" : "light"}>
             {status(active ? "active" : "inactive")}
           </Badge>
         </div>

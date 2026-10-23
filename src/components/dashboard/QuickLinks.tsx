@@ -43,20 +43,6 @@ const links = [
   },
 ];
 
-const iconTones: Record<string, string> = {
-  users: "bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300",
-  configurations:
-    "bg-theme-purple-500/10 text-theme-purple-500 dark:bg-theme-purple-500/20 dark:text-theme-purple-500",
-  masterData:
-    "bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400",
-  messages:
-    "bg-theme-pink-500/10 text-theme-pink-500 dark:bg-theme-pink-500/15 dark:text-theme-pink-500",
-  flows:
-    "bg-orange-50 text-orange-500 dark:bg-orange-500/15 dark:text-orange-400",
-  languages:
-    "bg-blue-light-50 text-blue-light-600 dark:bg-blue-light-500/15 dark:text-blue-light-300",
-};
-
 const tileTones: Record<string, string> = {
   users:
     "border-brand-100 from-brand-25 to-white dark:border-brand-500/20 dark:from-brand-500/5 dark:to-gray-900",
@@ -83,12 +69,12 @@ export default async function QuickLinks() {
       <div className="mb-5 flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300"
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-light-50 text-blue-light-500 dark:bg-blue-light-500/15 dark:text-blue-light-300"
         >
           <GridIcon className="size-5" />
         </span>
-        <div>
-          <h3 className="text-base font-semibold text-gray-950 dark:text-white/90">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-bold text-gray-950 dark:text-white/90">
             {t("manageTitle")}
           </h3>
           <p className="mt-1 text-theme-xs leading-5 text-gray-500 dark:text-gray-400">
@@ -106,11 +92,11 @@ export default async function QuickLinks() {
             <div className="flex w-full items-center gap-2.5">
               <span
                 aria-hidden="true"
-                className={`flex size-10 shrink-0 items-center justify-center rounded-xl [&>svg]:size-5 ${iconTones[link.key]}`}
+                className="order-last flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-light-50 text-blue-light-500 dark:bg-blue-light-500/15 dark:text-blue-light-300 [&>svg]:size-5"
               >
                 {link.icon}
               </span>
-              <span className="min-w-0 flex-1 text-theme-xs leading-5 font-semibold text-gray-900 transition-colors group-hover:text-brand-700 dark:text-gray-100 dark:group-hover:text-brand-300">
+              <span className="min-w-0 flex-1 text-sm leading-5 font-bold text-gray-900 transition-colors group-hover:text-brand-700 dark:text-gray-100 dark:group-hover:text-brand-300">
                 {navigation(link.key)}
               </span>
               <span

@@ -1,4 +1,6 @@
 "use client";
+import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
+import AnalyticsCardActions from "./AnalyticsCardActions";
 import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
@@ -37,9 +39,12 @@ export default function AnalyticsSlowInteractions({
       title={t("slowTitle")}
       icon={<TableIcon />}
       actions={
-        <span className="rounded-lg bg-gray-50 px-2.5 py-1 text-theme-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-          {t("recordCount", { count: rows.length })}
-        </span>
+        <AnalyticsCardActions>
+          <span className="rounded-lg bg-gray-50 px-2.5 py-1 text-theme-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+            {t("recordCount", { count: rows.length })}
+          </span>
+          <AnalyticsJourneyPeriod />
+        </AnalyticsCardActions>
       }
     >
       {!rows.length ? (
@@ -97,6 +102,7 @@ export default function AnalyticsSlowInteractions({
                           "—"
                         ) : (
                           <Badge
+                            variant="text"
                             size="sm"
                             color={duration > 1500 ? "error" : "success"}
                           >

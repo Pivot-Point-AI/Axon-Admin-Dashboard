@@ -3,9 +3,9 @@ import type { AnalyticsSection } from "@/lib/api/analytics";
 export const sectionMetrics: Record<AnalyticsSection, readonly string[]> = {
   users: [
     "total_users",
-    "daily_active_users",
     "total_sessions",
-    "retention_rate_pct",
+    "daily_active_users",
+    "active_sessions",
   ],
   chats: [
     "total_messages",
@@ -68,7 +68,7 @@ export const metricGroups: Partial<
     {
       title: "audienceHealth",
       fields: [
-        "active_sessions",
+        "retention_rate_pct",
         "returning_users",
         "one_time_users",
         "average_sessions_per_user",
@@ -108,12 +108,6 @@ export const metricGroups: Partial<
         "flow_drop_off_rate_pct",
         "average_steps_per_completed_flow",
       ],
-    },
-  ],
-  nlp: [
-    {
-      title: "qualityDetails",
-      fields: ["llm_fallback_count", "guardrail_violations_count"],
     },
   ],
 };

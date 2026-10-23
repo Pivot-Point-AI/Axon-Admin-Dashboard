@@ -25,6 +25,14 @@ export function distributionRows(value: unknown): DistributionRow[] {
     "breakdown",
     "buckets",
     "flows",
+    "hours",
+    "weekdays",
+    "days",
+    "items",
+    "data",
+    "rows",
+    "segments",
+    "categories",
   ].find((key) => root[key] !== null && typeof root[key] === "object");
   const source = wrapper ? root[wrapper] : value;
   const total = analyticsNumber(root.total);
@@ -37,8 +45,23 @@ export function distributionRows(value: unknown): DistributionRow[] {
               item.hour ??
               item.flow_type ??
               item.intent_name ??
+              item.language ??
+              item.language_code ??
+              item.label ??
+              item.category ??
+              item.bucket ??
+              item.range ??
+              item.level ??
+              item.tier ??
+              item.title ??
+              item.reason ??
               item.name ??
               item.type ??
+              // Any other text field names the row better than its position.
+              Object.values(item).find(
+                (value): value is string =>
+                  typeof value === "string" && value.trim() !== "",
+              ) ??
               index + 1,
           ),
           row,
@@ -53,10 +76,14 @@ export function distributionRows(value: unknown): DistributionRow[] {
       analyticsNumber(entry) ??
       analyticsNumber(item.count) ??
       analyticsNumber(item.total) ??
-      analyticsNumber(item.frequency);
+      analyticsNumber(item.frequency) ??
+      analyticsNumber(item.users) ??
+      analyticsNumber(item.value);
     if (count === null || count < 0) return [];
     const percentage =
-      analyticsNumber(item.percentage) ?? analyticsNumber(item.percentage_pct);
+      analyticsNumber(item.percentage) ??
+      analyticsNumber(item.percentage_pct) ??
+      analyticsNumber(item.share_pct);
     return [{ key, count, percentage }];
   });
   const denominator =

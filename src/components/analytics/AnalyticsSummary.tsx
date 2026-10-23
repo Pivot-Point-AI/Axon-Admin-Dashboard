@@ -1,9 +1,10 @@
 "use client";
 
+import AnalyticsCardScope from "./AnalyticsCardScope";
 import { useEffect, useState, type ReactNode } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import Button from "@/components/ui/button/Button";
-import { RefreshIcon, TimeIcon } from "@/icons";
+import { CalenderIcon, RefreshIcon } from "@/icons";
 import { ApiError } from "@/lib/api/client";
 import {
   getAnalyticsSummary,
@@ -51,19 +52,20 @@ export default function AnalyticsSummary({
   heading,
 }: AnalyticsSummaryProps) {
   const t = useTranslations("analytics");
+  const dashboard = useTranslations("dashboardAnalytics");
   const format = useFormatter();
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [revision, setRevision] = useState(0);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-  const { date, start_time, end_time } = filters;
+  const { date, start_time, end_time, period, start_date, end_date } = filters;
   useEffect(() => {
     const controller = new AbortController();
     getAnalyticsSummary(
       section,
       accessToken,
-      { date, start_time, end_time },
+      { date, start_time, end_time, period, start_date, end_date },
       controller.signal,
     )
       .then((result) => {
@@ -81,7 +83,18 @@ export default function AnalyticsSummary({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [section, accessToken, date, start_time, end_time, revision, t]);
+  }, [
+    section,
+    accessToken,
+    date,
+    start_time,
+    end_time,
+    period,
+    start_date,
+    end_date,
+    revision,
+    t,
+  ]);
   const groups = section === "flows" ? [] : (metricGroups[section] ?? []);
   const dedicatedLayout = section === "performance" || section === "logs";
   const hasComposition = (
@@ -101,6 +114,10 @@ export default function AnalyticsSummary({
     ...(section === "users"
       ? ["weekly_active_users", "monthly_active_users"]
       : []),
+    // Shown by the quality charts; the "Fallbacks & Safety" block was removed.
+    ...(section === "nlp"
+      ? ["llm_fallback_count", "guardrail_violations_count"]
+      : []),
   ]);
   const details = analyticsFields[section].filter(
     (field) => !usedFields.has(field),
@@ -112,7 +129,7 @@ export default function AnalyticsSummary({
   );
   return (
     <section aria-label={t(`sections.${section}`)} className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         {heading ?? (
           <div>
             <div className="mb-1 flex flex-wrap items-center gap-2">
@@ -125,34 +142,42 @@ export default function AnalyticsSummary({
             </p>
           </div>
         )}
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-brand-100 bg-white px-3 py-2.5 text-theme-xs font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-            <TimeIcon aria-hidden="true" className="size-4" />
-            {section === "users" || section === "flows"
-              ? t("design.allTime")
-              : section === "chats"
-                ? start_time || end_time
-                  ? t("design.selectedPeriod")
-                  : t("design.allTime")
-                : date && date !== "today"
-                  ? date
-                  : t("design.today")}
-          </span>
-          <p role="status" className="sr-only">
-            {loading
-              ? t("loading")
-              : updatedAt
-                ? t("design.updatedAt", {
-                    time: format.dateTime(updatedAt, {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    }),
-                  })
-                : t("design.unavailable")}
-          </p>
+        <div className="flex max-w-full flex-wrap items-center justify-end gap-2 rounded-xl border border-brand-100 bg-white p-1.5 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex min-w-0 items-center gap-2 ps-2 pe-1">
+            <CalenderIcon
+              aria-hidden="true"
+              className="size-4 shrink-0 text-gray-500 dark:text-gray-400"
+            />
+            <div className="min-w-0">
+              <p className="text-theme-xs text-gray-500 dark:text-gray-400">
+                {dashboard("lastUpdatedLabel")}
+              </p>
+              <p
+                role="status"
+                className="text-theme-xs font-medium text-gray-800 dark:text-gray-200"
+              >
+                {loading ? (
+                  t("loading")
+                ) : updatedAt ? (
+                  <time dateTime={updatedAt.toISOString()}>
+                    {format.dateTime(updatedAt, {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </time>
+                ) : (
+                  t("design.unavailable")
+                )}
+              </p>
+            </div>
+          </div>
+          {filterControls}
           <Button
+            title={t(error ? "retry" : "refresh")}
             variant="primary"
             size="sm"
+            className="w-10 shrink-0 !px-0 !text-white"
             disabled={loading}
             startIcon={
               <RefreshIcon
@@ -165,12 +190,11 @@ export default function AnalyticsSummary({
               setRevision((value) => value + 1);
             }}
           >
-            {t(error ? "retry" : "refresh")}
+            <span className="sr-only">{t(error ? "retry" : "refresh")}</span>
           </Button>
         </div>
       </div>
       {navigation}
-      {filterControls}
       {error && (
         <p
           role="alert"
@@ -208,60 +232,127 @@ export default function AnalyticsSummary({
           <div aria-busy={loading} className="space-y-5">
             <AnalyticsMetrics section={section} data={data} />
             {section === "flows" && <AnalyticsJourneys data={data} />}
-            {section === "nlp" && <AnalyticsQuality data={data} date={date} />}
-            {section === "performance" && (
-              <AnalyticsPerformance data={data} date={date} />
-            )}
+            {section === "nlp" && <AnalyticsQuality data={data} />}
+            {section === "performance" && <AnalyticsPerformance data={data} />}
             {section === "logs" && (
               <AnalyticsActivity data={data} date={date} />
             )}
             {section === "users" && (
               <div className="grid items-stretch gap-5 lg:grid-cols-2">
                 <div className="min-w-0">
-                  <AnalyticsAudienceActivity data={data} />
+                  <AnalyticsCardScope section="users" data={data}>
+                    {(d) => <AnalyticsAudienceActivity data={d} />}
+                  </AnalyticsCardScope>
                 </div>
                 <div className="min-w-0">
-                  <AnalyticsLanguageBreakdown value={data.language_breakdown} />
+                  <AnalyticsCardScope section="users" data={data}>
+                    {(d) => (
+                      <AnalyticsLanguageBreakdown
+                        value={d.language_breakdown}
+                      />
+                    )}
+                  </AnalyticsCardScope>
                 </div>
               </div>
             )}
             {!dedicatedLayout && latency.length > 0 && (
               <AnalyticsLatencyOverview fields={latency} data={data} />
             )}
-            {!dedicatedLayout && section !== "nlp" && charts.length > 0 && (
-              <div className="grid items-stretch gap-5 xl:grid-cols-2">
-                {hasComposition && (
-                  <AnalyticsComposition section={section} data={data} />
-                )}
-                {charts.map((field, index) => (
-                  <AnalyticsBreakdown
-                    key={field}
-                    field={field}
-                    value={data[field]}
-                    className={
-                      index === charts.length - 1 &&
-                      (charts.length + Number(hasComposition)) % 2 === 1
-                        ? "xl:col-span-2"
-                        : undefined
-                    }
+            {!dedicatedLayout &&
+              section !== "nlp" &&
+              section !== "chats" &&
+              charts.length > 0 && (
+                <div className="grid items-stretch gap-5 xl:grid-cols-2">
+                  {hasComposition && (
+                    <AnalyticsCardScope section={section} data={data}>
+                      {(d) => (
+                        <AnalyticsComposition section={section} data={d} />
+                      )}
+                    </AnalyticsCardScope>
+                  )}
+                  {charts.map((field, index) => (
+                    <AnalyticsCardScope
+                      key={field}
+                      section={section}
+                      data={data}
+                    >
+                      {(d) => (
+                        <AnalyticsBreakdown
+                          field={field}
+                          value={d[field]}
+                          className={
+                            index === charts.length - 1 &&
+                            (charts.length + Number(hasComposition)) % 2 === 1
+                              ? "xl:col-span-2"
+                              : undefined
+                          }
+                        />
+                      )}
+                    </AnalyticsCardScope>
+                  ))}
+                </div>
+              )}
+            {section === "chats" && (
+              <>
+                <AnalyticsCardScope section="chats" data={data}>
+                  {(d) => (
+                    <AnalyticsBreakdown
+                      field="peak_activity_hours"
+                      value={d.peak_activity_hours}
+                    />
+                  )}
+                </AnalyticsCardScope>
+                <AnalyticsCardScope section="chats" data={data}>
+                  {(d) => (
+                    <AnalyticsBreakdown
+                      field="activity_by_day_of_week"
+                      value={d.activity_by_day_of_week}
+                    />
+                  )}
+                </AnalyticsCardScope>
+                <div className="grid items-stretch gap-5 xl:grid-cols-2">
+                  {hasComposition && (
+                    <AnalyticsCardScope section="chats" data={data}>
+                      {(d) => (
+                        <AnalyticsComposition section={section} data={d} />
+                      )}
+                    </AnalyticsCardScope>
+                  )}
+                  <AnalyticsMetricList
+                    title="conversationDetails"
+                    fields={metricGroups.chats?.[0].fields ?? []}
+                    data={data}
                   />
-                ))}
-              </div>
+                </div>
+              </>
             )}
-            {groups.length > 0 && (
+            {section !== "chats" && groups.length > 0 && (
               <div
-                className={`grid items-start gap-5 ${groups.length > 1 ? "xl:grid-cols-2" : ""}`}
+                className={`grid items-stretch gap-5 ${groups.length > 1 ? "xl:grid-cols-2" : ""}`}
               >
                 {groups.map((group) =>
                   group.title === "newUsers" ? (
-                    <AnalyticsAcquisition key={group.title} data={data} />
-                  ) : (
-                    <AnalyticsMetricList
+                    <AnalyticsCardScope
                       key={group.title}
-                      title={group.title}
-                      fields={group.fields}
+                      section={section}
                       data={data}
-                    />
+                    >
+                      {(d) => <AnalyticsAcquisition data={d} />}
+                    </AnalyticsCardScope>
+                  ) : (
+                    <AnalyticsCardScope
+                      key={group.title}
+                      section={section}
+                      data={data}
+                    >
+                      {(d) => (
+                        <AnalyticsMetricList
+                          title={group.title}
+                          fields={group.fields}
+                          data={d}
+                        />
+                      )}
+                    </AnalyticsCardScope>
                   ),
                 )}
               </div>

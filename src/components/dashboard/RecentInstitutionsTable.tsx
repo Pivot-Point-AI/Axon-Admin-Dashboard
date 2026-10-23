@@ -68,15 +68,15 @@ export default function RecentInstitutionsTable() {
       className="axon-dashboard-institutions flex h-full min-w-0 flex-col rounded-xl border border-brand-100 bg-white p-4 shadow-theme-xs sm:p-5 dark:border-gray-800 dark:bg-gray-900"
     >
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <span
             aria-hidden="true"
             className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-light-50 text-blue-light-500 dark:bg-blue-light-500/15 dark:text-blue-light-300"
           >
             <BoxCubeIcon className="size-5" />
           </span>
-          <div className="min-w-0">
-            <h3 className="text-base font-semibold text-gray-950 dark:text-white/90">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base font-bold text-gray-950 dark:text-white/90">
               {t("institutionsTitle")}
             </h3>
             <p className="mt-1 text-theme-xs leading-5 text-gray-500 dark:text-gray-400">
@@ -179,7 +179,7 @@ export default function RecentInstitutionsTable() {
                       ) : status.color === "success" ? (
                         <StatusBadge active />
                       ) : (
-                        <Badge size="sm" color={status.color}>
+                        <Badge variant="text" size="sm" color={status.color}>
                           {status.label}
                         </Badge>
                       )}

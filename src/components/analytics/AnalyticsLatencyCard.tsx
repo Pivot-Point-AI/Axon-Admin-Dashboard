@@ -1,8 +1,6 @@
 ﻿"use client";
 
 import { useTranslations } from "next-intl";
-import AnalyticsDataTable from "./AnalyticsDataTable";
-import AnalyticsDetails from "./AnalyticsDetails";
 import AnalyticsDuration from "./AnalyticsDuration";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
 import AnalyticsLatencyChart from "./AnalyticsLatencyChart";
@@ -68,12 +66,6 @@ export default function AnalyticsLatencyCard({
           </p>
         </aside>
       </div>
-      <AnalyticsDetails label={t("viewDetails")}>
-        <p className="mb-3 text-theme-xs text-gray-500 dark:text-gray-400">
-          {t("rawUnits")}
-        </p>
-        <AnalyticsDataTable field={field} value={value} embedded />
-      </AnalyticsDetails>
     </div>
   );
 }

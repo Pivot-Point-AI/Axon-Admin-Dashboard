@@ -6,8 +6,16 @@ import { useAdminAuth } from "@/context/AdminAuthContext";
 import { CalenderIcon, RefreshIcon } from "@/icons";
 import Button from "@/components/ui/button/Button";
 import { ApiError } from "@/lib/api/client";
+import AnalyticsPeriodSelect from "@/components/analytics/AnalyticsPeriodSelect";
+import {
+  customPeriodFilters,
+  periodFilters,
+  selectedPeriod,
+} from "@/components/analytics/analyticsPeriods";
+import type { AnalyticsFilters } from "@/lib/api/analytics";
 import { getDashboardOverview } from "@/lib/api/dashboardAnalytics";
 import type { DashboardOverviewResponse } from "@/lib/api/types";
+import normalizeOverview from "./normalizeOverview";
 import AnalyticsKpiCards from "./AnalyticsKpiCards";
 import EngagementOverview from "./EngagementOverview";
 import FlowOutcomes from "./FlowOutcomes";
@@ -27,14 +35,27 @@ export default function DashboardStats({ heading }: DashboardStatsProps = {}) {
   const [loading, setLoading] = useState(true);
   const [revision, setRevision] = useState(0);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [filters, setFilters] = useState<AnalyticsFilters>(() =>
+    periodFilters("allTime"),
+  );
+  const design = useTranslations("analytics.design");
+  const period = selectedPeriod(filters);
+  const periodLabel = period
+    ? design(period)
+    : filters.start_date &&
+        filters.end_date &&
+        filters.start_date !== filters.end_date
+      ? design("dateRange", { from: filters.start_date, to: filters.end_date })
+      : (filters.start_date ?? design("customRange"));
+  const filterKey = JSON.stringify(filters);
 
   useEffect(() => {
     if (!accessToken) return;
     const controller = new AbortController();
-    getDashboardOverview(accessToken, controller.signal)
+    getDashboardOverview(accessToken, controller.signal, JSON.parse(filterKey))
       .then((data) => {
         if (!controller.signal.aborted) {
-          setOverview(data);
+          setOverview(normalizeOverview(data));
           setUpdatedAt(new Date());
           setError(null);
         }
@@ -47,7 +68,7 @@ export default function DashboardStats({ heading }: DashboardStatsProps = {}) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [accessToken, t, revision]);
+  }, [accessToken, t, revision, filterKey]);
 
   const refresh = () => {
     if (loading) return;
@@ -99,10 +120,20 @@ export default function DashboardStats({ heading }: DashboardStatsProps = {}) {
               </p>
             </div>
           </div>
+          <AnalyticsPeriodSelect
+            value={period}
+            start={filters.start_date}
+            end={filters.end_date}
+            onChange={(next) => setFilters(periodFilters(next))}
+            onCustomChange={(start, end) =>
+              setFilters(customPeriodFilters(start, end))
+            }
+          />
           <Button
+            title={t(loading ? "refreshing" : error ? "retry" : "refresh")}
             size="sm"
             variant="primary"
-            className="min-h-10 shrink-0 gap-2 !text-white"
+            className="min-h-10 w-10 shrink-0 !px-0 !text-white"
             onClick={refresh}
             disabled={loading}
             startIcon={
@@ -112,7 +143,9 @@ export default function DashboardStats({ heading }: DashboardStatsProps = {}) {
               />
             }
           >
-            {t(loading ? "refreshing" : error ? "retry" : "refresh")}
+            <span className="sr-only">
+              {t(loading ? "refreshing" : error ? "retry" : "refresh")}
+            </span>
           </Button>
         </div>
       </div>
@@ -126,8 +159,8 @@ export default function DashboardStats({ heading }: DashboardStatsProps = {}) {
       )}
       <div aria-busy={loading} className="space-y-6">
         <AnalyticsKpiCards overview={overview} />
-        <EngagementOverview overview={overview} />
-        <FlowOutcomes overview={overview} />
+        <EngagementOverview overview={overview} periodLabel={periodLabel} />
+        <FlowOutcomes overview={overview} periodLabel={periodLabel} />
       </div>
     </section>
   );

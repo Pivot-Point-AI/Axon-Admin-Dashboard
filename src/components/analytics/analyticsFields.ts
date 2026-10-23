@@ -1,6 +1,5 @@
 export const analyticsFields = {
   users: [
-    
     "total_users",
     "active_sessions",
     "total_sessions",
@@ -19,7 +18,6 @@ export const analyticsFields = {
     "new_users_this_month",
     "dormant_users_30d",
     "language_breakdown",
-
   ],
   chats: [
     "total_messages",

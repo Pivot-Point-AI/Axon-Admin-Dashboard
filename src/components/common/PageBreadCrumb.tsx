@@ -23,7 +23,12 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
           </p>
         )}
       </div>
-      {children && <div className="shrink-0">{children}</div>}
+      <div
+        data-page-actions
+        className="flex max-w-full shrink-0 flex-wrap items-center justify-end gap-3 empty:hidden"
+      >
+        {children}
+      </div>
     </header>
   );
 };

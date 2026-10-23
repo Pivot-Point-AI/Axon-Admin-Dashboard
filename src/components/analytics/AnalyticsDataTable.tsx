@@ -23,6 +23,7 @@ interface AnalyticsDataTableProps {
   visualization?: ReactNode;
   embedded?: boolean;
   paginated?: boolean;
+  query?: string;
 }
 
 export default function AnalyticsDataTable({
@@ -31,12 +32,22 @@ export default function AnalyticsDataTable({
   visualization,
   embedded = false,
   paginated = false,
+  query = "",
 }: AnalyticsDataTableProps) {
   const t = useTranslations("analytics");
   const [expanded, setExpanded] = useState(false);
   const tableId = useId();
-  const rows = analyticsTableRows(value);
-  const pagination = usePagination(rows, field, 5);
+  const needle = query.trim().toLowerCase();
+  const rows = analyticsTableRows(value).filter(
+    (row) =>
+      !needle ||
+      Object.values(row).some(
+        (cell) =>
+          (typeof cell === "string" || typeof cell === "number") &&
+          String(cell).replaceAll("_", " ").toLowerCase().includes(needle),
+      ),
+  );
+  const pagination = usePagination(rows, `${field}:${needle}`, 5);
   const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))];
   const numericColumns = new Set(
     columns.filter(
@@ -61,7 +72,9 @@ export default function AnalyticsDataTable({
   const content = (
     <>
       {!rows.length ? (
-        <AnalyticsEmptyState />
+        <AnalyticsEmptyState
+          message={needle ? t("design.noMatches") : undefined}
+        />
       ) : (
         <div
           id={tableId}

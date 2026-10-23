@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/utils";
+import {
+  BoxCubeIcon,
+  DocsIcon,
+  DollarLineIcon,
+  FolderIcon,
+  ListIcon,
+  TableIcon,
+} from "@/icons";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { asRecordArray } from "@/lib/api/normalize";
 import {
@@ -81,6 +88,15 @@ const tabs = [
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
+
+const tabIcons = {
+  banks: BoxCubeIcon,
+  billers: DocsIcon,
+  donations: DollarLineIcon,
+  cards: ListIcon,
+  billerTypes: TableIcon,
+  billerCategories: FolderIcon,
+};
 
 export default function MasterDataManager() {
   const t = useTranslations("masterDataLookups");
@@ -175,26 +191,26 @@ export default function MasterDataManager() {
 
   return (
     <div className="space-y-5">
-      <div role="tablist" className="axon-tabs no-scrollbar">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            role="tab"
-            aria-selected={activeTab === tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              "-mb-px border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
-              activeTab === tab.key
-                ? "border-brand-500 text-brand-500"
-                : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300",
-            )}
-          >
-            {tab.key === "billerTypes" || tab.key === "billerCategories"
-              ? t(tab.key)
-              : tab.label}
-          </button>
-        ))}
-      </div>
+      <nav aria-label={t("sectionsLabel")} className="axon-tabs no-scrollbar">
+        {tabs.map((tab) => {
+          const Icon = tabIcons[tab.key];
+          const active = activeTab === tab.key;
+          return (
+            <button
+              type="button"
+              key={tab.key}
+              aria-current={active ? "page" : undefined}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-brand-400 sm:grow ${active ? "bg-brand-50 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300" : "text-gray-500 hover:bg-gray-50 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"}`}
+            >
+              <Icon aria-hidden="true" className="size-4 shrink-0" />
+              {tab.key === "billerTypes" || tab.key === "billerCategories"
+                ? t(tab.key)
+                : tab.label}
+            </button>
+          );
+        })}
+      </nav>
 
       {activeTab === "banks" && (
         <MasterDataSection

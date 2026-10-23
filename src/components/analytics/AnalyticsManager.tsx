@@ -16,6 +16,12 @@ import {
   type AnalyticsSection,
   type AnalyticsFilters as Filters,
 } from "@/lib/api/analytics";
+import { AnalyticsPeriodContext } from "./AnalyticsPeriodContext";
+import {
+  customPeriodFilters,
+  periodFilters,
+  selectedPeriod,
+} from "./analyticsPeriods";
 import AnalyticsFilters from "./AnalyticsFilters";
 import AnalyticsSummary from "./AnalyticsSummary";
 
@@ -40,8 +46,16 @@ export default function AnalyticsManager({
   const t = useTranslations("analytics");
   const { accessToken } = useAdminAuth();
   const [section, setSection] = useState<AnalyticsSection>(initialSection);
-  const [telemetryDate, setTelemetryDate] = useState("today");
-  const [rangeFilters, setRangeFilters] = useState<Filters>({});
+  const [rangeFilters, setRangeFilters] = useState<Filters>(() =>
+    periodFilters("last7Days"),
+  );
+  // Telemetry pages open on Today: the backend only aggregates a single day
+  // reliably for them, so longer ranges are an explicit choice.
+  const [telemetryFilters, setTelemetryFilters] = useState<Filters>(() =>
+    periodFilters("today"),
+  );
+  const telemetry = ["nlp", "performance", "logs"].includes(section);
+  const setFilters = telemetry ? setTelemetryFilters : setRangeFilters;
   const navigationRef = useRef<HTMLElement>(null);
   const previousSection = useRef(section);
   useEffect(() => {
@@ -56,13 +70,8 @@ export default function AnalyticsManager({
     const container = navigation.getBoundingClientRect();
     if (bounds.left < container.left || bounds.right > container.right)
       tab.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [section, telemetryDate, rangeFilters]);
-  const dated = ["nlp", "performance", "logs"].includes(section);
-  const filters: Filters = dated
-    ? { date: telemetryDate }
-    : section === "chats"
-      ? rangeFilters
-      : {};
+  }, [section, rangeFilters, telemetryFilters]);
+  const filters: Filters = telemetry ? telemetryFilters : rangeFilters;
   const navigation = (
     <nav
       ref={navigationRef}
@@ -87,31 +96,37 @@ export default function AnalyticsManager({
     </nav>
   );
   return (
-    <div className="space-y-5">
-      {accessToken && (
-        <AnalyticsSummary
-          key={`${section}:${JSON.stringify(filters)}`}
-          section={section}
-          filters={filters}
-          accessToken={accessToken}
-          navigation={navigation}
-          heading={heading}
-          filterControls={
-            dated || section === "chats" ? (
+    <AnalyticsPeriodContext.Provider
+      value={{
+        period: selectedPeriod(filters),
+        filters,
+        onChange: (period) => setFilters(periodFilters(period)),
+        onCustomChange: (start, end) =>
+          setFilters(customPeriodFilters(start, end)),
+      }}
+    >
+      <div className="space-y-5">
+        {accessToken && (
+          <AnalyticsSummary
+            key={`${section}:${JSON.stringify(filters)}`}
+            section={section}
+            filters={filters}
+            accessToken={accessToken}
+            navigation={navigation}
+            heading={heading}
+            filterControls={
               <AnalyticsFilters
-                key={`${dated}:${JSON.stringify(filters)}`}
-                dated={dated}
+                key={JSON.stringify(filters)}
+                dated={false}
+                defaultPeriod={telemetry ? "today" : "last7Days"}
+                compact
                 filters={filters}
-                onApply={(next) =>
-                  dated
-                    ? setTelemetryDate(next.date || "today")
-                    : setRangeFilters(next)
-                }
+                onApply={setFilters}
               />
-            ) : undefined
-          }
-        />
-      )}
-    </div>
+            }
+          />
+        )}
+      </div>
+    </AnalyticsPeriodContext.Provider>
   );
 }

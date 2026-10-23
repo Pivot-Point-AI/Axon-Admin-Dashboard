@@ -1,5 +1,6 @@
 "use client";
 
+import PageRefresh from "@/components/common/PageRefresh";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAdminAuth } from "@/context/AdminAuthContext";
@@ -74,6 +75,11 @@ export default function FaqsManager() {
   };
   return (
     <div className="space-y-5">
+      <PageRefresh
+        loading={loading}
+        error={!!error}
+        onRefresh={() => void load()}
+      />
       {data && accessToken && (
         <FaqHeaderSettings
           key={`${data.settings.title}:${data.settings.subtitle}`}
@@ -99,7 +105,6 @@ export default function FaqsManager() {
             loading={loading}
             error={error}
             busyId={busyId}
-            onRefresh={() => void load()}
             onCreate={() => {
               setTarget(null);
               editor.openModal();

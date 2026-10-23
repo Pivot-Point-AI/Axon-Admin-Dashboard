@@ -1,5 +1,7 @@
 "use client";
 
+import { RowsPerPage } from "@/components/common/Pagination";
+import PageRefresh from "@/components/common/PageRefresh";
 import Pagination from "@/components/common/Pagination";
 import MasterDataMetrics from "./MasterDataMetrics";
 import StatusBadge from "@/components/common/StatusBadge";
@@ -358,6 +360,7 @@ export default function MasterDataSection({
 
   return (
     <div className="axon-master-data space-y-5">
+      <PageRefresh loading={loading} error={!!error} onRefresh={load} />
       <MasterDataMetrics items={items} loading={loading || !!error} />
       <div className="axon-management-panel rounded-xl border border-brand-100 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
@@ -401,18 +404,21 @@ export default function MasterDataSection({
             </div>
           )}
 
-          <Button
-            size="sm"
-            startIcon={
-              <PlusIcon
-                aria-hidden="true"
-                className="block size-5 text-white dark:text-white"
-              />
-            }
-            onClick={openCreate}
-          >
-            Add {title.replace(/s$/, "")}
-          </Button>
+          <div className="flex items-center gap-3">
+            <RowsPerPage pagination={pagination} disabled={loading} />
+            <Button
+              size="sm"
+              startIcon={
+                <PlusIcon
+                  aria-hidden="true"
+                  className="block size-5 text-white dark:text-white"
+                />
+              }
+              onClick={openCreate}
+            >
+              Add {title.replace(/s$/, "")}
+            </Button>
+          </div>
         </div>
 
         {error && (
@@ -425,6 +431,7 @@ export default function MasterDataSection({
           variant="header"
           pagination={pagination}
           disabled={loading}
+          showRows={false}
         />
         <div className="overflow-x-auto">
           <Table>

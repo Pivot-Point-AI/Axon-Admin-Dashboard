@@ -1,7 +1,17 @@
 import type { AnalyticsSection } from "@/lib/api/analytics";
 import { asAnalyticsRecord } from "./analyticsData";
+import { analyticsFields } from "./analyticsFields";
+import { chartFields } from "./analyticsPresentation";
+import { metricValue } from "./analyticsTrends";
 
 const aliases: Partial<Record<AnalyticsSection, Record<string, string[]>>> = {
+  users: {
+    language_breakdown: ["language_preferences"],
+  },
+  chats: {
+    peak_activity_hours: ["activity_by_hour"],
+    activity_by_day_of_week: ["activity_by_weekday"],
+  },
   nlp: {
     intent_confidence_buckets: ["confidence_distribution"],
     fallback_reasons: ["why_ai_fallback_was_used"],
@@ -45,6 +55,20 @@ export function analyticsSummaryData(
           value != null &&
           (typeof value !== "object" || Object.keys(value).length > 0),
       ) ?? candidates.find((value) => value != null);
+  }
+  // Newer responses report headline figures inside KPI blocks; fill any flat
+  // figure that is missing from them. Reported top-level values always win.
+  const blocks = Object.keys(data).filter(
+    (key) => data[key] !== null && typeof data[key] === "object",
+  );
+  for (const field of analyticsFields[section]) {
+    if (data[field] != null || chartFields.has(field)) continue;
+    const value = metricValue(
+      data,
+      field,
+      blocks.filter((key) => key !== field),
+    );
+    if (value !== null) data[field] = value;
   }
   return data;
 }
