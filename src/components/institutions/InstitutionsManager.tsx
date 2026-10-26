@@ -321,6 +321,7 @@ export default function InstitutionsManager() {
           </div>
         )}
 
+
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
             Manage Institutions
