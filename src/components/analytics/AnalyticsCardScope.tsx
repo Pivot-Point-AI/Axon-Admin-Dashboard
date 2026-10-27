@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
+import Button from "@/components/ui/button/Button";
+import AnalyticsHistoryState from "./AnalyticsHistoryState";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import {
   getAnalyticsSummary,
@@ -33,6 +36,7 @@ export default function AnalyticsCardScope({
   children,
 }: AnalyticsCardScopeProps) {
   const parent = useAnalyticsPeriod();
+  const t = useTranslations("analytics");
   const { accessToken } = useAdminAuth();
   const parentKey = JSON.stringify(parent?.filters ?? {});
   const [state, setState] = useState<{
@@ -42,9 +46,17 @@ export default function AnalyticsCardScope({
   if (state.key !== parentKey) setState({ key: parentKey, filters: null });
   const override = state.key === parentKey ? state.filters : null;
   const overrideKey = override ? JSON.stringify(override) : "";
+  const requestKey = JSON.stringify([
+    section,
+    parentKey,
+    overrideKey,
+    accessToken,
+  ]);
+  const [revision, setRevision] = useState(0);
   const [fetched, setFetched] = useState<{
     key: string;
-    data: Record<string, unknown>;
+    data: Record<string, unknown> | null;
+    failed: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -55,13 +67,17 @@ export default function AnalyticsCardScope({
       .then((result) => {
         if (!controller.signal.aborted)
           setFetched({
-            key: overrideKey,
+            key: requestKey,
             data: analyticsSummaryData(section, result),
+            failed: false,
           });
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setFetched({ key: requestKey, data: null, failed: true });
+      });
     return () => controller.abort();
-  }, [section, accessToken, overrideKey]);
+  }, [section, accessToken, overrideKey, requestKey, revision]);
 
   if (!parent) return <>{children(data)}</>;
   const dated = Boolean(parent.filters.date);
@@ -73,9 +89,8 @@ export default function AnalyticsCardScope({
         : undefined
       : selectedPeriod(override)
     : parent.period;
-  // While a newly chosen period loads, keep showing the card's previous data
-  // rather than flashing the page's period (which would redraw the chart twice).
-  const cardData = override ? (fetched?.data ?? data) : data;
+  const current = fetched?.key === requestKey ? fetched : null;
+  const cardData = override ? current?.data : data;
   return (
     <AnalyticsPeriodContext.Provider
       value={{
@@ -93,7 +108,27 @@ export default function AnalyticsCardScope({
           }),
       }}
     >
-      {children(cardData)}
+      {cardData ? (
+        children(cardData)
+      ) : (
+        <div className="space-y-3" aria-busy={!current?.failed}>
+          <AnalyticsHistoryState
+            loading={!current}
+            failed={current?.failed ?? false}
+          />
+          {current?.failed && (
+            <Button
+              size="sm"
+              onClick={() => {
+                setFetched(null);
+                setRevision((value) => value + 1);
+              }}
+            >
+              {t("retry")}
+            </Button>
+          )}
+        </div>
+      )}
     </AnalyticsPeriodContext.Provider>
   );
 }

@@ -49,10 +49,8 @@ export default function AnalyticsManager({
   const [rangeFilters, setRangeFilters] = useState<Filters>(() =>
     periodFilters("last7Days"),
   );
-  // Telemetry pages open on Today: the backend only aggregates a single day
-  // reliably for them, so longer ranges are an explicit choice.
   const [telemetryFilters, setTelemetryFilters] = useState<Filters>(() =>
-    periodFilters("today"),
+    periodFilters("last7Days"),
   );
   const telemetry = ["nlp", "performance", "logs"].includes(section);
   const setFilters = telemetry ? setTelemetryFilters : setRangeFilters;
@@ -118,7 +116,7 @@ export default function AnalyticsManager({
               <AnalyticsFilters
                 key={JSON.stringify(filters)}
                 dated={false}
-                defaultPeriod={telemetry ? "today" : "last7Days"}
+                defaultPeriod="last7Days"
                 compact
                 filters={filters}
                 onApply={setFilters}

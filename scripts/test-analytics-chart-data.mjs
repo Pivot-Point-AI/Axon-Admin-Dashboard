@@ -414,6 +414,162 @@ test("all summary requests forward supported date filters to the API", async () 
 });
 
 const daily = load("analyticsDailyHistory");
+const errorHistory = load("analyticsErrorHistory");
+
+test("all-time history loads real dates until it accounts for all 130 errors", async () => {
+  const requests = [];
+  const points = await errorHistory.loadAllTimeErrorHistory(
+    {
+      top_kpis: { recognized_errors: { value: 130 } },
+      recognized_errors: [{ timestamp: "2026-10-15T11:10:00Z" }],
+    },
+    async (filters) => {
+      requests.push(filters);
+      const count = filters.date
+        ? ({ "2026-10-15": 105, "2026-10-20": 2, "2026-10-21": 23 }[
+            filters.date
+          ] ?? 0)
+        : 130;
+      return {
+        top_kpis: { recognized_errors: { value: count } },
+        recognized_errors: [],
+      };
+    },
+    new AbortController().signal,
+    new Date(2026, 9, 26, 12),
+  );
+  assert.equal(points.length, 12);
+  assert.equal(
+    points.reduce((sum, point) => sum + point.total, 0),
+    130,
+  );
+  assert.equal(
+    points.find(
+      (point) => point.timestamp === periods.analyticsTimestamp("2026-10-21"),
+    ).total,
+    23,
+  );
+  assert.equal(requests.filter((request) => request.date).length, 12);
+});
+
+test("all-time history expands beyond sample dates and limits long histories to 90 real buckets", async () => {
+  const events = { "2025-01-02": 100, "2026-10-21": 30 };
+  const requests = [];
+  const points = await errorHistory.loadAllTimeErrorHistory(
+    {
+      recorded_errors: 130,
+      errors: [{ timestamp: "2026-10-21T12:00:00Z" }],
+    },
+    async (filters) => {
+      requests.push(filters);
+      const start = filters.date ?? filters.start_date;
+      const end = filters.date ?? filters.end_date;
+      const total = Object.entries(events).reduce(
+        (sum, [date, count]) =>
+          sum + (date >= start && date <= end ? count : 0),
+        0,
+      );
+      return { recorded_errors: total, errors: [] };
+    },
+    new AbortController().signal,
+    new Date(2026, 9, 26),
+  );
+  assert.ok(points.length <= 90);
+  assert.equal(
+    points.reduce((sum, point) => sum + point.total, 0),
+    130,
+  );
+  assert.ok(points.every((point) => point.endTimestamp >= point.timestamp));
+  assert.ok(requests.length < 110);
+});
+
+test("all-time history rejects ignored filters and missing dates rather than plotting incorrect totals", async () => {
+  await assert.rejects(
+    errorHistory.loadAllTimeErrorHistory(
+      {
+        recorded_errors: 130,
+        errors: [{ timestamp: "2026-10-15T12:00:00Z" }],
+      },
+      async () => ({ recorded_errors: 130, errors: [] }),
+      new AbortController().signal,
+      new Date(2026, 9, 26),
+    ),
+    /incomplete/,
+  );
+  await assert.rejects(
+    errorHistory.loadAllTimeErrorHistory(
+      { recorded_errors: 130 },
+      async (filters) =>
+        filters.date ? { found: false } : { recorded_errors: 130 },
+      new AbortController().signal,
+      new Date(2026, 9, 26),
+    ),
+    /incomplete/,
+  );
+});
+
+test("error history keeps the complete breakdown and parses nested trend values", () => {
+  const [point, missing] = telemetry.errorHistory([
+    {
+      date: "2026-10-21",
+      values: { total: 25, api: 10, validation: 0, timeout: 2 },
+    },
+    { date: "2026-10-22", metrics: { api: 0 } },
+  ]);
+  assert.equal(point.total, 25);
+  assert.equal(point.unknown, 13);
+  assert.equal(point.validation, 0);
+  assert.equal(
+    point.api + point.validation + point.timeout + point.unknown,
+    point.total,
+  );
+  assert.equal(missing.total, null);
+  assert.equal(missing.timeout, null);
+  assert.equal(missing.api, 0);
+});
+
+test("daily error totals retain unlisted records and accept totals without an error list", () => {
+  const date = "2026-10-21";
+  const point = daily.dailyTrendPoint("logs", date, {
+    recorded_errors: 25,
+    recognized_errors: [{ type: "api_error" }, { type: "timeout" }],
+  });
+  assert.equal(point.total, 25);
+  assert.equal(point.api, 1);
+  assert.equal(point.timeout, 1);
+  assert.equal(point.others, 0);
+  assert.equal(point.unknown, 23);
+  const totalOnly = daily.dailyTrendPoint("logs", date, {
+    top_kpis: { recorded_errors: { value: 25 } },
+  });
+  assert.equal(totalOnly.total, 25);
+  assert.equal(totalOnly.unknown, 25);
+  assert.equal(
+    daily.dailyTrendPoint("logs", date, { recorded_errors: 0 }).total,
+    0,
+  );
+});
+
+test("all-time error counts use the 130 KPI records rather than the 10-row sample", () => {
+  const snapshot = telemetry.errorSnapshot({
+    top_kpis: { recognized_errors: { value: 130 } },
+    recognized_errors: [
+      { error: "Request timed out." },
+      ...Array.from({ length: 9 }, () => ({ error: "503 Server Error" })),
+    ],
+  });
+  assert.equal(snapshot.total, 130);
+  assert.equal(snapshot.listed, 10);
+  assert.equal(snapshot.counts.api, 9);
+  assert.equal(snapshot.counts.timeout, 1);
+  assert.equal(snapshot.counts.unknown, 120);
+  assert.equal(snapshot.counts.others, 0);
+  assert.equal(snapshot.truncated, true);
+  assert.equal(
+    Object.values(snapshot.counts).reduce((sum, count) => sum + count, 0),
+    130,
+  );
+});
 
 test("daily history requires an explicit calendar range and resolves individual telemetry dates", () => {
   const now = new Date(2026, 9, 22, 15);

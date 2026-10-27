@@ -1,5 +1,6 @@
 "use client";
 
+import { blocksInfo } from "./analyticsTrends";
 import { useMemo } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
@@ -26,6 +27,7 @@ export default function AnalyticsJourneyTrends({
   data,
 }: AnalyticsJourneyTrendsProps) {
   const t = useTranslations("analytics.design");
+  const tInfo = useTranslations("analytics.design.info");
   const format = useFormatter();
   const reporting = useAnalyticsPeriod();
   const period = reporting?.period ?? "last7Days";
@@ -88,6 +90,13 @@ export default function AnalyticsJourneyTrends({
       title={t("journeyTrends")}
       description={t("journeyTrendsDescription")}
       icon={<TrendWaveIcon />}
+      info={
+        blocksInfo(data, [
+          "journey_trends",
+          "daily_flow_trends",
+          "flow_trends",
+        ]) ?? tInfo("journeyTrends")
+      }
       actions={
         <AnalyticsCardActions>
           <AnalyticsViewAll

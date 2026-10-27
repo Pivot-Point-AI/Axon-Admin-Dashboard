@@ -5,6 +5,7 @@ import { analyticsTimestamp, periodFilters } from "./analyticsPeriods";
 import { analyticsSummaryData } from "./analyticsSummaryData";
 import { latencyData } from "./analyticsLatencyData";
 import { qualityKey, qualityRows } from "./analyticsQualityData";
+import { errorSnapshot } from "./analyticsTelemetryData";
 
 export type DailyHistorySection = "flows" | "nlp" | "performance" | "logs";
 
@@ -63,29 +64,9 @@ export function dailyTrendPoint(
     point.p95 =
       latency.percentiles.find((row) => row.percentile === 95)?.value ?? null;
   } else if (section === "logs") {
-    if (!Array.isArray(data.errors)) return null;
-    point.total = data.errors.length;
-    point.api = 0;
-    point.validation = 0;
-    point.timeout = 0;
-    point.others = 0;
-    for (const error of data.errors) {
-      const row =
-        error !== null && typeof error === "object"
-          ? (error as Record<string, unknown>)
-          : {};
-      const type = String(
-        row.error_type ?? row.type ?? row.category ?? "",
-      ).toLowerCase();
-      const key = type.includes("timeout")
-        ? "timeout"
-        : type.includes("validation")
-          ? "validation"
-          : type.includes("api")
-            ? "api"
-            : "others";
-      point[key] = (point[key] ?? 0) + 1;
-    }
+    const snapshot = errorSnapshot(data);
+    if (!snapshot.available) return null;
+    Object.assign(point, snapshot.counts, { total: snapshot.total });
   } else {
     point.total = analyticsNumber(data.guardrail_violations_count);
     const rows = qualityRows(
@@ -141,6 +122,7 @@ export async function loadDailyHistory(
                       validation: null,
                       timeout: null,
                       others: null,
+                      unknown: null,
                     }
                   : {
                       total: null,

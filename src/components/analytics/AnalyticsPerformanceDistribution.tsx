@@ -16,11 +16,13 @@ export default function AnalyticsPerformanceDistribution({
   data,
 }: AnalyticsPerformanceDistributionProps) {
   const t = useTranslations("analytics.telemetry");
+  const tInfo = useTranslations("analytics.design.info");
   const points = useMemo(() => responseHistogram(data), [data]);
 
   return (
     <AnalyticsChartCard
       title={t("distributionTitle")}
+      info={tInfo("distribution")}
       description={t("distributionDescription")}
       icon={<TimeIcon />}
       actions={<AnalyticsJourneyPeriod />}

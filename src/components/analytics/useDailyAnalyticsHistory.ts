@@ -12,6 +12,9 @@ import {
   loadDailyHistory,
   type DailyHistorySection,
 } from "./analyticsDailyHistory";
+import { loadAllTimeErrorHistory } from "./analyticsErrorHistory";
+import { errorSnapshot } from "./analyticsTelemetryData";
+import { asAnalyticsRecord } from "./analyticsData";
 
 export default function useDailyAnalyticsHistory(
   section: DailyHistorySection,
@@ -20,10 +23,20 @@ export default function useDailyAnalyticsHistory(
   snapshot: unknown,
 ) {
   const { accessToken } = useAdminAuth();
+  const [revision, setRevision] = useState(0);
   const datesKey = JSON.stringify(historyDates(filters));
-  const requestKey = `${section}:${datesKey}`;
+  const requestKey = `${section}:${datesKey}:${revision}`;
   const hasReported = reported.length > 0;
-  const enabled = !hasReported && Boolean(accessToken) && datesKey !== "[]";
+  const allTimeErrors =
+    section === "logs" &&
+    datesKey === "[]" &&
+    !filters.date &&
+    (!filters.period || filters.period === "all_time") &&
+    errorSnapshot(asAnalyticsRecord(snapshot)).total > 0;
+  const enabled =
+    !hasReported &&
+    Boolean(accessToken) &&
+    (datesKey !== "[]" || allTimeErrors);
   const [result, setResult] = useState<{
     key: string;
     points: AnalyticsTrendPoint[];
@@ -35,18 +48,37 @@ export default function useDailyAnalyticsHistory(
     if (!enabled || !accessToken) return;
     const controller = new AbortController();
     const dates: string[] = JSON.parse(datesKey);
-    loadDailyHistory(
-      section,
-      dates,
-      (date) =>
-        getAnalyticsSummary(
-          section,
-          accessToken,
-          section === "flows" ? { start_date: date, end_date: date } : { date },
-          controller.signal,
-        ),
-      controller.signal,
-    )
+    // Let effect cleanup run before starting network work during React's
+    // development replay; actual date changes still abort in-flight requests.
+    Promise.resolve()
+      .then(() =>
+        allTimeErrors
+          ? loadAllTimeErrorHistory(
+              asAnalyticsRecord(snapshot),
+              (range) =>
+                getAnalyticsSummary(
+                  "logs",
+                  accessToken,
+                  range,
+                  controller.signal,
+                ),
+              controller.signal,
+            )
+          : loadDailyHistory(
+              section,
+              dates,
+              (date) =>
+                getAnalyticsSummary(
+                  section,
+                  accessToken,
+                  section === "flows"
+                    ? { start_date: date, end_date: date }
+                    : { date },
+                  controller.signal,
+                ),
+              controller.signal,
+            ),
+      )
       .then((points) => {
         if (!controller.signal.aborted)
           setResult({
@@ -69,7 +101,15 @@ export default function useDailyAnalyticsHistory(
         controller.abort();
       });
     return () => controller.abort();
-  }, [section, accessToken, datesKey, requestKey, enabled, snapshot]);
+  }, [
+    section,
+    accessToken,
+    datesKey,
+    requestKey,
+    enabled,
+    allTimeErrors,
+    snapshot,
+  ]);
   const current =
     result?.key === requestKey &&
     result.snapshot === snapshot &&
@@ -78,5 +118,6 @@ export default function useDailyAnalyticsHistory(
     points: hasReported ? reported : enabled && current ? result!.points : [],
     loading: enabled && !current,
     failed: enabled && current && result!.failed,
+    retry: () => setRevision((value) => value + 1),
   };
 }

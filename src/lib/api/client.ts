@@ -73,7 +73,11 @@ export function getApiErrorMessage(status: number, body: unknown): string {
   const errors = messages.apiErrors;
   // Keep diagnostics on ApiError.detail, while giving users an actionable
   // message even if the server returns internal details or an HTML error page.
-  if (status >= 500) return errors.serviceUnavailable;
+  if (status >= 500) {
+    // The user-facing text is generic; keep the real cause findable.
+    console.warn(`API responded ${status}`, body);
+    return errors.serviceUnavailable;
+  }
   if (
     body &&
     typeof body === "object" &&
@@ -113,7 +117,12 @@ async function performRequest<T>(url: string, init: RequestInit): Promise<T> {
 
   const contentType = response.headers.get("content-type") ?? "";
   const isJson = contentType.includes("application/json");
-  const payload = isJson ? await response.json().catch(() => null) : null;
+  const payload = isJson
+    ? await response.json().catch(() => {
+        init.signal?.throwIfAborted();
+        return null;
+      })
+    : null;
 
   if (!response.ok) {
     throw new ApiError(
@@ -124,6 +133,27 @@ async function performRequest<T>(url: string, init: RequestInit): Promise<T> {
   }
 
   return payload as T;
+}
+
+// The /backend proxy occasionally answers 502/503/504 or drops the connection
+// for a moment even though the API is up. A GET is safe to repeat, so retry
+// once before telling the user something went wrong.
+const TRANSIENT_STATUSES = new Set([502, 503, 504]);
+const RETRY_DELAY_MS = 400;
+
+async function requestWithRetry<T>(url: string, init: RequestInit): Promise<T> {
+  if (init.method !== "GET") return performRequest<T>(url, init);
+  try {
+    return await performRequest<T>(url, init);
+  } catch (error) {
+    const transient =
+      (error instanceof ApiError && TRANSIENT_STATUSES.has(error.status)) ||
+      error instanceof TypeError;
+    if (!transient || init.signal?.aborted) throw error;
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+    init.signal?.throwIfAborted();
+    return performRequest<T>(url, init);
+  }
 }
 
 export async function apiRequest<T>(
@@ -158,14 +188,19 @@ export async function apiRequest<T>(
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
-    signal,
+    signal:
+      method === "GET"
+        ? AbortSignal.any([
+            ...(signal ? [signal] : []),
+            AbortSignal.timeout(30_000),
+          ])
+        : signal,
+    cache: method === "GET" ? "no-store" : undefined,
   };
 
   try {
-    const result = await performRequest<T>(
-      buildUrl(path, query, baseUrl),
-      init,
-    );
+    const url = buildUrl(path, query, baseUrl);
+    const result = await requestWithRetry<T>(url, init);
     if (method !== "GET" && successNotification !== false) {
       notify({
         kind: "success",
@@ -175,12 +210,20 @@ export async function apiRequest<T>(
     }
     return result;
   } catch (error) {
-    if (!(error instanceof DOMException && error.name === "AbortError")) {
+    const requestError =
+      init.signal?.reason instanceof DOMException &&
+      init.signal.reason.name === "TimeoutError"
+        ? new ApiError(getApiErrorMessage(408, null), 408)
+        : error;
+    if (!(
+      requestError instanceof DOMException && requestError.name === "AbortError"
+    )) {
       notify({
         kind: "error",
-        message: error instanceof ApiError ? error.message : undefined,
+        message:
+          requestError instanceof ApiError ? requestError.message : undefined,
       });
     }
-    throw error;
+    throw requestError;
   }
 }

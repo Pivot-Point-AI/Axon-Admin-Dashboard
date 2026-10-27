@@ -1,4 +1,5 @@
 "use client";
+import { valueInfo } from "./analyticsTrends";
 import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import { useTranslations } from "next-intl";
 import { ChartBarsIcon } from "@/icons";
@@ -21,6 +22,7 @@ export default function AnalyticsActivityColumns({
   value,
 }: AnalyticsActivityColumnsProps) {
   const t = useTranslations("analytics.telemetry");
+  const tInfo = useTranslations("analytics.design.info");
   const rows = telemetryDistribution(value);
   const stt = field === "stt_events";
   const label = (key: string) =>
@@ -41,6 +43,7 @@ export default function AnalyticsActivityColumns({
       title={t(stt ? "speechTitle" : "tokensTitle")}
       description={t(stt ? "speechDescription" : "tokensDescription")}
       icon={<ChartBarsIcon />}
+      info={valueInfo(value) ?? tInfo(stt ? "speech" : "tokens")}
       actions={<AnalyticsJourneyPeriod />}
     >
       {stt && (

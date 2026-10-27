@@ -75,6 +75,7 @@ export default function InstitutionsManager() {
   const { accessToken } = useAdminAuth();
   const [institutions, setInstitutions] = useState<InstitutionItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -112,14 +113,15 @@ export default function InstitutionsManager() {
     try {
       const data = await getAllInstitutions(accessToken);
       setInstitutions(data);
+      setHasLoaded(true);
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "Failed to load institutions.",
+        err instanceof ApiError ? err.message : m("institutionsLoadFailed"),
       );
     } finally {
       setLoading(false);
     }
-  }, [accessToken]);
+  }, [accessToken, m]);
 
   useEffect(() => {
     loadInstitutions();
@@ -309,18 +311,17 @@ export default function InstitutionsManager() {
       />
 
       <div className="mb-5">
-        <InstitutionMetrics
-          institutions={institutions}
-          loading={loading || !!error}
-        />
+        <InstitutionMetrics institutions={institutions} loading={!hasLoaded} />
       </div>
       <div className="axon-institutions axon-management-panel rounded-xl border border-brand-100 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-gray-900">
         {error && (
-          <div className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
-            {error}
+          <div
+            role="alert"
+            className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400"
+          >
+            {hasLoaded ? m("institutionsRefreshFailed") : error}
           </div>
         )}
-
 
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -376,10 +377,16 @@ export default function InstitutionsManager() {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {loading ? (
+              {loading && !hasLoaded ? (
                 <TableRow>
                   <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
                     Loading institutions…
+                  </TableCell>
+                </TableRow>
+              ) : !hasLoaded && error ? (
+                <TableRow>
+                  <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {m("institutionsLoadFailed")}
                   </TableCell>
                 </TableRow>
               ) : institutions.length === 0 ? (

@@ -28,6 +28,7 @@ export default function AnalyticsSafetyTrend({
   data,
 }: AnalyticsSafetyTrendProps) {
   const t = useTranslations("analytics.quality");
+  const tInfo = useTranslations("analytics.design.info");
   const common = useTranslations("analytics");
   const reporting = useAnalyticsPeriod();
   const [period, setPeriod] = useState<JourneyPeriod>("last7Days");
@@ -64,6 +65,7 @@ export default function AnalyticsSafetyTrend({
     <ComponentCard
       compact
       title={t("trendTitle")}
+      info={tInfo("safetyTrend")}
       description={t("trendDescription")}
       icon={<PieChartIcon />}
       actions={

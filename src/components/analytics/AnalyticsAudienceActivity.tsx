@@ -14,7 +14,7 @@ import { GroupIcon } from "@/icons";
 import { analyticsNumber } from "./analyticsData";
 import AnalyticsPeriodChart from "./AnalyticsPeriodChart";
 import AnalyticsPeriodMetrics from "./AnalyticsPeriodMetrics";
-import { metricHistory, metricTrend } from "./analyticsTrends";
+import { blockInfo, metricHistory, metricTrend } from "./analyticsTrends";
 import useTwoDayData from "./useTwoDayData";
 
 interface AnalyticsAudienceActivityProps {
@@ -25,6 +25,7 @@ export default function AnalyticsAudienceActivity({
   data,
 }: AnalyticsAudienceActivityProps) {
   const t = useTranslations("analytics");
+  const tInfo = useTranslations("analytics.design.info");
   const format = useFormatter();
   const reporting = useAnalyticsPeriod();
   const periods = [
@@ -94,6 +95,7 @@ export default function AnalyticsAudienceActivity({
       description={t("design.activeAudienceDescription")}
       className="flex h-full flex-col"
       icon={<GroupIcon />}
+      info={blockInfo(data, "active_audience") ?? tInfo("activeAudience")}
       actions={actions}
     >
       <div className="flex min-h-80 flex-1 flex-col justify-between">

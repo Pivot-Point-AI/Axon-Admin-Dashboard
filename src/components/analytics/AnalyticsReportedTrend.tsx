@@ -25,6 +25,7 @@ interface AnalyticsReportedTrendProps {
   snapshot?: unknown;
   series: { key: string; label: string; token: string }[];
   compactAxis?: boolean;
+  info?: string | null;
 }
 
 export default function AnalyticsReportedTrend({
@@ -34,6 +35,7 @@ export default function AnalyticsReportedTrend({
   snapshot,
   series,
   compactAxis,
+  info,
 }: AnalyticsReportedTrendProps) {
   const t = useTranslations("analytics.telemetry");
   const reporting = useAnalyticsPeriod();
@@ -71,6 +73,7 @@ export default function AnalyticsReportedTrend({
     <AnalyticsChartCard
       title={title}
       description={description}
+      info={info}
       icon={<TrendLineIcon />}
       actions={
         <AnalyticsJourneyPeriod

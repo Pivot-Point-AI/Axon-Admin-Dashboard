@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { ChartBarsIcon } from "@/icons";
 import type { MetricTrendData } from "./analyticsTrends";
@@ -19,6 +19,8 @@ interface AnalyticsPeriodChartProps {
   tall?: boolean;
 }
 
+const CHART_ANIMATION_MS = 700;
+
 // Plot only the reported aggregate windows. No daily history is interpolated.
 export default function AnalyticsPeriodChart({
   points,
@@ -31,6 +33,8 @@ export default function AnalyticsPeriodChart({
   const coordinates = useRef<{ x: number; y: number; value: number | null }[]>(
     [],
   );
+  const progressRef = useRef(1);
+  const drawRef = useRef<(() => void) | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const format = useFormatter();
   const t = useTranslations("analytics");
@@ -38,10 +42,11 @@ export default function AnalyticsPeriodChart({
   const activePoint = activeIndex === null ? null : points[activeIndex];
   // Nothing recorded for this period: say so instead of drawing an empty plot.
   const empty = points.every((point) => !point.value);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
     const draw = () => {
+      const progress = progressRef.current;
       const context = canvas.getContext("2d");
       if (!context) return;
       const { width, height } = canvas.getBoundingClientRect();
@@ -97,6 +102,8 @@ export default function AnalyticsPeriodChart({
           y + 4,
         );
       }
+      // Drop a label that would collide with the final one.
+      const labelStep = Math.ceil(points.length / 7);
       const positions = points.map((point, index) => {
         const fraction =
           variant === "bar"
@@ -114,17 +121,19 @@ export default function AnalyticsPeriodChart({
                 ? "start"
                 : "end"
               : "center";
+        const last = points.length - 1;
         if (
           points.length <= 8 ||
-          index % Math.ceil(points.length / 7) === 0 ||
-          index === points.length - 1
+          (index % labelStep === 0 && last - index >= labelStep / 2) ||
+          index === last
         )
           context.fillText(point.label, x, height - 8);
         return {
           x,
           y:
             padding.top +
-            chartHeight * (1 - Math.max(0, point.value ?? 0) / maximum),
+            chartHeight *
+              (1 - (Math.max(0, point.value ?? 0) / maximum) * progress),
           value: point.value,
         };
       });
@@ -236,6 +245,7 @@ export default function AnalyticsPeriodChart({
         context.stroke();
       }
     };
+    drawRef.current = draw;
     const resize = new ResizeObserver(draw);
     resize.observe(canvas);
     const appearance = new MutationObserver(draw);
@@ -249,6 +259,24 @@ export default function AnalyticsPeriodChart({
       appearance.disconnect();
     };
   }, [points, variant, accent, activeIndex]);
+  // Grow the plot in whenever the data changes; hovering must not replay it.
+  useLayoutEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      progressRef.current = 1;
+      drawRef.current?.();
+      return;
+    }
+    progressRef.current = 0;
+    drawRef.current?.();
+    const start = performance.now();
+    let frame = requestAnimationFrame(function step(now) {
+      const elapsed = Math.min(1, (now - start) / CHART_ANIMATION_MS);
+      progressRef.current = 1 - (1 - elapsed) ** 3;
+      drawRef.current?.();
+      if (elapsed < 1) frame = requestAnimationFrame(step);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [points, variant]);
   // The same reported values are available through pointer, touch, and keyboard input.
   return (
     <div className={`relative ${fillHeight ? "h-full min-h-64" : ""}`}>

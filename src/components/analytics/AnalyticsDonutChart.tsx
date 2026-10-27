@@ -1,6 +1,7 @@
 "use client";
 
 import CountUpText from "@/components/common/CountUpText";
+import AnalyticsEmptyState from "./AnalyticsEmptyState";
 import AnalyticsSliceHover from "./AnalyticsSliceHover";
 import AnalyticsSliceLabels from "./AnalyticsSliceLabels";
 import { useFormatter, useTranslations } from "next-intl";
@@ -33,6 +34,7 @@ export default function AnalyticsDonutChart({
   const t = useTranslations("analytics");
   const sum = rows.reduce((value, row) => value + row.count, 0);
   const total = Math.max(sum, reportedTotal ?? 0);
+  if (total <= 0) return <AnalyticsEmptyState />;
   const segments = rows.reduce(
     (result, row, index) => {
       const end = result.angle + (total > 0 ? (row.count / total) * 360 : 0);

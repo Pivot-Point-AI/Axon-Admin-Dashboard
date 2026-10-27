@@ -12,10 +12,13 @@ interface AnalyticsMetricCardProps {
   description?: string;
   icon: ReactNode;
   progress?: number;
+  /** A stacked bar for a count split into parts; widths are shares of the whole. */
+  segments?: { label: string; share: number; className: string }[];
   children?: ReactNode;
   trend?: MetricTrendData | null;
   trendVariant?: "line" | "bar";
   lowerIsBetter?: boolean;
+  info?: string | null;
 }
 
 export default function AnalyticsMetricCard({
@@ -26,10 +29,12 @@ export default function AnalyticsMetricCard({
   description = "",
   icon,
   progress,
+  segments,
   children,
   trend,
   trendVariant = "line",
   lowerIsBetter = false,
+  info,
 }: AnalyticsMetricCardProps) {
   const metricValue = (
     <p className="shrink-0 text-lg font-bold tracking-tight text-gray-950 tabular-nums sm:text-xl dark:text-white">
@@ -54,6 +59,7 @@ export default function AnalyticsMetricCard({
         icon={icon}
         badge={badge}
         iconStart={iconStart}
+        info={info}
       />
       <div className="mt-2.5 flex min-w-0 flex-nowrap items-center gap-x-1.5">
         {metricValue}
@@ -68,6 +74,30 @@ export default function AnalyticsMetricCard({
         <p className="mt-2 text-theme-xs leading-5 text-gray-500 dark:text-gray-400">
           {description}
         </p>
+      )}
+      {segments && segments.some((segment) => segment.share > 0) && (
+        <div className="mt-auto flex items-center gap-3 pt-2">
+          <div
+            role="img"
+            aria-label={segments
+              .map((segment) => `${segment.label} ${segment.share}%`)
+              .join(", ")}
+            title={segments
+              .map((segment) => `${segment.label}: ${segment.share}%`)
+              .join(" · ")}
+            className="flex h-1.5 flex-1 gap-px overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800"
+          >
+            {segments.map((segment) => (
+              <div
+                key={segment.label}
+                className={`axon-grow-x h-full ${segment.className}`}
+                style={{
+                  width: `${Math.min(100, Math.max(0, segment.share))}%`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
       )}
       {progress != null &&
         !(

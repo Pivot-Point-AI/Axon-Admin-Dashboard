@@ -1,5 +1,4 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+import { setRequestLocale } from "next-intl/server";
 import LogsManager from "@/components/logs/LogsManager";
 import { Metadata } from "next";
 
@@ -15,10 +14,8 @@ export default async function LogsPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("managementDesign");
   return (
-    <div className="axon-management">
-      <PageBreadcrumb pageTitle="Logs" description={t("logsSubtitle")} />
+    <div className="axon-management lg:-my-5">
       <LogsManager />
     </div>
   );

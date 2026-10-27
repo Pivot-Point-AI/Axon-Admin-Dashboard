@@ -19,6 +19,7 @@ interface AnalyticsJourneysProps {
 
 export default function AnalyticsJourneys({ data }: AnalyticsJourneysProps) {
   const t = useTranslations("analytics");
+  const tInfo = useTranslations("analytics.design.info");
   const [query, setQuery] = useState("");
 
   return (
@@ -44,6 +45,7 @@ export default function AnalyticsJourneys({ data }: AnalyticsJourneysProps) {
             title={t("design.journeyDetailTitle")}
             description={t("design.journeyDetailDescription")}
             icon={<TableIcon />}
+            info={tInfo("journeyDetail")}
             actions={
               <AnalyticsCardActions>
                 <div className="w-full sm:w-64">

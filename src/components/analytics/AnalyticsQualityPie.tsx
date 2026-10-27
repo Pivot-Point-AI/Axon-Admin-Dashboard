@@ -1,5 +1,6 @@
 "use client";
 
+import { valueInfo } from "./analyticsTrends";
 import { useFormatter, useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
 import { ChartBarsIcon, PieChartIcon } from "@/icons";
@@ -28,6 +29,7 @@ export default function AnalyticsQualityPie({
   value,
 }: AnalyticsQualityPieProps) {
   const t = useTranslations("analytics.quality");
+  const tInfo = useTranslations("analytics.design.info");
   const format = useFormatter();
   const confidence = field === "intent_confidence_buckets";
   const { rows: all, total } = qualityDistribution(field, value);
@@ -104,6 +106,7 @@ export default function AnalyticsQualityPie({
     <ComponentCard
       compact
       title={title}
+      info={valueInfo(value) ?? tInfo(confidence ? "confidence" : "intent")}
       description={t(
         confidence ? "confidenceDescription" : "intentDescription",
       )}

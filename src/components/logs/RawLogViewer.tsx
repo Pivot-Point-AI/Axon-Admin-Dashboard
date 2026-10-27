@@ -6,11 +6,14 @@ import type { LogEventEntry } from "@/lib/api/logs";
 import RawLogRow from "./RawLogRow";
 import LogEmptyState from "./LogEmptyState";
 import { logDateBounds } from "./logDates";
+import LogTerminalRow from "./LogTerminalRow";
 
 export default function RawLogViewer({
   entries,
+  terminal = false,
 }: {
   entries: LogEventEntry[];
+  terminal?: boolean;
 }) {
   const t = useTranslations("fixes");
   const labels = useTranslations("logViewer");
@@ -25,6 +28,24 @@ export default function RawLogViewer({
     timeZoneName: "short",
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   } as const;
+
+  if (terminal)
+    return (
+      <div
+        aria-label={t("rawLogs")}
+        className="font-mono min-h-full bg-white py-3 text-theme-xs leading-6 text-gray-700 dark:bg-terminal-panel dark:text-gray-300"
+      >
+        {entries.length ? (
+          <div className="min-w-192">
+            {entries.map((entry) => (
+              <LogTerminalRow key={entry.id} entry={entry} />
+            ))}
+          </div>
+        ) : (
+          <LogEmptyState />
+        )}
+      </div>
+    );
 
   if (entries.length === 0) {
     return (

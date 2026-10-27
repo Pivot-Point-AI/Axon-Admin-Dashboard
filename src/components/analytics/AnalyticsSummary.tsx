@@ -16,6 +16,7 @@ import AnalyticsMetrics, { AnalyticsMetricList } from "./AnalyticsMetrics";
 import AnalyticsAudienceActivity from "./AnalyticsAudienceActivity";
 import AnalyticsLanguageBreakdown from "./AnalyticsLanguageBreakdown";
 import AnalyticsBreakdown from "./AnalyticsBreakdown";
+import AnalyticsActivityBreakdown from "./AnalyticsActivityBreakdown";
 import AnalyticsDataTable from "./AnalyticsDataTable";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
 import AnalyticsAcquisition from "./AnalyticsAcquisition";
@@ -296,34 +297,12 @@ export default function AnalyticsSummary({
               <>
                 <AnalyticsCardScope section="chats" data={data}>
                   {(d) => (
-                    <AnalyticsBreakdown
-                      field="peak_activity_hours"
-                      value={d.peak_activity_hours}
+                    <AnalyticsActivityBreakdown
+                      hours={d.peak_activity_hours}
+                      weekdays={d.activity_by_day_of_week}
                     />
                   )}
                 </AnalyticsCardScope>
-                <AnalyticsCardScope section="chats" data={data}>
-                  {(d) => (
-                    <AnalyticsBreakdown
-                      field="activity_by_day_of_week"
-                      value={d.activity_by_day_of_week}
-                    />
-                  )}
-                </AnalyticsCardScope>
-                <div className="grid items-stretch gap-5 xl:grid-cols-2">
-                  {hasComposition && (
-                    <AnalyticsCardScope section="chats" data={data}>
-                      {(d) => (
-                        <AnalyticsComposition section={section} data={d} />
-                      )}
-                    </AnalyticsCardScope>
-                  )}
-                  <AnalyticsMetricList
-                    title="conversationDetails"
-                    fields={metricGroups.chats?.[0].fields ?? []}
-                    data={data}
-                  />
-                </div>
               </>
             )}
             {section !== "chats" && groups.length > 0 && (

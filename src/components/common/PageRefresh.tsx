@@ -6,6 +6,22 @@ import { useFormatter, useTranslations } from "next-intl";
 import Button from "@/components/ui/button/Button";
 import { CalenderIcon, RefreshIcon } from "@/icons";
 
+const getActionSlot = () => document.querySelector("[data-page-actions]");
+const getServerActionSlot = () => null;
+
+function subscribeToActionSlot(onChange: () => void) {
+  let current = getActionSlot();
+  const observer = new MutationObserver(() => {
+    const next = getActionSlot();
+    if (next !== current) {
+      current = next;
+      onChange();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+  return () => observer.disconnect();
+}
+
 interface PageRefreshProps {
   loading: boolean;
   error?: boolean;
@@ -24,9 +40,9 @@ export default function PageRefresh({
   const t = useTranslations("dashboardAnalytics");
   const format = useFormatter();
   const slot = useSyncExternalStore(
-    () => () => {},
-    () => document.querySelector("[data-page-actions]"),
-    () => null,
+    subscribeToActionSlot,
+    getActionSlot,
+    getServerActionSlot,
   );
   const [wasLoading, setWasLoading] = useState(loading);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -56,6 +72,9 @@ export default function PageRefresh({
                   day: "numeric",
                   month: "short",
                   year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
                 })}
               </time>
             ) : (

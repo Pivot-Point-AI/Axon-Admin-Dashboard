@@ -14,6 +14,7 @@ export default function AnalyticsActivityChannels({
   value,
 }: AnalyticsActivityChannelsProps) {
   const t = useTranslations("analytics.telemetry");
+  const tInfo = useTranslations("analytics.design.info");
   const format = useFormatter();
   const rows = telemetryDistribution(value).filter(
     (row) => !["total", "total_count"].includes(row.key),
@@ -30,6 +31,7 @@ export default function AnalyticsActivityChannels({
   return (
     <AnalyticsChartCard
       title={t("channelsTitle")}
+      info={tInfo("channels")}
       description={t("channelsDescription")}
       icon={<PieChartIcon />}
       actions={<AnalyticsJourneyPeriod />}

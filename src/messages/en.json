@@ -56,6 +56,45 @@
       "string": "Text"
     }
   },
+  "logTerminal": {
+    "hideSessions": "Hide sessions",
+    "showSessions": "Show sessions",
+    "fullScreen": "Full screen",
+    "exitFullScreen": "Exit full screen",
+    "copy": "Copy",
+    "download": "Download",
+    "copied": "Logs copied",
+    "copyFailed": "Could not copy logs. Please try again.",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "load": "Load",
+    "loadingHistory": "Loading…",
+    "filters": "Filters",
+    "sessionId": "Session ID",
+    "userId": "User ID",
+    "flowId": "Flow ID",
+    "historyPrompt": "Choose a date range and load the recorded logs.",
+    "sessions": "Sessions",
+    "allSessions": "All Sessions (Live)",
+    "searchSessions": "Search sessions…",
+    "loadingSessions": "Loading sessions…",
+    "noSessions": "No sessions to display",
+    "sessionsFailed": "Sessions could not be loaded. Try refreshing the list.",
+    "refreshSessions": "Refresh sessions",
+    "views": "Log views",
+    "realtime": "Real-Time",
+    "history": "History",
+    "sessionLabel": "Session: {session}",
+    "allSessionLabel": "Session: All",
+    "states": {
+      "connecting": "Connecting…",
+      "live": "Connected",
+      "reconnecting": "Reconnecting…",
+      "offline": "Disconnected",
+      "unauthorized": "Not authorized",
+      "paused": "Paused"
+    }
+  },
   "logViewer": {
     "dateTime": "Date & time",
     "dateRange": "Log dates on this page",
@@ -82,6 +121,7 @@
     "goToPage": "Go to page {page}"
   },
   "common": {
+    "moreInfo": "More information",
     "breadcrumb": "Breadcrumb",
     "home": "Home",
     "edit": "Edit",
@@ -122,7 +162,9 @@
   "header": {
     "sessionLog": "Session log",
     "searchPlaceholder": "Search institutions, licenses, settings...",
-    "toggleSidebar": "Toggle Sidebar"
+    "toggleSidebar": "Toggle Sidebar",
+    "hideSidebar": "Hide sidebar",
+    "showSidebar": "Show sidebar"
   },
   "userDropdown": {
     "accountMenu": "Account menu for {name}",
@@ -181,6 +223,8 @@
     "messagesSubtitle": "Review and customize automated voice and chat message templates across all supported languages.",
     "languagesSubtitle": "Configure supported languages and designate the default primary language for customer conversations.",
     "institutionsSubtitle": "Manage financial institutions, issue license keys, and track active subscription expirations.",
+    "institutionsLoadFailed": "Institutions could not be loaded. Please try again.",
+    "institutionsRefreshFailed": "Refresh failed. Previously loaded institutions are still shown. Please try again.",
     "flowsSubtitle": "Enable or disable banking task flows and conversational intent journeys for users.",
     "masterDataSubtitle": "Maintain reference data for partner banks, billers, card types, and donation organizations.",
     "profileSubtitle": "View your administrator identity, active credentials, and assigned dashboard permissions.",
@@ -317,6 +361,9 @@
     "flowsInitiatedDescription": "Banking tasks started across all conversations",
     "flowCompletionDescription": "Initiated tasks that reached completion",
     "flowAbandonmentDescription": "Initiated tasks that ended before completion",
+    "flowSegmentCompleted": "Completed",
+    "flowSegmentAbandoned": "Abandoned",
+    "flowSegmentInProgress": "In progress",
     "allTime": "All Time",
     "completed": "Completed",
     "abandoned": "Abandoned",
@@ -734,7 +781,7 @@
         "p95_response_time": "95% of responses finish within this time.",
         "slow_turns_count_above_1500ms": "Responses that exceeded 1,500 ms.",
         "turn_success_count": "Interactions completed successfully.",
-        "turn_failed_count": "Interactions that failed or raised errors.",
+        "turn_failed_count": "Turns aborted by an error. Logged errors are counted separately.",
         "total_tokens": "Total tokens reported for this period.",
         "recorded_errors": "Error records available in this report."
       },
@@ -759,7 +806,39 @@
       },
       "visibleRecords": "Showing {visible} of {total} records",
       "chartNavigation": "Interactive chart. Hover or touch to inspect a value. Use the left and right arrow keys to move between values, and Escape to dismiss.",
-      "inspectChart": "Hover, tap, or focus a bar to see its value"
+      "inspectChart": "Hover, tap, or focus a bar to see its value",
+      "activityTitle": "Activity",
+      "info": {
+        "confidence": "How sure the assistant was when it identified what each customer wanted. Many low-confidence turns mean requests are being misread and the assistant may need more training examples.",
+        "intent": "The topics customers ask about most, as recognised by the assistant. Use it to see what to improve or automate first.",
+        "responseTrend": "How response time changes over the selected period. A rising line means customers are waiting longer and the slow stages are worth investigating.",
+        "newUsers": "Counts people who contacted the assistant for the first time in each period. Use it to see whether your channels are bringing in new customers.",
+        "activeAudience": "Unique users who were active on a given day, week or month. Daily, weekly and monthly figures show how broad and how regular your audience is.",
+        "language": "Share of conversations by the language customers used. Use it to decide which languages deserve better coverage.",
+        "activity": "When customers use the assistant. Switch between the 24-hour view to find peak hours and the weekday view to find the busiest days.",
+        "journeyTrends": "How many journeys were started, completed and abandoned over time. A widening gap between started and completed means customers are dropping out.",
+        "journeysByCategory": "How started journeys are split across categories such as transfers, balance checks and card services. It shows what customers ask for most.",
+        "completionVsAbandonment": "For each category, the share of journeys customers finished compared with those they left unfinished. Low completion highlights where the experience needs work.",
+        "journeyDetail": "A full breakdown of every journey with its outcomes: started, completed, cancelled, failed and abandoned. Search to find a specific journey.",
+        "safetyTrend": "How often safety checks blocked or flagged a message over time. A sudden rise can signal misuse or a gap in the assistant's guardrails.",
+        "slowInteractions": "The slowest individual responses in the period, with where the time went. Use them to find and fix the causes of delay.",
+        "latencyOverview": "Response time percentiles. P50 is the typical response, while P90 and P95 show how slow the slower responses are for some customers.",
+        "actions": "Actions the assistant carried out on behalf of customers, such as sending a link or starting a flow, and whether each succeeded.",
+        "channels": "How customers reach the assistant: voice or text. Use it to see which channel to prioritise.",
+        "errors": "Errors recorded while serving customers, grouped by type. Frequent repeats point to a problem worth fixing first.",
+        "outcomes": "How conversations ended, for example resolved, handed over or dropped. A quick view of overall success.",
+        "stage": "Average time spent in each processing step, such as speech recognition and AI generation. The longest step is the best place to optimise.",
+        "distribution": "How response times are spread across fast and slow ranges. A long tail on the slow side means some customers wait much longer than average.",
+        "speech": "Results of speech recognition: transcribed, empty, failed or discarded as noise. Many empty or failed events suggest audio quality problems.",
+        "tokens": "Language model usage, split into input and output tokens. Tokens drive cost, so this shows what you are consuming.",
+        "audienceHealth": "Key audience and retention measures: how many users return, how often they come back, and how many have gone quiet.",
+        "conversationDetails": "Message and session counts for the selected period, including sessions where customers actually engaged and sessions that stayed empty.",
+        "journeyDetails": "Counts of journeys that were cancelled, failed or abandoned, and how many steps completed journeys needed.",
+        "totalUsers": "Unique customers who have used the assistant in the selected period, compared with the previous period.",
+        "totalSessions": "Every conversation started in the selected period, including ones that did not lead to a message.",
+        "dailyActiveUsers": "Unique customers active today, compared with yesterday. The bracketed figure is the previous value.",
+        "activeSessions": "Conversations that are open right now, compared with the busiest moment today."
+      }
     },
     "telemetry": {
       "processingTitle": "Processing Performance",
@@ -806,6 +885,8 @@
       "errorsTitle": "Recorded Errors",
       "errorsDescription": "Errors over time with error type breakdown.",
       "noErrors": "No recorded errors for this period.",
+      "errorsTruncated": "The API returned details for {shown} of {total} recorded errors. Type counts cover these records; the remaining errors are shown as Type unavailable.",
+      "errorsHistoryIncomplete": "The API provides only a sample of error records for this period. A complete timeline requires daily counts or the full error history.",
       "errorDistribution": "Error Distribution",
       "stages": {
         "response": "Response Time",
@@ -823,12 +904,17 @@
         "ai_generation": "AI Generation",
         "response": "Response Time"
       },
-      "labels": { "voice": "Voice", "audio": "Voice", "text": "Text" },
+      "labels": {
+        "voice": "Voice",
+        "audio": "Voice",
+        "text": "Text"
+      },
       "events": {
         "transcribed": "Transcribed",
         "empty": "Empty",
         "failed": "Failed",
-        "garbage_dropped": "Garbage Dropped"
+        "garbage_dropped": "Garbage Dropped",
+        "unknown": "Unknown"
       },
       "tokens": {
         "total": "Total Tokens",
@@ -846,6 +932,7 @@
         "add_biller": "Add Biller"
       },
       "errorLabels": {
+        "unknown": "Type unavailable",
         "total": "Total Errors",
         "api": "API errors",
         "validation": "Validation Errors",
@@ -955,8 +1042,6 @@
       "cancelled": "Cancelled",
       "failed": "Failed",
       "initialized": "Started",
-      "completion_rate_pct": "Completion Rate",
-      "avg_steps": "Average Steps",
       "completion_rate_pct": "Completion Rate",
       "avg_steps": "Average Steps",
       "abandoned": "Abandoned",

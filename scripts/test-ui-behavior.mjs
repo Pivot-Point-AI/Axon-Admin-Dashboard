@@ -143,6 +143,14 @@ function harness(overrides = {}) {
       for (const effect of effects.splice(0)) await effect();
       await new Promise((resolve) => setImmediate(resolve));
     },
+    async runStrictEffects() {
+      for (const effect of effects.splice(0)) {
+        const cleanup = effect();
+        cleanup?.();
+        effect();
+      }
+      await new Promise((resolve) => setImmediate(resolve));
+    },
     render(component, props) {
       let result;
       let count = 0;
@@ -170,6 +178,442 @@ const button = (tree, label) =>
       element.type === "@/components/ui/button/Button" &&
       element.props.children === label,
   );
+
+test("shared refresh follows heading replacement and keeps its click handler connected", () => {
+  const previousDocument = globalThis.document;
+  const previousObserver = globalThis.MutationObserver;
+  const firstSlot = {};
+  const nextSlot = {};
+  let slot = firstSlot;
+  let observerCallback;
+  let subscribe;
+  let disconnected = false;
+  let changes = 0;
+  let clicks = 0;
+  try {
+    globalThis.document = { body: {}, querySelector: () => slot };
+    globalThis.MutationObserver = class {
+      constructor(callback) {
+        observerCallback = callback;
+      }
+      observe() {}
+      disconnect() {
+        disconnected = true;
+      }
+    };
+    const runtime = harness({
+      react: {
+        useState: (initial) => [initial, () => {}],
+        useSyncExternalStore: (listen, read) => {
+          subscribe = listen;
+          return read();
+        },
+      },
+      "react-dom": { createPortal: (control, target) => ({ control, target }) },
+    });
+    const Refresh = runtime.load(
+      "src/components/common/PageRefresh.tsx",
+    ).default;
+    const props = { loading: false, onRefresh: () => clicks++ };
+    assert.equal(Refresh(props).target, firstSlot);
+    const cleanup = subscribe(() => changes++);
+    observerCallback();
+    assert.equal(changes, 0);
+    slot = nextSlot;
+    observerCallback();
+    assert.equal(changes, 1);
+    const refreshed = Refresh(props);
+    assert.equal(refreshed.target, nextSlot);
+    elements(refreshed.control)
+      .find((node) => node.props.title === messages.dashboardAnalytics.refresh)
+      .props.onClick();
+    assert.equal(clicks, 1);
+    slot = null;
+    observerCallback();
+    assert.equal(Refresh(props), null);
+    cleanup();
+    assert.equal(disconnected, true);
+  } finally {
+    globalThis.document = previousDocument;
+    globalThis.MutationObserver = previousObserver;
+  }
+});
+
+test("refresh reads bypass caches and use a bounded timeout without changing writes", async () => {
+  const previousFetch = globalThis.fetch;
+  const previousTimeout = AbortSignal.timeout;
+  const calls = [];
+  const timeouts = [];
+  try {
+    AbortSignal.timeout = (duration) => {
+      timeouts.push(duration);
+      return new AbortController().signal;
+    };
+    globalThis.fetch = async (url, init) => {
+      calls.push({ url, ...init });
+      return new Response(JSON.stringify({ revision: calls.length }), {
+        headers: { "content-type": "application/json" },
+      });
+    };
+    const runtime = harness();
+    const { apiRequest } = runtime.load("src/lib/api/client.ts");
+    const first = await apiRequest("/institutions", {
+      bearerToken: "test-token",
+    });
+    const refreshed = await apiRequest("/institutions", {
+      bearerToken: "test-token",
+    });
+    assert.equal(first.revision, 1);
+    assert.equal(refreshed.revision, 2);
+    assert.ok(calls.every((call) => call.cache === "no-store"));
+    assert.equal(calls[1].headers.Authorization, "Bearer test-token");
+    assert.deepEqual(timeouts, [30_000, 30_000]);
+    await apiRequest("/institutions/create", {
+      method: "POST",
+      body: {},
+      successNotification: false,
+    });
+    assert.equal(calls.at(-1).cache, undefined);
+    assert.equal(timeouts.length, 2);
+  } finally {
+    globalThis.fetch = previousFetch;
+    AbortSignal.timeout = previousTimeout;
+  }
+});
+
+test("stalled refreshes become retryable timeout errors while navigation cancellation stays silent", async () => {
+  const previousFetch = globalThis.fetch;
+  const previousTimeout = AbortSignal.timeout;
+  let timeout = new AbortController();
+  const notifications = [];
+  try {
+    AbortSignal.timeout = () => timeout.signal;
+    globalThis.fetch = (url, init) =>
+      new Promise((resolve, reject) => {
+        init.signal.addEventListener(
+          "abort",
+          () => reject(init.signal.reason),
+          { once: true },
+        );
+      });
+    const runtime = harness({
+      "@/lib/feedback": { notify: (value) => notifications.push(value) },
+    });
+    const { apiRequest, ApiError } = runtime.load("src/lib/api/client.ts");
+    const stalled = apiRequest("/institutions");
+    timeout.abort(new DOMException("Timed out", "TimeoutError"));
+    await assert.rejects(
+      stalled,
+      (error) => error instanceof ApiError && error.status === 408,
+    );
+    assert.equal(notifications[0].message, messages.apiErrors.timeout);
+    notifications.length = 0;
+    timeout = new AbortController();
+    const navigation = new AbortController();
+    const canceled = apiRequest("/institutions", { signal: navigation.signal });
+    navigation.abort();
+    await assert.rejects(canceled, { name: "AbortError" });
+    assert.equal(notifications.length, 0);
+    let bodyStarted;
+    const started = new Promise((resolve) => {
+      bodyStarted = resolve;
+    });
+    globalThis.fetch = async (url, init) => ({
+      ok: true,
+      headers: new Headers({ "content-type": "application/json" }),
+      json: () =>
+        new Promise((resolve, reject) => {
+          bodyStarted();
+          init.signal.addEventListener(
+            "abort",
+            () => reject(init.signal.reason),
+            { once: true },
+          );
+        }),
+    });
+    const bodyTimeout = apiRequest("/institutions");
+    await started;
+    timeout.abort(new DOMException("Timed out", "TimeoutError"));
+    await assert.rejects(bodyTimeout, (error) => error.status === 408);
+  } finally {
+    globalThis.fetch = previousFetch;
+    AbortSignal.timeout = previousTimeout;
+  }
+});
+
+test("analytics card scopes hide stale ranges and expose retry after a failed request", async () => {
+  const pending = [];
+  const parent = { filters: { period: "last_7_days" }, period: "last7Days" };
+  const runtime = harness({
+    "./AnalyticsPeriodContext": {
+      AnalyticsPeriodContext: { Provider: "provider" },
+      useAnalyticsPeriod: () => parent,
+    },
+    "@/lib/api/analytics": {
+      getAnalyticsSummary: () =>
+        new Promise((resolve, reject) => pending.push({ resolve, reject })),
+    },
+  });
+  const Scope = runtime.load(
+    "src/components/analytics/AnalyticsCardScope.tsx",
+  ).default;
+  const render = () =>
+    runtime.render(Scope, {
+      section: "logs",
+      data: { recorded_errors: 99 },
+      children: (data) =>
+        React.createElement("output", null, data.recorded_errors),
+    });
+  const displayed = (tree) =>
+    elements(tree).find((element) => element.type === "output")?.props.children;
+  let tree = render();
+  assert.equal(displayed(tree), 99);
+  await runtime.runEffects();
+  tree.props.value.onChange("today");
+  tree = render();
+  assert.equal(displayed(tree), undefined);
+  await runtime.runEffects();
+  pending.at(-1).resolve({ recorded_errors: 3 });
+  await new Promise((resolve) => setImmediate(resolve));
+  tree = render();
+  assert.equal(displayed(tree), 3);
+  await runtime.runEffects();
+  tree.props.value.onChange("yesterday");
+  tree = render();
+  assert.equal(displayed(tree), undefined);
+  await runtime.runEffects();
+  pending.at(-1).reject(new Error("Unavailable"));
+  await new Promise((resolve) => setImmediate(resolve));
+  tree = render();
+  assert.equal(displayed(tree), undefined);
+  button(tree, messages.analytics.retry).props.onClick();
+  tree = render();
+  await runtime.runEffects();
+  pending.at(-1).resolve({ recorded_errors: 7 });
+  await new Promise((resolve) => setImmediate(resolve));
+  tree = render();
+  assert.equal(displayed(tree), 7);
+});
+
+test("all-time errors show the full total and never chart a capped sample as complete history", () => {
+  const runtime = harness({
+    "./useDailyAnalyticsHistory": {
+      __esModule: true,
+      default: () => ({ points: [], loading: false, failed: false }),
+    },
+    "./AnalyticsPeriodContext": {
+      useAnalyticsPeriod: () => ({
+        filters: { period: "all_time" },
+        period: "allTime",
+      }),
+    },
+  });
+  const Errors = runtime.load(
+    "src/components/analytics/AnalyticsActivityErrors.tsx",
+  ).default;
+  const tree = runtime.render(Errors, {
+    data: {
+      top_kpis: { recognized_errors: { value: 130 } },
+      errors: [
+        { error: "Request timed out.", timestamp: "2026-10-15T11:10:00Z" },
+        ...Array.from({ length: 9 }, () => ({
+          error: "503 Server Error",
+          timestamp: "2026-10-16T10:00:00Z",
+        })),
+      ],
+    },
+  });
+  assert.equal(
+    elements(tree).find((node) => node.type === "strong").props.children,
+    "130",
+  );
+  assert.equal(
+    elements(tree).some((node) => node.type?.name === "AnalyticsTrendChart"),
+    false,
+  );
+  const ranking = elements(tree).find(
+    (node) => node.type?.name === "AnalyticsRankingChart",
+  );
+  assert.equal(
+    ranking.props.rows.find((row) => row.key === "unknown").count,
+    120,
+  );
+  assert.equal(
+    ranking.props.rows.reduce((sum, row) => sum + row.count, 0),
+    130,
+  );
+  assert.ok(
+    elements(tree).some(
+      (node) =>
+        node.props.description ===
+        messages.analytics.telemetry.errorsHistoryIncomplete,
+    ),
+  );
+});
+
+test("daily analytics requests start once per date during development effect replay", async () => {
+  const requested = [];
+  const runtime = harness({
+    "@/lib/api/analytics": {
+      getAnalyticsSummary: async (section, token, filters) => {
+        requested.push(filters.date);
+        return { recognized_errors: [] };
+      },
+    },
+  });
+  const Hook = runtime.load(
+    "src/components/analytics/useDailyAnalyticsHistory.ts",
+  ).default;
+  const snapshot = {};
+  const render = () =>
+    runtime.render(
+      () =>
+        Hook(
+          "logs",
+          {
+            start_date: "2026-10-20",
+            end_date: "2026-10-26",
+          },
+          [],
+          snapshot,
+        ),
+      {},
+    );
+  assert.equal(render().loading, true);
+  await runtime.runStrictEffects();
+  assert.equal(requested.length, 7);
+  assert.equal(new Set(requested).size, 7);
+  assert.equal(render().loading, false);
+});
+
+test("all-time error cards load dated summaries and replace the sample with reconciled history", async () => {
+  const requested = [];
+  let today;
+  const runtime = harness({
+    "@/lib/api/analytics": {
+      getAnalyticsSummary: async (section, token, filters) => {
+        requested.push(filters);
+        return {
+          recorded_errors: !filters.date || filters.date === today ? 130 : 0,
+          errors: [],
+        };
+      },
+    },
+  });
+  const periods = runtime.load("src/components/analytics/analyticsPeriods.ts");
+  today = periods.periodFilters("today").start_date;
+  const start = periods.periodFilters("last7Days").start_date;
+  const snapshot = {
+    recorded_errors: 130,
+    errors: [{ timestamp: `${start}T12:00:00Z` }],
+  };
+  const Hook = runtime.load(
+    "src/components/analytics/useDailyAnalyticsHistory.ts",
+  ).default;
+  const render = () =>
+    runtime.render(
+      () => Hook("logs", { period: "all_time" }, [], snapshot),
+      {},
+    );
+  assert.equal(render().loading, true);
+  await runtime.runStrictEffects();
+  const result = render();
+  assert.equal(result.loading, false);
+  assert.equal(result.failed, false);
+  assert.equal(result.points.length, 7);
+  assert.equal(
+    result.points.reduce((sum, point) => sum + point.total, 0),
+    130,
+  );
+  assert.equal(requested.filter((filters) => filters.date).length, 7);
+});
+
+test("error totals stay visible while history loads or fails, and the history panel exposes retry", () => {
+  let retryCount = 0;
+  const history = {
+    points: [],
+    loading: true,
+    failed: false,
+    retry: () => retryCount++,
+  };
+  const runtime = harness({
+    "./useDailyAnalyticsHistory": { __esModule: true, default: () => history },
+    "./AnalyticsPeriodContext": {
+      useAnalyticsPeriod: () => ({
+        filters: { period: "all_time" },
+        period: "allTime",
+      }),
+    },
+  });
+  const Errors = runtime.load(
+    "src/components/analytics/AnalyticsActivityErrors.tsx",
+  ).default;
+  const render = () =>
+    runtime.render(Errors, { data: { recorded_errors: 130, errors: [] } });
+  let tree = render();
+  assert.equal(
+    elements(tree).find((node) => node.type === "strong").props.children,
+    "130",
+  );
+  assert.equal(
+    elements(tree).find((node) => node.type?.name === "AnalyticsHistoryState")
+      .props.loading,
+    true,
+  );
+  history.loading = false;
+  history.failed = true;
+  tree = render();
+  assert.equal(
+    elements(tree).find((node) => node.type === "strong").props.children,
+    "130",
+  );
+  const panel = elements(tree).find(
+    (node) => node.type?.name === "AnalyticsHistoryState",
+  );
+  assert.equal(panel.props.failed, true);
+  panel.props.onRetry();
+  assert.equal(retryCount, 1);
+  const ranking = elements(tree).find(
+    (node) => node.type?.name === "AnalyticsRankingChart",
+  );
+  assert.equal(
+    ranking.props.rows.reduce((sum, row) => sum + row.count, 0),
+    130,
+  );
+});
+
+test("retrying failed daily history starts a fresh request and clears the failure", async () => {
+  let failing = true;
+  const runtime = harness({
+    "@/lib/api/analytics": {
+      getAnalyticsSummary: async () => {
+        if (failing) throw new Error("Unavailable");
+        return { recorded_errors: 3, errors: [] };
+      },
+    },
+  });
+  const Hook = runtime.load(
+    "src/components/analytics/useDailyAnalyticsHistory.ts",
+  ).default;
+  const snapshot = {};
+  const render = () =>
+    runtime.render(
+      () => Hook("logs", { date: "2026-10-21" }, [], snapshot),
+      {},
+    );
+  render();
+  await runtime.runStrictEffects();
+  const failed = render();
+  assert.equal(failed.failed, true);
+  failing = false;
+  failed.retry();
+  assert.equal(render().loading, true);
+  await runtime.runEffects();
+  const recovered = render();
+  assert.equal(recovered.failed, false);
+  assert.equal(recovered.loading, false);
+  assert.equal(recovered.points[0].total, 3);
+});
 
 test("date-time picker blocks past values and accepts a future value", () => {
   const runtime = harness();
@@ -207,6 +651,85 @@ test("date-time picker blocks past values and accepts a future value", () => {
   tree = render();
   button(tree, messages.fixes.saveDate).props.onClick();
   assert.deepEqual(saved, [future]);
+});
+
+test("institution refresh preserves the table and metrics during loading and failure, then recovers", async () => {
+  const requests = [];
+  const runtime = harness({
+    "@/lib/api/institutions": {
+      getAllInstitutions: () =>
+        new Promise((resolve, reject) => requests.push({ resolve, reject })),
+    },
+  });
+  const Manager = runtime.load(
+    "src/components/institutions/InstitutionsManager.tsx",
+  ).default;
+  const render = () => runtime.render(Manager);
+  const metrics = (tree) =>
+    elements(tree).find((node) => node.type?.name === "InstitutionMetrics")
+      .props;
+  const refresh = (tree) =>
+    elements(tree).find(
+      (node) => node.type === "@/components/common/PageRefresh",
+    ).props;
+  const item = {
+    institution_id: "bank-1",
+    institution_name: "Test Bank",
+    is_active: true,
+    license_expires_at: null,
+  };
+  render();
+  await runtime.runEffects();
+  requests[0].resolve([item]);
+  await new Promise((resolve) => setImmediate(resolve));
+  let tree = render();
+  assert.equal(metrics(tree).loading, false);
+  assert.deepEqual(metrics(tree).institutions, [item]);
+  const failedRefresh = refresh(tree).onRefresh();
+  tree = render();
+  assert.equal(refresh(tree).loading, true);
+  assert.equal(metrics(tree).loading, false);
+  assert.ok(elements(tree).some((node) => node.key === "bank-1"));
+  requests.at(-1).reject(new Error("Backend failure"));
+  await failedRefresh;
+  tree = render();
+  assert.equal(refresh(tree).error, true);
+  assert.equal(metrics(tree).loading, false);
+  assert.deepEqual(metrics(tree).institutions, [item]);
+  assert.equal(
+    elements(tree).find((node) => node.props.role === "alert").props.children,
+    messages.managementDesign.institutionsRefreshFailed,
+  );
+  const retry = refresh(tree).onRefresh();
+  requests.at(-1).resolve([]);
+  await retry;
+  tree = render();
+  assert.equal(refresh(tree).error, false);
+  assert.equal(metrics(tree).loading, false);
+  assert.deepEqual(metrics(tree).institutions, []);
+});
+
+test("an initial institution load failure does not claim the institution list is empty", async () => {
+  const runtime = harness({
+    "@/lib/api/institutions": {
+      getAllInstitutions: async () => {
+        throw new Error("Backend failure");
+      },
+    },
+  });
+  const Manager = runtime.load(
+    "src/components/institutions/InstitutionsManager.tsx",
+  ).default;
+  runtime.render(Manager);
+  await runtime.runEffects();
+  const tree = runtime.render(Manager);
+  assert.ok(elements(tree).some((node) => node.props.role === "alert"));
+  assert.equal(
+    elements(tree).some(
+      (node) => node.props.children === "No institutions yet.",
+    ),
+    false,
+  );
 });
 
 test("institution submission rechecks expiry after the picker closes", async () => {

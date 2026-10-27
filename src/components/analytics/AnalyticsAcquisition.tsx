@@ -10,11 +10,12 @@ import {
   analyticsTimestamp,
 } from "./analyticsPeriods";
 import ComponentCard from "@/components/common/ComponentCard";
-import { UserIcon } from "@/icons";
+import { CalenderIcon, UserIcon } from "@/icons";
 import { analyticsNumber } from "./analyticsData";
 import AnalyticsPeriodChart from "./AnalyticsPeriodChart";
-import AnalyticsPeriodMetrics from "./AnalyticsPeriodMetrics";
-import { metricHistory, metricTrend } from "./analyticsTrends";
+import MetricTrend from "./MetricTrend";
+import AnalyticsValue from "./AnalyticsValue";
+import { blockInfo, metricHistory, metricTrend } from "./analyticsTrends";
 import useTwoDayData from "./useTwoDayData";
 
 interface AnalyticsAcquisitionProps {
@@ -25,13 +26,15 @@ export default function AnalyticsAcquisition({
   data,
 }: AnalyticsAcquisitionProps) {
   const t = useTranslations("analytics");
+  const tInfo = useTranslations("analytics.design.info");
   const format = useFormatter();
   const reporting = useAnalyticsPeriod();
-  const points = [
+  const fields = [
     "new_users_today",
     "new_users_this_week",
     "new_users_this_month",
-  ].map((field) => ({
+  ];
+  const points = fields.map((field) => ({
     label: t(`fields.${field}`),
     value: analyticsNumber(data[field]),
     trend: metricTrend(data, field, ["new_user_acquisition"]),
@@ -97,12 +100,41 @@ export default function AnalyticsAcquisition({
       )}
       icon={<UserIcon />}
       actions={actions}
+      info={blockInfo(data, "new_user_acquisition") ?? tInfo("newUsers")}
       className="flex h-full flex-col"
     >
       <div className="min-h-64 flex-1">
         <AnalyticsPeriodChart points={chartPoints} variant="bar" fillHeight />
       </div>
-      <AnalyticsPeriodMetrics points={points} isAcquisition />
+      <dl className="mt-4 divide-y divide-gray-100 border-t border-gray-200 pt-4 dark:divide-gray-800 dark:border-gray-700">
+        {fields.map((field, index) => (
+          <div
+            key={field}
+            className="grid grid-cols-[minmax(0,1.2fr)_5rem_minmax(0,1fr)] items-center gap-x-3 py-3 first:pt-0 last:pb-0"
+          >
+            <dt className="flex min-w-0 items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span
+                aria-hidden="true"
+                className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-blue-light-50 text-blue-light-500 dark:bg-blue-light-500/15 dark:text-blue-light-300"
+              >
+                <CalenderIcon className="size-4" />
+              </span>
+              <span className="min-w-0 break-words">{points[index].label}</span>
+            </dt>
+            <dd className="contents">
+              <span className="text-center text-sm font-bold text-gray-950 tabular-nums dark:text-white">
+                <AnalyticsValue
+                  value={points[index].value ?? 0}
+                  field={field}
+                />
+              </span>
+              <span className="flex min-w-0 justify-end [&>span]:justify-end">
+                <MetricTrend compact trend={points[index].trend} />
+              </span>
+            </dd>
+          </div>
+        ))}
+      </dl>
     </ComponentCard>
   );
 }

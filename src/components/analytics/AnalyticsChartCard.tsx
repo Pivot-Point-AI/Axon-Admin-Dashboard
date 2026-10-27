@@ -6,6 +6,7 @@ interface AnalyticsChartCardProps {
   description?: string;
   icon: ReactNode;
   actions?: ReactNode;
+  info?: string | null;
   children: ReactNode;
 }
 
@@ -14,6 +15,7 @@ export default function AnalyticsChartCard({
   description,
   icon,
   actions,
+  info,
   children,
 }: AnalyticsChartCardProps) {
   return (
@@ -23,6 +25,7 @@ export default function AnalyticsChartCard({
       description={description}
       icon={icon}
       actions={actions}
+      info={info}
       className="flex h-full flex-col"
     >
       <div className="min-w-0 flex-1">{children}</div>

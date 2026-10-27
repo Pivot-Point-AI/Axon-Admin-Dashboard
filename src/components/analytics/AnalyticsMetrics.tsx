@@ -26,7 +26,12 @@ import { sectionMetrics } from "./analyticsPresentation";
 import AnalyticsValue from "./AnalyticsValue";
 import MetricTrend, { MetricTrendBadge } from "./MetricTrend";
 import MetricSparkline from "./MetricSparkline";
-import { lowerMetricIsBetter, metricTrend } from "./analyticsTrends";
+import {
+  lowerMetricIsBetter,
+  metricInfo,
+  metricTrend,
+  metricValue,
+} from "./analyticsTrends";
 
 interface AnalyticsMetricsProps {
   section: AnalyticsSection;
@@ -42,12 +47,21 @@ export default function AnalyticsMetrics({
   const overview = useOverviewFallback(section === "users");
   const latency = asAnalyticsRecord(data.end_to_end_latency_ms);
   const tokens = asAnalyticsRecord(data.token_usage);
+  const tokenCategories = asAnalyticsRecord(tokens.categories);
   const values: Record<string, unknown> = {
     ...data,
     average_response_time: latency.avg ?? latency.average,
     p95_response_time: latency.p95,
-    total_tokens: tokens.total ?? tokens.total_tokens,
-    recorded_errors: Array.isArray(data.errors) ? data.errors.length : null,
+    // The KPI block carries the full figure; the error list is capped by the
+    // server, so its length is only a fallback.
+    total_tokens:
+      metricValue(data, "total_tokens") ??
+      tokens.total ??
+      tokens.total_tokens ??
+      tokenCategories.total_tokens,
+    recorded_errors:
+      metricValue(data, "recorded_errors") ??
+      (Array.isArray(data.errors) ? data.errors.length : null),
   };
   if (section === "users")
     return <AudienceKpiCards data={data} fallback={overview} />;
@@ -67,7 +81,16 @@ export default function AnalyticsMetrics({
             key={field}
             className="axon-metric flex min-w-0 flex-col rounded-xl border border-gray-200/80 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
           >
-            <MetricHeader label={t(`fields.${field}`)} icon={<Icon />} />
+            <MetricHeader
+              label={t(`fields.${field}`)}
+              icon={<Icon />}
+              info={
+                metricInfo(data, field) ??
+                (t.has(`design.metricHints.${field}`)
+                  ? t(`design.metricHints.${field}`)
+                  : null)
+              }
+            />
             <div className="mt-2.5 flex min-w-0 flex-nowrap items-center gap-x-1.5">
               <p className="flex shrink-0 items-baseline gap-1.5 text-lg font-bold tracking-tight text-gray-950 tabular-nums sm:text-xl dark:text-white/90">
                 <AnalyticsValue value={value} field={field} />
@@ -109,6 +132,13 @@ interface AnalyticsMetricListProps {
   data: Record<string, unknown>;
 }
 
+const rowBlocks = [
+  "audience_and_retention",
+  "conversation_details",
+  "fallbacks_and_safety",
+  "top_kpis",
+];
+
 const audienceHealthIcons: Record<
   string,
   {
@@ -146,6 +176,7 @@ export function AnalyticsMetricList({
   data,
 }: AnalyticsMetricListProps) {
   const t = useTranslations("analytics");
+  const tInfo = useTranslations("analytics.design.info");
   const reporting = useAnalyticsPeriod();
   const isAudienceHealth = title === "audienceHealth";
 
@@ -156,6 +187,15 @@ export function AnalyticsMetricList({
         onChange={reporting.onChange}
       />
     ) : undefined;
+
+  // One explanation for the whole card: each row's own text, one per line.
+  const info =
+    fields
+      .flatMap((field) => {
+        const text = metricInfo(data, field, rowBlocks);
+        return text ? [`${t(`fields.${field}`)}: ${text}`] : [];
+      })
+      .join("\n") || (tInfo.has(title) ? tInfo(title) : null);
 
   return (
     <ComponentCard
@@ -169,6 +209,7 @@ export function AnalyticsMetricList({
       }
       icon={isAudienceHealth ? <TaskIcon /> : <GroupIcon />}
       actions={actions}
+      info={info}
       className="h-full"
     >
       <dl className="divide-y divide-gray-100 border-t border-gray-200 pt-4 dark:divide-gray-800 dark:border-gray-700">

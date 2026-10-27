@@ -24,6 +24,7 @@ export default function AnalyticsSlowInteractions({
   value,
 }: AnalyticsSlowInteractionsProps) {
   const t = useTranslations("analytics.telemetry");
+  const tInfo = useTranslations("analytics.design.info");
   const common = useTranslations("analytics.design");
   const format = useFormatter();
   const [expanded, setExpanded] = useState(false);
@@ -37,6 +38,7 @@ export default function AnalyticsSlowInteractions({
     <ComponentCard
       compact
       title={t("slowTitle")}
+      info={tInfo("slowInteractions")}
       icon={<TableIcon />}
       actions={
         <AnalyticsCardActions>

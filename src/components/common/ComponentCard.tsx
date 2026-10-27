@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/utils";
+import InfoTip from "./InfoTip";
 
 interface ComponentCardProps {
   title: string;
@@ -10,6 +11,7 @@ interface ComponentCardProps {
   icon?: ReactNode;
   compact?: boolean;
   iconClassName?: string;
+  info?: string | null;
 }
 
 export default function ComponentCard({
@@ -21,6 +23,7 @@ export default function ComponentCard({
   icon,
   compact = false,
   iconClassName,
+  info,
 }: ComponentCardProps) {
   return (
     <section
@@ -50,14 +53,17 @@ export default function ComponentCard({
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <h2
-              className={cn(
-                "leading-6 font-bold text-gray-950 dark:text-white/90",
-                compact ? "text-sm" : "text-base",
-              )}
-            >
-              {title}
-            </h2>
+            <div className="flex items-center gap-1.5">
+              <h2
+                className={cn(
+                  "leading-6 font-bold text-gray-950 dark:text-white/90",
+                  compact ? "text-sm" : "text-base",
+                )}
+              >
+                {title}
+              </h2>
+              {info && <InfoTip text={info} title={title} />}
+            </div>
             {description && (
               <p className="mt-0.5 text-theme-xs leading-5 text-gray-500 dark:text-gray-400">
                 {description}

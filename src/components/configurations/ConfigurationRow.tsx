@@ -105,7 +105,7 @@ export default function ConfigurationRow({
             >
               {config.config_key}
             </label>
-            <span className="mt-1 block w-fit rounded-full bg-brand-50 px-2 py-0.5 text-theme-xs text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
+            <span className="mt-1 block w-fit px-2 py-0.5 text-theme-xs text-brand-600 dark:text-brand-300">
               {typeLabel(config, t)}
             </span>
           </div>

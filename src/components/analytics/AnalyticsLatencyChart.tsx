@@ -62,7 +62,7 @@ export default function AnalyticsLatencyChart({
                 className="block h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800"
               >
                 <span
-                  className="block h-full rounded-full bg-chart-primary dark:bg-chart-primary"
+                  className="axon-grow-x block h-full rounded-full bg-chart-primary dark:bg-chart-primary"
                   style={{ width: `${(row.value / data.scale) * 100}%` }}
                 />
               </span>

@@ -7,7 +7,11 @@ import {
   analyticsNumber,
   asAnalyticsRecord,
 } from "@/components/analytics/analyticsData";
-import { metricTrend } from "@/components/analytics/analyticsTrends";
+import {
+  blockInfo,
+  metricInfo,
+  metricTrend,
+} from "@/components/analytics/analyticsTrends";
 
 interface AudienceKpiCardsProps {
   data: unknown;
@@ -27,6 +31,7 @@ export default function AudienceKpiCards({
   fallback,
 }: AudienceKpiCardsProps) {
   const t = useTranslations("dashboardAnalytics");
+  const tInfo = useTranslations("analytics.design.info");
   const format = useFormatter();
   const root = asAnalyticsRecord(data);
   return (
@@ -46,6 +51,24 @@ export default function AudienceKpiCards({
                   ? null
                   : "0"
                 : format.number(value)
+            }
+            info={
+              metricInfo(data, field, [
+                "top_kpis",
+                "current_active_sessions",
+              ]) ??
+              (field === "active_sessions"
+                ? blockInfo(data, "current_active_sessions")
+                : null) ??
+              tInfo(
+                field === "total_users"
+                  ? "totalUsers"
+                  : field === "total_sessions"
+                    ? "totalSessions"
+                    : field === "daily_active_users"
+                      ? "dailyActiveUsers"
+                      : "activeSessions",
+              )
             }
             trend={
               metricTrend(data, field) ??

@@ -17,6 +17,9 @@
   --color-surface-accent: var(--surface-accent);
   --font-*: initial;
   --font-outfit: var(--font-dashboard), Inter, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -49,6 +52,10 @@
   --color-surface-app: #f3f8ff;
   --color-surface-dark: #0a0c10;
   --color-surface-panel: #0f1219;
+  --color-terminal-bg: #09090b;
+  --color-terminal-panel: #18181b;
+  --color-terminal-border: #27272a;
+  --color-terminal-muted: #a1a1aa;
   --color-sidebar-navy: #102d4e;
   --color-sidebar-dark: #0c223d;
   --color-slate-body: #64748b;

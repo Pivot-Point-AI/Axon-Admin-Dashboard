@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
+import AnalyticsEmptyState from "./AnalyticsEmptyState";
 import type { DistributionRow } from "./analyticsData";
 import { chartColors } from "./analyticsChartData";
 
@@ -23,6 +24,7 @@ export default function AnalyticsColumnChart({
   const [active, setActive] = useState<string | null>(null);
   const selected = rows.find((row) => row.key === active);
   const max = Math.max(1, ...rows.map((row) => row.count));
+  if (!rows.some((row) => row.count > 0)) return <AnalyticsEmptyState />;
   const dense = rows.length > 10;
   const labelEvery = dense ? Math.ceil(rows.length / 8) : 1;
   return (

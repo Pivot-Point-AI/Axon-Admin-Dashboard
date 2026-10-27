@@ -1,5 +1,6 @@
 "use client";
 
+import { blocksInfo } from "./analyticsTrends";
 import useReveal from "./useReveal";
 import CountUpText from "@/components/common/CountUpText";
 import AnalyticsSliceHover from "./AnalyticsSliceHover";
@@ -179,6 +180,7 @@ export default function AnalyticsJourneysByCategory({
   data,
 }: AnalyticsJourneysByCategoryProps) {
   const t = useTranslations("analytics.design");
+  const tInfo = useTranslations("analytics.design.info");
   const format = useFormatter();
   const { rows, total } = journeyDistribution(data);
   const everything: PieRow[] = journeyCategories(data)
@@ -211,6 +213,15 @@ export default function AnalyticsJourneysByCategory({
       compact
       title={t("journeysByCategory")}
       icon={<PieChartIcon />}
+      info={
+        blocksInfo(data, [
+          "flow_breakdown_by_type",
+          "journey_outcomes_detail",
+          "journey_outcomes",
+          "most_popular_journeys",
+          "top_popular_flows",
+        ]) ?? tInfo("journeysByCategory")
+      }
       actions={
         <AnalyticsCardActions>
           <AnalyticsViewAll

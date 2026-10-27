@@ -9,6 +9,7 @@ interface AnalyticsRankingChartProps {
   color: (key: string, index: number) => string;
   unit?: string;
   shares?: boolean;
+  categoryColors?: boolean;
 }
 
 export default function AnalyticsRankingChart({
@@ -17,9 +18,10 @@ export default function AnalyticsRankingChart({
   color,
   unit,
   shares = false,
+  categoryColors = false,
 }: AnalyticsRankingChartProps) {
   const format = useFormatter();
-  if (!rows.length) return <AnalyticsEmptyState />;
+  if (!rows.some((row) => row.count > 0)) return <AnalyticsEmptyState />;
   const total = rows.reduce((sum, row) => sum + row.count, 0);
   const scale = shares
     ? total
@@ -57,12 +59,13 @@ export default function AnalyticsRankingChart({
             className="col-span-12 h-3 overflow-hidden rounded-full bg-gray-100 sm:col-span-6 sm:col-start-4 sm:row-start-1 dark:bg-gray-800"
           >
             <div
-              className="bg-linear-to-e h-full rounded-full from-white/15 to-transparent dark:from-white/10"
+              className="axon-grow-x bg-linear-to-e h-full rounded-full from-white/15 to-transparent dark:from-white/10"
               style={{
                 width: `${scale > 0 ? (row.count / scale) * 100 : 0}%`,
-                backgroundColor: shares
-                  ? "var(--color-blue-light-500)"
-                  : `var(--color-${color(row.key, index)})`,
+                backgroundColor:
+                  shares && !categoryColors
+                    ? "var(--color-blue-light-500)"
+                    : `var(--color-${color(row.key, index)})`,
               }}
             />
           </div>

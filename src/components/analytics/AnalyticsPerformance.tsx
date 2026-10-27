@@ -1,4 +1,5 @@
 "use client";
+import { valueInfo } from "./analyticsTrends";
 import AnalyticsCardScope from "./AnalyticsCardScope";
 import { useTranslations } from "next-intl";
 import { ChartBarsIcon } from "@/icons";
@@ -23,6 +24,7 @@ export default function AnalyticsPerformance({
   data,
 }: AnalyticsPerformanceProps) {
   const t = useTranslations("analytics.telemetry");
+  const tInfo = useTranslations("analytics.design.info");
   const common = useTranslations("analytics.design");
   const label = (key: string) =>
     t.has(`stageLabels.${key}`)
@@ -35,6 +37,7 @@ export default function AnalyticsPerformance({
           {(d) => (
             <AnalyticsChartCard
               title={t("stageTitle")}
+              info={tInfo("stage")}
               description={t("stageDescription")}
               icon={<ChartBarsIcon />}
               actions={<AnalyticsJourneyPeriod />}
@@ -53,6 +56,7 @@ export default function AnalyticsPerformance({
             <AnalyticsReportedTrend
               title={t("responseTrendTitle")}
               description={t("responseTrendDescription")}
+              info={valueInfo(d.response_time_trend) ?? tInfo("responseTrend")}
               source={d.response_time_trend}
               snapshot={d}
               compactAxis

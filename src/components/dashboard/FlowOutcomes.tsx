@@ -30,6 +30,8 @@ export default function FlowOutcomes({
           style: "percent",
           maximumFractionDigits: 1,
         });
+  const completed = overview?.flow_completion_rate_pct ?? 0;
+  const abandoned = overview?.flow_abandonment_rate_pct ?? 0;
   return (
     <section aria-label={t("flowTitle")}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -62,6 +64,27 @@ export default function FlowOutcomes({
           }
           description={t("flowsInitiatedDescription")}
           icon={<PlayIcon />}
+          segments={
+            overview
+              ? [
+                  {
+                    label: t("flowSegmentCompleted"),
+                    share: completed,
+                    className: "bg-blue-light-500 dark:bg-blue-light-400",
+                  },
+                  {
+                    label: t("flowSegmentAbandoned"),
+                    share: abandoned,
+                    className: "bg-blue-light-500 dark:bg-blue-light-400",
+                  },
+                  {
+                    label: t("flowSegmentInProgress"),
+                    share: Math.max(0, 100 - completed - abandoned),
+                    className: "bg-gray-300 dark:bg-gray-600",
+                  },
+                ]
+              : undefined
+          }
           iconStart
           trend={metricTrend(overview, "total_flows_initiated", [
             "banking_journeys",

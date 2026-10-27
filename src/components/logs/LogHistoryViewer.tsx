@@ -4,7 +4,7 @@ import Pagination from "@/components/common/Pagination";
 import usePagination from "@/hooks/usePagination";
 import useRequiredFields from "@/hooks/useRequiredFields";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import DateField from "@/components/form/DateField";
@@ -17,7 +17,9 @@ import {
   toLogEntry,
   type LogEventEntry,
 } from "@/lib/api/logs";
+import type { LogEvent } from "@/lib/api/types";
 import RawLogViewer from "./RawLogViewer";
+import LogHistoryTerminal from "./LogHistoryTerminal";
 
 const toDateInput = (date: Date) => {
   const offsetMs = date.getTimezoneOffset() * 60_000;
@@ -52,6 +54,24 @@ const QUICK_RANGES: {
   },
 ];
 
+const DAY_MS = 86_400_000;
+const MIN_SEARCH_DATE = "2000-01-01";
+
+// Safety net in case the server returns events outside the requested dates.
+// Events without a readable timestamp are kept, and the range is widened by a
+// day on each side so a server/browser timezone difference can't drop rows.
+function inDateRange(
+  event: LogEvent,
+  startDate: string,
+  endDate: string,
+): boolean {
+  const time = Date.parse(String(event.timestamp ?? ""));
+  if (Number.isNaN(time)) return true;
+  const start = Date.parse(`${startDate}T00:00:00Z`) - DAY_MS;
+  const end = Date.parse(`${endDate}T00:00:00Z`) + 2 * DAY_MS;
+  return time >= start && time < end;
+}
+
 // Large ranges are scanned server-side; past this the server is likely stuck,
 // and a spinner that never ends is worse than an error.
 const HISTORY_TIMEOUT_MS = 60_000;
@@ -70,6 +90,7 @@ function historyErrorMessage(
 }
 
 interface LogHistoryViewerProps {
+  terminalTabs?: ReactNode;
   // When set, the search is pinned to this session and the session / user /
   // flow filters are hidden.
   sessionId?: string;
@@ -81,6 +102,7 @@ interface LogHistoryViewerProps {
 export default function LogHistoryViewer({
   sessionId,
   autoSearch = false,
+  terminalTabs,
 }: LogHistoryViewerProps) {
   const f = useTranslations("fixes");
   const errors = useTranslations("apiErrors");
@@ -99,6 +121,8 @@ export default function LogHistoryViewer({
   const [error, setError] = useState<string | null>(null);
 
   const required = useRequiredFields();
+  const latestRequest = useRef(0);
+  const inFlight = useRef<AbortController | null>(null);
 
   const search = async () => {
     if (!accessToken) return;
@@ -111,6 +135,14 @@ export default function LogHistoryViewer({
     }
     setLoading(true);
     setError(null);
+    // Only the newest request may update the list; an older, slower response
+    // must not overwrite results for the dates now on screen.
+    const requestId = ++latestRequest.current;
+    // Cancel the superseded request too, so a pile of overlapping scans doesn't
+    // hammer the server (and surface spurious errors).
+    inFlight.current?.abort();
+    const controller = new AbortController();
+    inFlight.current = controller;
     try {
       const data = await getLogHistory(
         {
@@ -122,15 +154,24 @@ export default function LogHistoryViewer({
           flowId: flowId.trim(),
         },
         accessToken,
-        AbortSignal.timeout(HISTORY_TIMEOUT_MS),
+        AbortSignal.any([
+          controller.signal,
+          AbortSignal.timeout(HISTORY_TIMEOUT_MS),
+        ]),
       );
+      if (requestId !== latestRequest.current) return;
       pagination.setPage(1);
-      setEntries(logEventsFrom(data).map(toLogEntry));
+      setEntries(
+        logEventsFrom(data)
+          .filter((event) => inDateRange(event, startDate, endDate))
+          .map(toLogEntry),
+      );
       setSearched(true);
     } catch (err) {
-      setError(historyErrorMessage(err, errors));
+      if (requestId === latestRequest.current)
+        setError(historyErrorMessage(err, errors));
     } finally {
-      setLoading(false);
+      if (requestId === latestRequest.current) setLoading(false);
     }
   };
 
@@ -143,20 +184,76 @@ export default function LogHistoryViewer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSearch, accessToken]);
 
+  // Re-run the search shortly after the filters change, so editing them updates
+  // the results without a separate Load click.
+  const filtersSeeded = useRef(false);
+  useEffect(() => {
+    if (!filtersSeeded.current) {
+      filtersSeeded.current = true;
+      return;
+    }
+    // A half-edited range isn't worth a request (or an error flash).
+    // Typing a year into a date field passes through values like 0002-10-19,
+    // which the server answers with a 500.
+    const plausible = (date: string) => date >= MIN_SEARCH_DATE;
+    if (
+      !accessToken ||
+      !plausible(startDate) ||
+      !plausible(endDate) ||
+      startDate > endDate
+    )
+      return;
+    const timer = setTimeout(() => void search(), 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate, fetchLimit, filterSessionId, userId, flowId]);
+
   const pagination = usePagination(entries, "", 50);
   const pageEntries = pagination.items;
 
+  if (terminalTabs)
+    return (
+      <LogHistoryTerminal
+        tabs={terminalTabs}
+        sessionId={sessionId}
+        startDate={startDate}
+        endDate={endDate}
+        onStartChange={setStartDate}
+        onEndChange={setEndDate}
+        startInvalid={
+          required.invalid(startDate) ||
+          (!!startDate && !!endDate && startDate > endDate)
+        }
+        endInvalid={required.invalid(endDate)}
+        filterSessionId={filterSessionId}
+        onSessionChange={setFilterSessionId}
+        userId={userId}
+        onUserChange={setUserId}
+        flowId={flowId}
+        onFlowChange={setFlowId}
+        limit={fetchLimit}
+        onLimitChange={setFetchLimit}
+        onSearch={() => void search()}
+        loading={loading}
+        searched={searched}
+        error={error}
+        entries={pageEntries}
+        total={entries.length}
+        pagination={pagination}
+      />
+    );
+
   return (
-    <div className="axon-log-history">
+    <div className="axon-log-history space-y-4">
       <div className="mb-5">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white/90">
           {t("recorded")}
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           {t("historySubtitle")}
         </p>
       </div>
-      <div className="rounded-xl border border-gray-200 bg-gray-25 p-4 dark:border-gray-800 dark:bg-gray-900/40">
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-950/50">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <span className="me-1 text-theme-xs font-medium text-gray-500 dark:text-gray-400">
             Quick range
@@ -286,7 +383,9 @@ export default function LogHistoryViewer({
             pagination={pagination}
             disabled={loading}
           />
-          <RawLogViewer entries={pageEntries} />
+          <div className="custom-scrollbar max-h-128 overflow-auto rounded-lg border border-gray-200 dark:border-gray-800">
+            <RawLogViewer entries={pageEntries} terminal />
+          </div>
           <Pagination
             variant="footer"
             pagination={pagination}

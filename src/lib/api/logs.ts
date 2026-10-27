@@ -12,10 +12,15 @@ import type {
 } from "./types";
 
 // The sessions currently being recorded.
-export function listLogSessions(bearerToken: string, limit = 200) {
+export function listLogSessions(
+  bearerToken: string,
+  limit = 200,
+  signal?: AbortSignal,
+) {
   return apiRequest<LogSessionsResponse>("/logs/sessions", {
     query: { limit },
     bearerToken,
+    signal,
     baseUrl: ADMIN_API_BASE_URL,
   });
 }

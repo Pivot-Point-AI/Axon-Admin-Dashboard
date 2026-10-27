@@ -1,5 +1,6 @@
 "use client";
 
+import { valueInfo } from "./analyticsTrends";
 import MetricHeader from "@/components/common/MetricHeader";
 import CountUpText from "@/components/common/CountUpText";
 import AnalyticsSliceHover from "./AnalyticsSliceHover";
@@ -37,6 +38,7 @@ export default function AnalyticsLanguageBreakdown({
   value,
 }: AnalyticsLanguageBreakdownProps) {
   const t = useTranslations("analytics");
+  const tInfo = useTranslations("analytics.design.info");
   const locale = useLocale();
   const format = useFormatter();
   const [expanded, setExpanded] = useState(false);
@@ -57,6 +59,7 @@ export default function AnalyticsLanguageBreakdown({
       title={t("design.languageTitle")}
       description={t("design.languageDescription")}
       icon={<GlobeIcon />}
+      info={valueInfo(value) ?? tInfo("language")}
       actions={<AnalyticsJourneyPeriod />}
       className="flex h-full flex-col"
     >

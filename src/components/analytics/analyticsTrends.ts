@@ -90,6 +90,7 @@ const aliases: Record<string, string[]> = {
   turn_success_count: ["successful_interactions", "successful_turns"],
   turn_failed_count: ["failed_interactions", "failed_turns"],
   recorded_errors: ["recognized_errors", "error_count", "errors_count"],
+  total_tokens: ["tokens_used", "total_tokens_used"],
   returning_users: ["returning_users"],
   one_time_users: ["one_time_users"],
   average_sessions_per_user: ["sessions_per_user"],
@@ -422,4 +423,73 @@ export function trendSentiment(
     trend.favorable ??
     (lowerIsBetter ? trend.direction === "down" : trend.direction === "up");
   return favorable ? "positive" : "negative";
+}
+
+const infoKeys = [
+  "stat_info",
+  "info",
+  "tooltip",
+  "help_text",
+  "hint",
+  "description",
+];
+
+/** The server's own explanation, wherever the response chose to put it: on
+ * the entry, in a nested `stat`/`meta` object, or in a `<name>_info` sibling. */
+function readInfo(
+  record: Record<string, unknown>,
+  root?: Record<string, unknown>,
+  name?: string,
+): string | null {
+  const nested = [
+    record,
+    asAnalyticsRecord(record.stat),
+    asAnalyticsRecord(record.meta),
+  ];
+  for (const source of nested)
+    for (const key of infoKeys) {
+      const found = firstString(source[key]);
+      if (found) return found;
+    }
+  if (root && name)
+    return firstString(
+      root[`${name}_info`],
+      root[`${name}_stat_info`],
+      root[`${name}_description`],
+    );
+  return null;
+}
+
+export function metricInfo(
+  data: unknown,
+  field: string,
+  blocks: string[] = ["top_kpis"],
+): string | null {
+  const root = asAnalyticsRecord(data);
+  const record =
+    findMetric(root, field, blocks) ?? asAnalyticsRecord(root[field]);
+  return readInfo(record, root, field);
+}
+
+/** The explanation attached to a chart's own data object. */
+export function valueInfo(
+  value: unknown,
+  root?: unknown,
+  name?: string,
+): string | null {
+  return readInfo(asAnalyticsRecord(value), asAnalyticsRecord(root), name);
+}
+
+export function blockInfo(data: unknown, block: string): string | null {
+  const root = asAnalyticsRecord(data);
+  return readInfo(asAnalyticsRecord(root[block]), root, block);
+}
+
+/** The first explanation found among several names a block may be sent under. */
+export function blocksInfo(data: unknown, blocks: string[]): string | null {
+  for (const block of blocks) {
+    const found = blockInfo(data, block);
+    if (found) return found;
+  }
+  return null;
 }

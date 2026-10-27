@@ -35,6 +35,7 @@ export default function AnalyticsActivityActions({
   data,
 }: AnalyticsActivityActionsProps) {
   const t = useTranslations("analytics.telemetry");
+  const tInfo = useTranslations("analytics.design.info");
   const rows = telemetryDistribution(data.dispatched_actions);
   const label = (key: string) =>
     t.has(`actions.${key}`) ? t(`actions.${key}`) : key.replaceAll("_", " ");
@@ -62,6 +63,7 @@ export default function AnalyticsActivityActions({
   return (
     <AnalyticsChartCard
       title={t("actionsTitle")}
+      info={tInfo("actions")}
       description={t(
         history.length ? "actionsHistoryDescription" : "actionsDescription",
       )}

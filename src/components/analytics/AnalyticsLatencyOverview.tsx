@@ -24,6 +24,7 @@ export default function AnalyticsLatencyOverview({
   data,
 }: AnalyticsLatencyOverviewProps) {
   const t = useTranslations("analytics.latency");
+  const tInfo = useTranslations("analytics.design.info");
   const [selected, setSelected] = useState(fields[0]);
   const selectedField = fields.includes(selected) ? selected : fields[0];
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -58,6 +59,7 @@ export default function AnalyticsLatencyOverview({
   return (
     <ComponentCard
       title={t("overviewTitle")}
+      info={tInfo("latencyOverview")}
       description={t("overviewDescription")}
       className="overflow-hidden p-0 sm:p-0 [&>div:first-child]:mb-0 [&>div:first-child]:px-5 [&>div:first-child]:pt-5"
     >

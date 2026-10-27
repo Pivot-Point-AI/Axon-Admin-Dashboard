@@ -1,5 +1,6 @@
 "use client";
 
+import { blocksInfo } from "./analyticsTrends";
 import { useFormatter, useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
 import { TrendLineIcon } from "@/icons";
@@ -31,6 +32,7 @@ export default function AnalyticsCompletionAbandonment({
   data,
 }: AnalyticsCompletionAbandonmentProps) {
   const t = useTranslations("analytics.design");
+  const tInfo = useTranslations("analytics.design.info");
   const format = useFormatter();
   const allCategories = journeyCategories(data)
     .filter(
@@ -148,6 +150,15 @@ export default function AnalyticsCompletionAbandonment({
       title={t("completionVsAbandonment")}
       description={t("completionVsAbandonmentDescription")}
       icon={<TrendLineIcon />}
+      info={
+        blocksInfo(data, [
+          "flow_breakdown_by_type",
+          "journey_outcomes_detail",
+          "journey_outcomes",
+          "most_popular_journeys",
+          "top_popular_flows",
+        ]) ?? tInfo("completionVsAbandonment")
+      }
       actions={
         <AnalyticsCardActions>
           <AnalyticsViewAll

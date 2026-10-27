@@ -19,6 +19,7 @@ export default function AnalyticsActivityOutcomes({
   date,
 }: AnalyticsActivityOutcomesProps) {
   const t = useTranslations("analytics.telemetry");
+  const tInfo = useTranslations("analytics.design.info");
   const common = useTranslations("analytics.design");
   const format = useFormatter();
   const reporting = useAnalyticsPeriod();
@@ -66,6 +67,7 @@ export default function AnalyticsActivityOutcomes({
   return (
     <AnalyticsChartCard
       title={t("outcomesTitle")}
+      info={tInfo("outcomes")}
       description={t(
         history.length ? "outcomesHistoryDescription" : "outcomesDescription",
       )}

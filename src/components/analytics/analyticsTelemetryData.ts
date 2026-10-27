@@ -6,10 +6,62 @@ import {
 } from "./analyticsData";
 import { latencyData } from "./analyticsLatencyData";
 import type { AnalyticsTrendPoint } from "./AnalyticsTrendChart";
+import { metricValue } from "./analyticsTrends";
 
 export const telemetryNumber = (...values: unknown[]) =>
   values.map(analyticsNumber).find((value) => value !== null && value >= 0) ??
   null;
+
+export type ErrorKind = "api" | "validation" | "timeout" | "others";
+export const errorCategories = [
+  "api",
+  "validation",
+  "timeout",
+  "others",
+  "unknown",
+] as const;
+
+/** The KPI is the full count; the error list can be a capped sample. */
+export function errorSnapshot(data: Record<string, unknown>) {
+  const source = data.errors ?? data.recognized_errors;
+  const errors = analyticsTableRows(source);
+  const counts: Record<(typeof errorCategories)[number], number> = {
+    api: 0,
+    validation: 0,
+    timeout: 0,
+    others: 0,
+    unknown: 0,
+  };
+  for (const error of errors) counts[classifyError(error)]++;
+  const reported = telemetryNumber(
+    data.recorded_errors,
+    metricValue(data, "recorded_errors"),
+  );
+  const total = Math.max(errors.length, reported ?? 0);
+  counts.unknown = total - errors.length;
+  return {
+    counts,
+    total,
+    listed: errors.length,
+    truncated: total > errors.length,
+    available: Array.isArray(source) || reported !== null,
+  };
+}
+
+/** The type is often generic ("ner_extraction_failed"); the message says why. */
+export function classifyError(row: Record<string, unknown>): ErrorKind {
+  const text = [
+    row.error_type ?? row.type ?? row.category ?? "",
+    typeof row.error === "string" ? row.error : "",
+    row.message ?? "",
+  ]
+    .join(" ")
+    .toLowerCase();
+  if (/time.?out|timed out/.test(text)) return "timeout";
+  if (text.includes("validation")) return "validation";
+  if (/api|server error|unauthorized|\b[45]\d\d\b/.test(text)) return "api";
+  return "others";
+}
 
 export function telemetryRows(value: unknown) {
   const root = asAnalyticsRecord(value);
@@ -21,6 +73,7 @@ export function telemetryRows(value: unknown) {
     "points",
     "buckets",
     "distribution",
+    "categories",
   ].find((key) => root[key] !== null && typeof root[key] === "object");
   return analyticsTableRows(wrapper ? root[wrapper] : value);
 }
@@ -61,15 +114,48 @@ export function telemetryHistory(
         typeof date === "string" ? analyticsTimestamp(date) : NaN;
       if (!Number.isFinite(timestamp)) return [];
       const point: AnalyticsTrendPoint = { timestamp };
+      const values = asAnalyticsRecord(row.values);
+      const metrics = asAnalyticsRecord(row.metrics);
       for (const key of keys)
         point[key] = telemetryNumber(
           row[key],
+          values[key],
+          metrics[key],
           row[`values.${key}`],
           row[`metrics.${key}`],
         );
       return keys.some((key) => point[key] !== null) ? [point] : [];
     })
     .sort((a, b) => a.timestamp - b.timestamp);
+}
+
+/** Keep uncategorized errors visible so the breakdown reconciles with totals. */
+export function errorHistory(value: unknown): AnalyticsTrendPoint[] {
+  return telemetryHistory(value, [
+    "total",
+    "api",
+    "validation",
+    "timeout",
+    "others",
+    "unknown",
+  ]).map((point) => {
+    const categorized = errorCategories.reduce(
+      (sum, key) => sum + (point[key] ?? 0),
+      0,
+    );
+    if (point.total !== null) {
+      point.unknown =
+        (point.unknown ?? 0) + Math.max(0, point.total - categorized);
+      point.total = Math.max(point.total, categorized);
+    } else if (
+      ["api", "validation", "timeout", "others"].every(
+        (key) => point[key] !== null,
+      )
+    ) {
+      point.total = categorized;
+    }
+    return point;
+  });
 }
 
 export function performanceStages(data: Record<string, unknown>) {

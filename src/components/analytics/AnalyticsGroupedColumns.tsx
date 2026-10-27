@@ -37,7 +37,7 @@ export default function AnalyticsGroupedColumns({
       row.values[key] == null ? [] : [row.values[key]],
     ),
   );
-  if (!reported.length) return <AnalyticsEmptyState />;
+  if (!reported.some((value) => value)) return <AnalyticsEmptyState />;
   const maximum = Math.max(1, ...reported.map((value) => value ?? 0));
   const magnitude = 10 ** Math.floor(Math.log10(maximum / axisSteps));
   const step =

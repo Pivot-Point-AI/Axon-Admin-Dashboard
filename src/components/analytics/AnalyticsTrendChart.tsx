@@ -1,6 +1,7 @@
 "use client";
 
 import useReveal from "./useReveal";
+import AnalyticsEmptyState from "./AnalyticsEmptyState";
 import { useCallback, useId, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import AnalyticsChartCanvas, {
@@ -19,6 +20,7 @@ interface AnalyticsTrendChartProps {
   axisSteps?: number;
   compactAxis?: boolean;
   tall?: boolean;
+  fillHeight?: boolean;
 }
 
 export default function AnalyticsTrendChart({
@@ -29,6 +31,7 @@ export default function AnalyticsTrendChart({
   axisSteps = 4,
   compactAxis = false,
   tall = false,
+  fillHeight = false,
 }: AnalyticsTrendChartProps) {
   const t = useTranslations("analytics.design");
   const format = useFormatter();
@@ -206,8 +209,19 @@ export default function AnalyticsTrendChart({
   );
 
   const active = hoverIndex === null ? null : points[hoverIndex];
+  // A line that never leaves zero says nothing; show the empty state instead.
+  if (
+    !points.some((point) => series.some(({ key }) => (point[key] ?? 0) !== 0))
+  )
+    return <AnalyticsEmptyState />;
   return (
-    <div className="space-y-3">
+    <div
+      className={
+        fillHeight
+          ? "flex min-h-0 flex-col gap-3 lg:absolute lg:inset-0"
+          : "space-y-3"
+      }
+    >
       <div className="flex flex-wrap items-center gap-5 text-theme-xs text-gray-500 dark:text-gray-400">
         {series.map(({ key, token, label }) => (
           <span key={key} className="inline-flex items-center gap-1.5">
@@ -220,13 +234,15 @@ export default function AnalyticsTrendChart({
           </span>
         ))}
       </div>
-      <div className={`relative ${tall ? "h-96" : "h-44"}`}>
+      <div
+        className={`relative ${fillHeight ? "h-44 lg:h-auto lg:min-h-0 lg:flex-1" : tall ? "h-96" : "h-44"}`}
+      >
         <p id={hintId} className="sr-only">
           {t("trendKeyboardHint")}
         </p>
         <AnalyticsChartCanvas
           draw={draw}
-          className="h-full w-full rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:focus-visible:ring-brand-500"
+          className={`${fillHeight ? "absolute inset-0" : ""} h-full w-full rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:focus-visible:ring-brand-500`}
           tabIndex={0}
           aria-label={title}
           aria-describedby={hintId}
@@ -286,6 +302,9 @@ export default function AnalyticsTrendChart({
           >
             <p className="mb-1 font-semibold text-gray-800 dark:text-gray-200">
               {dateLabel(active.timestamp)}
+              {active.endTimestamp != null &&
+                active.endTimestamp !== active.timestamp &&
+                ` – ${dateLabel(active.endTimestamp)}`}
             </p>
             {series.map(({ key, token, label }) => (
               <p

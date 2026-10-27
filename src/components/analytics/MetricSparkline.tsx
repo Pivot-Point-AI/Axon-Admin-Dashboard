@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import type { MetricTrendPoint } from "./analyticsTrends";
+import useReveal from "./useReveal";
 
 export type SparklineTone =
   | "blueLight"
@@ -40,6 +41,7 @@ export default function MetricSparkline({
   const t = useTranslations("metricTrends");
   const format = useFormatter();
   const available = points.filter((point) => point.value !== null);
+  const reveal = useReveal(points.map((point) => point.value).join(","), 900);
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
@@ -74,6 +76,11 @@ export default function MetricSparkline({
             ? height / 2
             : 3 + (1 - (value - min) / span) * (height - 6),
       });
+      // Wipe the sparkline in from its starting edge.
+      context.beginPath();
+      if (rtl) context.rect(width * (1 - reveal), 0, width * reveal, height);
+      else context.rect(0, 0, width * reveal, height);
+      context.clip();
       if (variant === "bar") {
         const barWidth = Math.min(
           10,
@@ -160,7 +167,7 @@ export default function MetricSparkline({
       resize.disconnect();
       appearance.disconnect();
     };
-  }, [points, tone, variant]);
+  }, [points, tone, variant, reveal]);
   if (
     available.length < 2 ||
     available.every((point) => point.value === available[0].value)
