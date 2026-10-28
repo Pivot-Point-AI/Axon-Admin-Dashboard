@@ -37,7 +37,7 @@ export default function AnalyticsPerformance({
           {(d) => (
             <AnalyticsChartCard
               title={t("stageTitle")}
-              info={tInfo("stage")}
+              info={valueInfo(d.stage_averages_ms) ?? tInfo("stage")}
               description={t("stageDescription")}
               icon={<ChartBarsIcon />}
               actions={<AnalyticsJourneyPeriod />}

@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Axon Admin Dashboard — User Guide</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 20mm 16mm; }
+  @page :first { margin: 0; }
+  :root {
+    --brand: #465fff; --brand-dark: #2a3fd6; --brand-50: #ecf3ff; --ink: #101828; --body: #344054;
+    --muted: #667085; --line: #e4e7ec; --soft: #f9fafb; --good: #027a48; --bad: #b42318;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: "Segoe UI", "Inter", Arial, sans-serif; color: var(--body); font-size: 10.5pt; line-height: 1.55; }
+  h1, h2, h3, h4 { color: var(--ink); line-height: 1.25; margin: 0; }
+  p { margin: 0 0 3.2mm; }
+  a { color: var(--brand); text-decoration: none; }
+
+  /* Cover */
+  .cover { height: 297mm; padding: 24mm 22mm 0; color: #fff; display: flex; flex-direction: column; justify-content: space-between;
+    background: radial-gradient(120% 80% at 90% 0%, #3b55f0 0%, rgba(59,85,240,0) 55%), linear-gradient(160deg, #0b1a3d 0%, #0a1230 60%, #070d22 100%);
+    page-break-after: always; }
+  .cover .mark { font-size: 15pt; letter-spacing: .22em; font-weight: 700; color: #9db3ff; }
+  .cover h1 { color: #fff; font-size: 38pt; font-weight: 700; letter-spacing: -.02em; margin: 0 0 6mm; }
+  .cover .sub { font-size: 14pt; color: #cbd5ff; max-width: 130mm; line-height: 1.45; }
+  .cover .meta { padding-bottom: 12mm; margin-top: 8mm; display: flex; gap: 14mm; font-size: 10pt; color: #b3c0f5; border-top: 1px solid rgba(255,255,255,.2); padding-top: 6mm; }
+  .cover .meta b { display: block; color: #fff; font-size: 11pt; margin-top: 1mm; font-weight: 600; }
+  .cover .rule { width: 18mm; height: 1.4mm; background: #7c93ff; border-radius: 2mm; margin-bottom: 8mm; }
+
+  /* TOC */
+  .toc { page-break-after: always; }
+  .toc h2 { font-size: 22pt; margin-bottom: 8mm; }
+  .toc ol { list-style: none; padding: 0; margin: 0; counter-reset: t; }
+  .toc li { display: flex; align-items: baseline; gap: 3mm; padding: 2.6mm 0; border-bottom: 1px solid var(--line); font-size: 11pt; color: var(--ink); }
+  .toc li span.n { color: var(--brand); font-weight: 700; width: 9mm; }
+  .toc li small { margin-left: auto; color: var(--muted); font-size: 9pt; }
+  .toc .sub { padding-left: 12mm; font-size: 10pt; color: var(--body); }
+
+  /* Sections */
+  section.chapter { page-break-before: always; }
+  .chapter > h2 { font-size: 22pt; padding-bottom: 3mm; margin-bottom: 6mm; border-bottom: 2px solid var(--brand); display: flex; gap: 4mm; align-items: baseline; }
+  .chapter > h2 .num { color: var(--brand); }
+  h3 { font-size: 14pt; margin: 8mm 0 3mm; break-after: avoid; page-break-after: avoid; }
+  h4 { font-size: 11pt; margin: 5mm 0 2mm; color: var(--brand-dark); break-after: avoid; page-break-after: avoid; }
+  figure.tall.short img { max-height: 80mm; }
+  ul, ol.list { margin: 0 0 4mm; padding-left: 6mm; }
+  li { margin-bottom: 1.4mm; }
+  .lead { font-size: 11.5pt; color: var(--body); }
+
+  figure { margin: 5mm 0 6mm; break-inside: avoid; page-break-inside: avoid; }
+  figure img { width: 100%; display: block; border: 1px solid var(--line); border-radius: 2.2mm; box-shadow: 0 1.2mm 4mm rgba(16,24,40,.08); }
+  figure.tall img { width: auto; max-width: 100%; max-height: 138mm; margin: 0 auto; }
+  figure.mid img { width: 140mm; margin: 0 auto; }
+  .module figure { margin: 3mm 0 0; } .module figure img { width: 118mm; margin: 0 auto; }
+  .module { margin-bottom: 6mm; }
+  figure.narrow img { width: 62mm; margin: 0 auto; }
+  figcaption { font-size: 8.8pt; color: var(--muted); text-align: center; margin-top: 2.4mm; }
+  figcaption b { color: var(--ink); }
+
+  .callout { border-left: 1.2mm solid var(--brand); background: var(--brand-50); padding: 3.4mm 4.5mm; border-radius: 0 2mm 2mm 0; margin: 4mm 0 5mm; break-inside: avoid; }
+  .callout b.t { display: block; color: var(--brand-dark); margin-bottom: 1mm; font-size: 10pt; letter-spacing: .02em; }
+  .callout.warn { border-color: #f79009; background: #fffaeb; } .callout.warn b.t { color: #b54708; }
+  .callout p:last-child { margin: 0; }
+
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0 6mm; font-size: 9.6pt; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  th { text-align: left; background: var(--soft); color: var(--ink); font-weight: 600; padding: 2mm 3mm; border-bottom: 1.5px solid var(--line); }
+  td { padding: 1.9mm 3mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #f2f4f7; padding: .3mm 1.4mm; border-radius: 1mm; color: #1d2939; }
+  .good { color: var(--good); font-weight: 600; } .bad { color: var(--bad); font-weight: 600; } .neutral { color: var(--muted); font-weight: 600; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .card { border: 1px solid var(--line); border-radius: 2.4mm; padding: 4mm 4.5mm; background: #fff; break-inside: avoid; }
+  .card h4 { margin-top: 0; }
+  .module { break-inside: avoid; margin-bottom: 8mm; }
+  .module h3 { margin-top: 0; }
+  .pill { display: inline-block; font-size: 8.4pt; padding: .4mm 2.2mm; border-radius: 4mm; background: var(--brand-50); color: var(--brand-dark); font-weight: 600; margin-right: 1.4mm; }
+
+  ol.legend { list-style: none; counter-reset: l; padding: 0; margin: 0 0 5mm; display: grid; grid-template-columns: 1fr 1fr; gap: 1.6mm 8mm; }
+  ol.legend li { counter-increment: l; position: relative; padding-left: 8mm; margin: 0; font-size: 9.6pt; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  ol.legend li::before { content: counter(l); position: absolute; left: 0; top: .2mm; width: 5.4mm; height: 5.4mm; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 700; font-size: 8pt; text-align: center; line-height: 5.4mm; }
+  .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3mm; margin: 4mm 0 5mm; }
+  .step { border: 1px solid var(--line); border-top: 1.2mm solid var(--brand); border-radius: 2mm; padding: 3mm; font-size: 9pt; background: #fff; break-inside: avoid; }
+  .step b { display: block; color: var(--brand); font-size: 15pt; line-height: 1.1; }
+  .step span { color: var(--ink); font-weight: 600; display: block; margin: .6mm 0; }
+  .toc li small { font-variant-numeric: tabular-nums; }
+
+  .chapter > h2 { background: linear-gradient(90deg, var(--brand-50), rgba(236,243,255,0)); border-bottom: 0; border-left: 1.6mm solid var(--brand); border-radius: 1.5mm; padding: 4mm 5mm; margin-bottom: 6mm; }
+  .chapter > h2 .num { font-size: 20pt; }
+  .cover .shot { height: 96mm; overflow: hidden; border-radius: 3mm 3mm 0 0; box-shadow: 0 6mm 14mm rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.18); margin: 0 -4mm; align-self: stretch; background: #fff; }
+  .cover .shot img { width: 100%; display: block; }
+  .glance { display: flex; gap: 4mm; background: var(--soft); border: 1px solid var(--line); border-radius: 2.4mm; padding: 3.4mm 4.5mm; margin: 0 0 5mm; font-size: 9.6pt; break-inside: avoid; }
+  .glance b { color: var(--brand-dark); white-space: nowrap; }
+  .task { display: grid; grid-template-columns: 1fr 66mm; gap: 7mm; align-items: start; margin-bottom: 8mm; break-inside: avoid; page-break-inside: avoid; }
+  .task h3 { margin-top: 0; }
+  .task ol { counter-reset: s; list-style: none; padding: 0; margin: 0 0 3mm; }
+  .task ol li { counter-increment: s; position: relative; padding-left: 8.5mm; margin-bottom: 2.2mm; }
+  .task ol li::before { content: counter(s); position: absolute; left: 0; top: .1mm; width: 5.6mm; height: 5.6mm; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 700; font-size: 8.2pt; text-align: center; line-height: 5.6mm; }
+  .task figure { margin: 0; } .task figure img { width: 100%; }
+  .task .callout { margin: 2mm 0 0; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="mark">AXON</div>
+  <div>
+    <div class="rule"></div>
+    <h1>Admin Dashboard<br>User Guide</h1>
+    <div class="sub">A practical guide to monitoring your banking assistant, reading its analytics, and managing institutions, languages, messages and settings.</div>
+  </div>
+  <div class="shot"><img src="img/02-dashboard.jpg"></div>
+  <div class="meta">
+    <div>Version<b>1.0</b></div>
+    <div>Published<b>October 28, 2026</b></div>
+    <div>Audience<b>Administrators, managers and viewers</b></div>
+  </div>
+</div>
+
+<!-- CONTENTS -->
+<div class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><span class="n">1</span>Introduction<small>{{1}}</small></li>
+    <li><span class="n">2</span>Getting started<small>{{2}}</small></li>
+    <li><span class="n">3</span>The Dashboard<small>{{3}}</small></li>
+    <li><span class="n">4</span>Analytics<small>{{4}}</small></li>
+    <li class="sub"><span class="n">4.1</span>Reporting period and metric cards<small>{{4.1}}</small></li>
+    <li class="sub"><span class="n">4.3</span>Audience<small>{{4.3}}</small></li>
+    <li class="sub"><span class="n">4.4</span>Conversations<small>{{4.4}}</small></li>
+    <li class="sub"><span class="n">4.5</span>Journeys<small>{{4.5}}</small></li>
+    <li class="sub"><span class="n">4.6</span>AI Quality<small>{{4.6}}</small></li>
+    <li class="sub"><span class="n">4.7</span>Performance<small>{{4.7}}</small></li>
+    <li class="sub"><span class="n">4.8</span>Activity Logs<small>{{4.8}}</small></li>
+    <li><span class="n">5</span>Administration modules<small>{{5}}</small></li>
+    <li><span class="n">6</span>How do I…?<small>{{6}}</small></li>
+    <li><span class="n">7</span>Reference<small>{{7}}</small></li>
+  </ol>
+</div>
+
+<!-- 1 INTRODUCTION -->
+<section class="chapter">
+  <h2><span class="num">1</span>Introduction</h2>
+  <p class="lead">The Axon Admin Dashboard is the web console for the Axon conversational banking assistant. It gives your team one place to see how customers use the assistant, how well it performs, and to manage the institutions, languages, messages and settings behind it.</p>
+
+  <div class="grid2">
+    <div class="card"><h4>Monitor</h4><p>Track audience growth, conversation volume, banking journeys, AI quality, response speed and system activity, each compared with the previous period.</p></div>
+    <div class="card"><h4>Manage</h4><p>Maintain institutions and licenses, dashboard users, assistant settings, reference data, message templates, conversation flows, languages and FAQs.</p></div>
+  </div>
+
+  <h3>Who this guide is for</h3>
+  <p>Dashboard accounts have one of three roles: <b>Super Admin</b>, <b>Manager</b> or <b>Viewer</b>. This guide is written for all three. Viewers will mostly use the Dashboard and Analytics sections; administrators also use the management modules in chapter 5.</p>
+
+  <h3>Where the data comes from</h3>
+  <p>Every figure on screen is loaded live from the Axon Admin API. The dashboard never calculates comparisons itself: the API supplies each value, its previous value, the percentage change and the explanation behind it. Refresh a page at any time to load the latest figures.</p>
+
+
+  <h3>Your first five minutes</h3>
+  <div class="steps">
+    <div class="step"><b>1</b><span>Sign in</span>Use the credentials from your administrator.</div>
+    <div class="step"><b>2</b><span>Read the Dashboard</span>Scan the headline cards and their change badges.</div>
+    <div class="step"><b>3</b><span>Set the period</span>Pick Today, Last 7 days or a custom range.</div>
+    <div class="step"><b>4</b><span>Open Analytics</span>Move across the six tabs for detail.</div>
+    <div class="step"><b>5</b><span>Press ⓘ</span>Read what any number means and how it is calculated.</div>
+  </div>
+
+  <div class="callout"><b class="t">ABOUT THE SCREENSHOTS</b>
+    <p>Screenshots were captured from a live Axon environment. Analytics figures cover the <b>last 7 days</b> unless a page says otherwise. Personal details such as email addresses and institution identifiers are blurred, and your own data will of course differ.</p>
+  </div>
+</section>
+
+<!-- 2 GETTING STARTED -->
+<section class="chapter">
+  <h2><span class="num">2</span>Getting started</h2>
+
+  <h3>2.1 Signing in</h3>
+  <p>Open the dashboard address provided by your administrator and sign in with your username and password. If you have forgotten your password, use <b>Forgot password</b> on the sign-in page; a single-use reset link lets you choose a new one. Sessions expire after a period of inactivity, in which case you are returned to the sign-in page.</p>
+  <figure class="mid"><img src="img/01-signin.jpg"><figcaption><b>Figure 1.</b> The sign-in page.</figcaption></figure>
+
+  <h3>2.2 Finding your way around</h3>
+  <p>The left sidebar groups every page. Use the round arrow on its edge to collapse or expand it.</p>
+  <table>
+    <tr><th style="width:34mm">Group</th><th>Pages</th></tr>
+    <tr><td>Overview</td><td>Dashboard, Analytics, Institutions, Logs</td></tr>
+    <tr><td>Administration</td><td>Dashboard Users, Configurations, Master Data, Messages, Flows, Languages, FAQs</td></tr>
+    <tr><td>Account</td><td>User Profile</td></tr>
+  </table>
+  <p>The top bar contains the breadcrumb trail, a global search (press <code>Ctrl</code> + <code>K</code> from anywhere), the light/dark theme switch and your account menu. Each page also shows when it was <b>Last Updated</b> with a blue refresh button beside it.</p>
+
+  <h3>2.3 Light, dark and mobile</h3>
+  <p>The dashboard follows your preference for light or dark appearance and can be switched at any time with the moon icon. It is fully responsive: on a phone the sidebar becomes a slide-out menu and cards stack in a single column.</p>
+  <div class="grid2">
+    <figure style="margin:0"><img src="img/22-dark-mode.jpg"><figcaption><b>Figure 2.</b> Dark theme.</figcaption></figure>
+    <figure class="narrow" style="margin:0"><img src="img/40-mobile-dashboard.jpg" style="width:48mm"><figcaption><b>Figure 3.</b> Mobile layout.</figcaption></figure>
+  </div>
+</section>
+
+<!-- 3 DASHBOARD -->
+<section class="chapter">
+  <h2><span class="num">3</span>The Dashboard</h2>
+  <p class="lead">The Dashboard is the first page after sign-in. It answers three questions at a glance: <i>who is using the assistant, how engaged are they, and are banking tasks being completed?</i> Use the period selector beside <b>Last Updated</b> to change the reporting window, and <b>View All</b> on a section to open the matching Analytics tab.</p>
+  <figure class="tall short"><img src="img/02-dashboard-a.jpg"><figcaption><b>Figure 4.</b> The Dashboard.</figcaption></figure>
+  <ol class="legend">
+    <li><b>Headline cards</b> with change badges</li>
+    <li><b>Period selector</b> and refresh</li>
+    <li><b>Audience Engagement</b></li>
+    <li><b>Banking Journeys</b></li>
+    <li><b>Manage</b> shortcuts</li>
+    <li><b>Institutions</b> panel</li>
+  </ol>
+  <table>
+    <tr><th style="width:44mm">Section</th><th>What it shows</th></tr>
+    <tr><td>Headline cards</td><td>Total Unique Users, Total Sessions, Daily Active Users and Current Active Sessions, each with its change against the previous period.</td></tr>
+    <tr><td>Audience Engagement</td><td>Engaged Sessions Rate, Returning User Rate and User Stickiness, with a progress bar for each percentage.</td></tr>
+    <tr><td>Banking Journeys</td><td>Flows Initiated, Flow Completion Rate and Flow Abandonment Rate. For abandonment, a decrease is good news and is shown in green.</td></tr>
+    <tr><td>Manage</td><td>Shortcut tiles to Dashboard Users, Configurations, Master Data, Messages, Flows and Languages.</td></tr>
+    <tr><td>Institutions</td><td>The most recently registered institutions with their license expiry and status. Choose <b>Manage all</b> to open the full list.</td></tr>
+  </table>
+</section>
+
+<!-- 4 ANALYTICS -->
+<section class="chapter">
+  <h2><span class="num">4</span>Analytics</h2>
+  <p class="lead">Analytics gives a deeper view of the same data across six tabs. Switch between them with the tab bar under the page title.</p>
+
+  <table>
+    <tr><th style="width:36mm">Tab</th><th>Question it answers</th></tr>
+    <tr><td>Audience</td><td>Who is using the assistant, and do they come back?</td></tr>
+    <tr><td>Conversations</td><td>How much do customers talk to it, and when?</td></tr>
+    <tr><td>Journeys</td><td>Do customers finish the banking tasks they start?</td></tr>
+    <tr><td>AI Quality</td><td>Does the assistant understand requests, and stay safe?</td></tr>
+    <tr><td>Performance</td><td>How fast does it respond?</td></tr>
+    <tr><td>Activity Logs</td><td>Are interactions succeeding, and what is going wrong?</td></tr>
+  </table>
+
+  <h3>4.1 Reporting period</h3>
+  <p>The period selector at the top right of the page controls every card on the tab. Choose a quick range such as <b>Today</b>, <b>Yesterday</b>, <b>Last 7 days</b> or <b>Last 30 days</b>, or pick a custom start and end date. Many cards also carry their own period button so you can compare windows side by side. While a panel is open the page behind it is softly blurred to keep your focus on the choice.</p>
+  <figure class="mid"><img src="img/21-period-filter.jpg"><figcaption><b>Figure 5.</b> Choosing a reporting period.</figcaption></figure>
+
+  <h3>4.2 Reading a metric card</h3>
+  <p>Every headline card follows the same pattern: the figure, a coloured change badge, and the comparison it refers to (for example <i>vs last week</i>).</p>
+  <table>
+    <tr><th style="width:40mm">Badge</th><th>Meaning</th></tr>
+    <tr><td><span class="good">▲ +13.6% green</span></td><td>A favourable change. For measures where lower is better, such as abandonment or latency, a decrease is shown in green.</td></tr>
+    <tr><td><span class="bad">▼ −21.4% red</span></td><td>An unfavourable change compared with the previous period.</td></tr>
+    <tr><td><span class="neutral">0% grey</span></td><td>No change, or a figure that is shown for context only.</td></tr>
+  </table>
+
+  <h4>The ⓘ information button</h4>
+  <p>Select or hover over the ⓘ beside a card title for a plain-language explanation: what the number means, the <b>formula</b> behind it and a worked <b>example</b>. The page dims and blurs while the explanation is open. Click the button to keep it open, and press <code>Esc</code> or click elsewhere to close it.</p>
+  <figure class="mid"><img src="img/20-info-tooltip.jpg"><figcaption><b>Figure 6.</b> The explanation panel for Total Unique Users.</figcaption></figure>
+</section>
+
+<section class="chapter" style="page-break-before: always;">
+  <h2><span class="num">4.3</span>Audience</h2>
+  <p>Understand your customer base and whether people return.</p>
+  <figure class="tall"><img src="img/10-analytics-users-a.jpg"><figcaption><b>Figure 7.</b> The Audience tab.</figcaption></figure>
+  <ol class="legend" style="grid-template-columns:1fr;">
+    <li><b>Tab bar</b>: switch between Audience, Conversations, Journeys, AI Quality, Performance and Activity Logs.</li>
+    <li><b>Reporting period</b>: the window every card on the tab reports on.</li>
+    <li><b>Headline cards</b>: Total Unique Users, Total Sessions, Daily Active Users and Current Active Sessions.</li>
+    <li><b>ⓘ button</b>: what the figure means, its formula and an example.</li>
+    <li><b>Active Audience</b>: a daily activity curve with summary cards for today and the selected period.</li>
+    <li><b>Language Preferences</b>: share of customers by preferred language, number of languages and total users.</li>
+    <li><b>Audience &amp; Retention</b>: retention, returning and one-time users, sessions per user, daily-to-monthly activity, and users inactive for 30+ days.</li>
+    <li><b>New User Acquisition</b>: new users today, this week and this month, share of traffic, growth rates and single-session drop rate.</li>
+  </ol>
+</section>
+
+<section class="chapter" style="page-break-before: always;">
+  <h2><span class="num">4.4</span>Conversations</h2>
+  <p>See how much customers talk to the assistant and when they are busiest.</p>
+  <figure class="tall"><img src="img/11-analytics-chats.jpg"><figcaption><b>Figure 8.</b> The Conversations tab.</figcaption></figure>
+  <ul>
+    <li><b>Headline cards</b>: Total Messages, Total Sessions, Session Engagement and Turns Per Conversation.</li>
+    <li><b>Activity</b>: one card with a switch between <b>Activity By Hour</b> (to find peak hours) and <b>Activity By Weekday</b> (to find the busiest days).</li>
+  </ul>
+  <div class="callout"><b class="t">TIP</b><p>Use the hourly view to plan support cover and maintenance windows: schedule changes in the quietest hours.</p></div>
+</section>
+
+<section class="chapter" style="page-break-before: always;">
+  <h2><span class="num">4.5</span>Journeys</h2>
+  <p>A journey is a multi-step banking task such as a fund transfer, bill payment or adding a beneficiary. This tab shows how many start, finish or are abandoned.</p>
+  <figure class="tall"><img src="img/12-analytics-flows.jpg"><figcaption><b>Figure 9.</b> The Journeys tab.</figcaption></figure>
+  <ul>
+    <li><b>Headline cards</b>: Journeys Started, Journeys Completed, Completion Rate and Abandonment Rate.</li>
+    <li><b>Journey Trends</b>: started, completed and abandoned journeys over time.</li>
+    <li><b>Journeys By Category</b>: which banking tasks customers start most. <b>View all</b> lists every category.</li>
+    <li><b>Completion Vs Abandonment Rate</b>: for each category, the share finished against the share left unfinished. Categories with low completion are the best candidates for improvement.</li>
+    <li><b>Journey Outcomes Detail</b>: a searchable table with total, completed, cancelled, failed, abandoned, completion rate and average steps per journey.</li>
+  </ul>
+</section>
+
+<section class="chapter" style="page-break-before: always;">
+  <h2><span class="num">4.6</span>AI Quality</h2>
+  <p>Check that the assistant understands customers and keeps conversations safe.</p>
+  <figure class="tall"><img src="img/13-analytics-nlp.jpg"><figcaption><b>Figure 10.</b> The AI Quality tab.</figcaption></figure>
+  <ul>
+    <li><b>Headline cards</b>: Classified Interactions, Average Confidence, High-Confidence Rate and AI Fallback Rate.</li>
+    <li><b>Confidence Distribution</b>: the share of requests understood with high, medium or low confidence. A large low-confidence slice means requests are being misread.</li>
+    <li><b>Safety Blocks Trend</b>: how often safety checks blocked or flagged a message over time.</li>
+    <li><b>What Users Ask For</b>: the topics customers raise most often. <b>View all</b> lists every one.</li>
+  </ul>
+  <p>A card reading <b>No Data</b> means nothing was recorded for the selected period. It does not indicate a fault.</p>
+</section>
+
+<section class="chapter" style="page-break-before: always;">
+  <h2><span class="num">4.7</span>Performance</h2>
+  <p>Measure how quickly the assistant responds. For all speed measures, lower is better.</p>
+  <figure class="tall"><img src="img/14-analytics-performance.jpg"><figcaption><b>Figure 11.</b> The Performance tab.</figcaption></figure>
+  <ul>
+    <li><b>Headline cards</b>: Measured Interactions, Average Response Time, 95th Percentile and Slow Responses (over 1,500 ms).</li>
+    <li><b>Average Time By Stage</b>: where time is spent: parsing, intent classification, flow execution and AI generation.</li>
+    <li><b>Response Time Trend</b> and <b>Response Time Distribution</b>: how speed changes over time and how responses spread across fast and slow ranges.</li>
+    <li><b>Slowest Interactions</b>: the individual requests that took longest, for troubleshooting.</li>
+  </ul>
+  <div class="callout"><b class="t">PERCENTILES EXPLAINED</b><p>The average hides slow outliers. <b>P50</b> is the typical response; <b>P95</b> is the time that 95% of responses beat. A large gap between them means some customers wait much longer than most.</p></div>
+</section>
+
+<section class="chapter" style="page-break-before: always;">
+  <h2><span class="num">4.8</span>Activity Logs</h2>
+  <p>Review how interactions ended and where errors occur.</p>
+  <figure class="tall"><img src="img/15-analytics-logs.jpg"><figcaption><b>Figure 12.</b> The Activity Logs tab.</figcaption></figure>
+  <ul>
+    <li><b>Headline cards</b>: Successful Interactions, Failed Interactions, Tokens Used and Recorded Errors.</li>
+    <li><b>Interaction Outcomes</b>: a gauge of the success rate with successful and failed counts, beside <b>Conversation Channels</b> (voice versus text).</li>
+    <li><b>Speech Recognition Events</b> and <b>Token Usage</b>: how voice input was transcribed, and how many tokens were spent on prompts and completions.</li>
+    <li><b>Actions Delivered</b>: what the assistant did for customers, ranked by count.</li>
+    <li><b>Slowest Interactions</b> and <b>Recorded Errors</b>: the slow requests, and errors over time with a breakdown by type.</li>
+  </ul>
+</section>
+
+<!-- 5 ADMIN MODULES -->
+<section class="chapter">
+  <h2><span class="num">5</span>Administration modules</h2>
+  <div class="glance"><b>In this chapter</b><span>Institutions, Logs, Dashboard Users, Configurations, Master Data, Messages, Flows, Languages, FAQs and User Profile. Step-by-step tasks follow in chapter 6.</span></div>
+  <p class="lead">The Administration group and the Institutions and Logs pages let authorised users manage the assistant. Most list pages share the same controls: a search box, filters, a <b>Rows per page</b> selector, page navigation and a primary action button at the top right.</p>
+
+  <div class="module">
+    <h3>5.1 Institutions</h3>
+    <p>Register financial institutions, issue license keys and track subscription expiry. Summary cards show total, active, expiring-soon (within 30 days) and expired licenses. Use <b>New Institution</b> to add one; each row offers actions such as editing and renewing the license.</p>
+    <figure><img src="img/3-institutions.jpg"><figcaption><b>Figure 13.</b> Institutions.</figcaption></figure>
+  </div>
+
+  <div class="module">
+    <h3>5.2 Logs</h3>
+    <p>A live view of assistant activity. The session list on the left filters the stream to one conversation. <b>Real-Time</b> streams events as they happen; <b>History</b> searches past events. Use <b>Pause</b>, <b>Clear</b>, <b>Copy</b> and <b>Download</b> to work with the stream, and <b>Full screen</b> for more room.</p>
+    <figure><img src="img/3-logs.jpg"><figcaption><b>Figure 14.</b> Logs.</figcaption></figure>
+  </div>
+
+  <div class="module">
+    <h3>5.3 Dashboard Users</h3>
+    <p>Create and manage the accounts that can sign in to this dashboard. Cards count Super Admins, Managers and Viewers. Search by name, email or role, filter by role, and use <b>New User</b> to add an account.</p>
+    <figure><img src="img/3-users.jpg"><figcaption><b>Figure 15.</b> Dashboard Users.</figcaption></figure>
+  </div>
+
+  <div class="module">
+    <h3>5.4 Configurations</h3>
+    <p>Adjust how the assistant behaves. Settings are numeric or on/off and can be filtered by type. Changes apply as soon as they are saved, so edit with care.</p>
+    <figure><img src="img/3-configurations.jpg"><figcaption><b>Figure 16.</b> Configurations.</figcaption></figure>
+  </div>
+
+  <div class="module">
+    <h3>5.5 Master Data</h3>
+    <p>Maintain reference data in six tabs: <span class="pill">Banks</span><span class="pill">Billers</span><span class="pill">Donations</span><span class="pill">Cards</span><span class="pill">Biller Types</span><span class="pill">Biller Categories</span> Each tab lists its records with an active flag and offers add, edit and delete.</p>
+    <figure><img src="img/3-master-data.jpg"><figcaption><b>Figure 17.</b> Master Data.</figcaption></figure>
+  </div>
+
+  <div class="module">
+    <h3>5.6 Messages</h3>
+    <p>Review and customise the automated voice and chat message templates across all supported languages. Each row shows the message key, its parameters, language, text and status.</p>
+    <figure><img src="img/3-messages.jpg"><figcaption><b>Figure 18.</b> Messages.</figcaption></figure>
+  </div>
+
+  <div class="module">
+    <h3>5.7 Flows</h3>
+    <p>Enable or disable conversational banking task flows. Each row is an intent with an <b>Enabled</b> switch; a disabled flow is no longer offered to customers.</p>
+    <figure><img src="img/3-flows.jpg"><figcaption><b>Figure 19.</b> Flows.</figcaption></figure>
+  </div>
+
+  <div class="module">
+    <h3>5.8 Languages</h3>
+    <p>Configure the languages the assistant supports and choose the <b>primary</b> language used by default. Add a language with <b>New Language</b>, and enable or disable existing ones.</p>
+    <figure><img src="img/3-languages.jpg"><figcaption><b>Figure 20.</b> Languages.</figcaption></figure>
+  </div>
+
+  <div class="module">
+    <h3>5.9 FAQs</h3>
+    <p>Keep customer support content up to date. Set the FAQ page header and introduction, organise questions into sections, and use <b>Add FAQ</b> to write a new question and answer. Filter by status to see drafts or published items.</p>
+    <figure><img src="img/3-faqs.jpg"><figcaption><b>Figure 21.</b> FAQs.</figcaption></figure>
+  </div>
+
+  <div class="module">
+    <h3>5.10 User Profile</h3>
+    <p>View your administrator identity, active credentials and assigned dashboard permissions. Open it from the sidebar or from your account menu.</p>
+  </div>
+</section>
+
+<!-- 6 HOW DO I -->
+<section class="chapter">
+  <h2><span class="num">6</span>How do I…?</h2>
+  <p class="lead">Short, step-by-step answers to the tasks administrators do most. Nothing is saved until you select the final button, and you can close any dialog with the <b>×</b> or <code>Esc</code>.</p>
+  <div class="glance"><b>Before you start</b><span>You need an account with permission to manage the area. If a button is missing, ask a Super Admin to review your role.</span></div>
+  <div class="task">
+    <div><h3>6.1 Add an institution</h3><ol><li>Open <b>Institutions</b> from the sidebar.</li><li>Choose <b>New Institution</b> at the top right of <i>Manage Institutions</i>.</li><li>Enter the <b>Institution Name</b> and pick the <b>License Expires At</b> date and time.</li><li>Select <b>Create Institution</b>.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>The institution appears in the list with its license expiry and status. Use the icons in its <b>Actions</b> column to edit it or manage its license later.</p></div></div>
+    <figure><img src="img/50-new-institution.jpg"><figcaption><b>Figure 23.</b> Add an institution.</figcaption></figure>
+  </div>
+  <div class="task">
+    <div><h3>6.2 Add a dashboard user</h3><ol><li>Open <b>Dashboard Users</b>.</li><li>Choose <b>New User</b>.</li><li>Enter the <b>Username</b> and <b>Email</b>, and choose the <b>Role</b>.</li><li>Select <b>Create User</b>.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>Roles control what the person can do: Super Admin, Manager or Viewer. Choose the lowest role that fits their job.</p></div></div>
+    <figure><img src="img/51-new-user.jpg"><figcaption><b>Figure 24.</b> Add a dashboard user.</figcaption></figure>
+  </div>
+  <div class="task">
+    <div><h3>6.3 Add a language</h3><ol><li>Open <b>Languages</b>.</li><li>Choose <b>New Language</b> and pick the language from the list.</li><li>Leave <b>Enabled</b> on so customers can use it.</li><li>Select <b>Create Language</b>.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>To make it the default, use <b>Set as Primary</b> on its row. Only one language is primary at a time.</p></div></div>
+    <figure><img src="img/52-new-language.jpg"><figcaption><b>Figure 25.</b> Add a language.</figcaption></figure>
+  </div>
+  <div class="task">
+    <div><h3>6.4 Add an FAQ</h3><ol><li>Open <b>FAQs</b> and choose <b>Add FAQ</b>.</li><li>Type a <b>Section title</b>, or choose an existing section.</li><li>Write the <b>Question</b> and the <b>Answer</b>.</li><li>Optionally open <b>Display order</b> to place it, and keep <b>Active</b> on to show it on the customer FAQ page.</li><li>Select <b>Save FAQ</b>.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>Write answers the way a customer would ask the question. Short, direct answers work best.</p></div></div>
+    <figure><img src="img/53-add-faq.jpg"><figcaption><b>Figure 26.</b> Add an FAQ.</figcaption></figure>
+  </div>
+  <div class="task">
+    <div><h3>6.5 Add a bank (or other reference data)</h3><ol><li>Open <b>Master Data</b> and choose the <b>Banks</b> tab.</li><li>Choose <b>Add Bank</b>.</li><li>Enter the <b>Bank Name</b> and <b>Abbreviation</b>, and keep <b>Active</b> on.</li><li>Select <b>Save</b>.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>Billers, donations, card types, biller types and biller categories follow the same pattern on their own tabs.</p></div></div>
+    <figure><img src="img/54-add-bank.jpg"><figcaption><b>Figure 27.</b> Add a bank (or other reference data).</figcaption></figure>
+  </div>
+  <div class="task">
+    <div><h3>6.6 Change a configuration setting</h3><ol><li>Open <b>Configurations</b>.</li><li>Choose <b>Edit</b> above the list. The values become editable.</li><li>Change a <b>Value</b>. The allowed range is shown beneath the field.</li><li>Select <b>Save</b> on that row, then <b>Cancel editing</b> when you are done.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>Changes apply as soon as they are saved, and they affect how the assistant behaves for every customer. Change one setting at a time and note the original value.</p></div></div>
+    <figure><img src="img/55-edit-configurations.jpg"><figcaption><b>Figure 28.</b> Change a configuration setting.</figcaption></figure>
+  </div>
+</section>
+
+<!-- 7 REFERENCE -->
+<section class="chapter">
+  <h2><span class="num">7</span>Reference</h2>
+
+  <h3>7.1 Reporting periods and comparisons</h3>
+  <p>Each period is compared with the window of equal length immediately before it. The comparison wording appears next to every badge.</p>
+  <table>
+    <tr><th>Period</th><th>Window analysed</th><th>Compared with</th></tr>
+    <tr><td>Today</td><td>From midnight (UTC) to now</td><td>Yesterday</td></tr>
+    <tr><td>Yesterday</td><td>The full previous day</td><td>The day before</td></tr>
+    <tr><td>Last 7 days</td><td>Rolling 7 days</td><td>The prior 7 days (<i>vs last week</i>)</td></tr>
+    <tr><td>Last 14 days</td><td>Rolling 14 days</td><td>The prior 14 days</td></tr>
+    <tr><td>Last 30 days</td><td>Rolling 30 days</td><td>The prior 30 days (<i>vs last month</i>)</td></tr>
+    <tr><td>All time</td><td>Cumulative data</td><td>A prior 30-day baseline</td></tr>
+    <tr><td>Custom</td><td>Your start and end dates (inclusive)</td><td>An equal window immediately before</td></tr>
+  </table>
+
+  <h3>7.2 Glossary</h3>
+  <table>
+    <tr><th style="width:44mm">Term</th><th>Meaning</th></tr>
+    <tr><td>Session</td><td>One conversation a customer starts with the assistant.</td></tr>
+    <tr><td>Turn</td><td>One question from the customer and the assistant's reply.</td></tr>
+    <tr><td>DAU / WAU / MAU</td><td>Distinct users active in a day, a rolling 7 days and a rolling 30 days.</td></tr>
+    <tr><td>Stickiness</td><td>DAU divided by MAU: how often monthly users return on a given day.</td></tr>
+    <tr><td>Retention</td><td>The share of users who came back for more than one session.</td></tr>
+    <tr><td>Journey / Flow</td><td>A multi-step banking task, such as a fund transfer or bill payment.</td></tr>
+    <tr><td>Abandonment</td><td>A started journey that the customer left unfinished.</td></tr>
+    <tr><td>Intent</td><td>What the customer is trying to do, as recognised by the assistant.</td></tr>
+    <tr><td>Confidence</td><td>How sure the assistant was when it recognised the intent.</td></tr>
+    <tr><td>Fallback</td><td>A request handed to the generative AI model because no standard flow fitted.</td></tr>
+    <tr><td>Latency</td><td>The time from the customer's message to the assistant's reply, in milliseconds.</td></tr>
+    <tr><td>Token</td><td>A unit of text processed by the language model; usage drives cost.</td></tr>
+  </table>
+
+  <h3>7.3 Troubleshooting</h3>
+  <table>
+    <tr><th style="width:52mm">Symptom</th><th>What to try</th></tr>
+    <tr><td>Cards show no data, or a loading error</td><td>Check your connection, then refresh with the blue button. If you are returned to the sign-in page, your session has expired: sign in again.</td></tr>
+    <tr><td>A card reads <b>No Data</b></td><td>Nothing was recorded in the selected period. Widen the period, for example to Last 30 days.</td></tr>
+    <tr><td>A figure differs from the previous page</td><td>Pages may use different reporting periods. Check the period selector on each page.</td></tr>
+    <tr><td>An ⓘ shows general text only</td><td>The API sent no specific explanation for that card, so a built-in description is shown instead.</td></tr>
+    <tr><td>Live Logs show “Reconnecting…”</td><td>The live connection is re-establishing. If it persists, refresh the page or contact your administrator.</td></tr>
+    <tr><td>A page or action is missing</td><td>Your role may not include it. Ask a Super Admin to review your permissions.</td></tr>
+  </table>
+
+  <h3>7.4 Data sources</h3>
+  <p>The dashboard reads from the Axon Admin API. Analytics pages use these endpoints, each accepting a <code>period</code> and, for custom ranges, <code>start_date</code> and <code>end_date</code>:</p>
+  <table>
+    <tr><th style="width:62mm">Endpoint</th><th>Used by</th></tr>
+    <tr><td><code>/dashboard-analytics/overview</code></td><td>Dashboard</td></tr>
+    <tr><td><code>/dashboard-analytics/user-summary</code></td><td>Audience</td></tr>
+    <tr><td><code>/dashboard-analytics/chat-summary</code></td><td>Conversations</td></tr>
+    <tr><td><code>/dashboard-analytics/flow-summary</code></td><td>Journeys</td></tr>
+    <tr><td><code>/dashboard-analytics/nlp-summary</code></td><td>AI Quality</td></tr>
+    <tr><td><code>/dashboard-analytics/performance-summary</code></td><td>Performance</td></tr>
+    <tr><td><code>/dashboard-analytics/log-summary</code></td><td>Activity Logs</td></tr>
+  </table>
+</section>
+
+</body>
+</html>

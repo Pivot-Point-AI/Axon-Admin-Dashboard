@@ -27,11 +27,13 @@ export function periodFilters(
     period:
       period === "today"
         ? "today"
-        : period === "last7Days"
-          ? "last_7_days"
-          : period === "last30Days"
-            ? "last_30_days"
-            : undefined,
+        : period === "yesterday"
+          ? "yesterday"
+          : period === "last7Days"
+            ? "last_7_days"
+            : period === "last14Days"
+              ? "last_14_days"
+              : "last_30_days",
     start_date: dateKey(start),
     end_date: dateKey(end),
     start_time: new Date(`${dateKey(start)}T00:00:00`).toISOString(),

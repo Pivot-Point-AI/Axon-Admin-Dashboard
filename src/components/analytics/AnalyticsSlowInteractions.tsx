@@ -1,4 +1,5 @@
 "use client";
+import { valueInfo } from "./analyticsTrends";
 import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import AnalyticsCardActions from "./AnalyticsCardActions";
 import { useState } from "react";
@@ -38,7 +39,7 @@ export default function AnalyticsSlowInteractions({
     <ComponentCard
       compact
       title={t("slowTitle")}
-      info={tInfo("slowInteractions")}
+      info={valueInfo(value) ?? tInfo("slowInteractions")}
       icon={<TableIcon />}
       actions={
         <AnalyticsCardActions>

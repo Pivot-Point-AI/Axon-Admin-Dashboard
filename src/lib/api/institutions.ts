@@ -20,12 +20,13 @@ export function createInstitution(
   });
 }
 
-export function getAllInstitutions(bearerToken: string, limit = 500) {
-  return apiRequest<InstitutionItem[]>("/institutions", {
-    query: { limit },
-    bearerToken,
-    baseUrl: ADMIN_API_BASE_URL,
-  });
+export async function getAllInstitutions(bearerToken: string, limit = 500) {
+  const institutions = await apiRequest<InstitutionItem[] | null>(
+    "/institutions",
+    { query: { limit }, bearerToken, baseUrl: ADMIN_API_BASE_URL },
+  );
+  // The server can answer with null when there are no institutions.
+  return Array.isArray(institutions) ? institutions : [];
 }
 
 export function getInstitutionById(institutionId: string, bearerToken: string) {

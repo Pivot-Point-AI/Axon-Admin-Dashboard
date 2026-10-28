@@ -5,6 +5,8 @@ import AnalyticsDuration from "./AnalyticsDuration";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
 import AnalyticsLatencyChart from "./AnalyticsLatencyChart";
 import { latencyData } from "./analyticsLatencyData";
+import { valueInfo } from "./analyticsTrends";
+import InfoTip from "@/components/common/InfoTip";
 
 interface AnalyticsLatencyCardProps {
   field: string;
@@ -17,15 +19,24 @@ export default function AnalyticsLatencyCard({
 }: AnalyticsLatencyCardProps) {
   const t = useTranslations("analytics.latency");
   const timing = latencyData(value);
+  const info = valueInfo(value);
   if (!timing.hasData)
     return <AnalyticsEmptyState message={t("timingUnavailable")} />;
   return (
     <div>
       <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
         <div className="min-w-0 lg:col-span-2">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            {t("distributionTitle", { stage: t(`titles.${field}`) })}
-          </h3>
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {t("distributionTitle", { stage: t(`titles.${field}`) })}
+            </h3>
+            {info && (
+              <InfoTip
+                text={info}
+                title={t("distributionTitle", { stage: t(`titles.${field}`) })}
+              />
+            )}
+          </div>
           <p className="mt-1 mb-5 text-theme-xs leading-5 text-gray-500 dark:text-gray-400">
             {t("distributionDescription")}
           </p>

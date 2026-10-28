@@ -133,7 +133,9 @@ export default function AnalyticsPeriodChart({
           y:
             padding.top +
             chartHeight *
-              (1 - (Math.max(0, point.value ?? 0) / maximum) * progress),
+              (1 -
+                (Math.max(0, point.value ?? 0) / maximum) *
+                  (variant === "bar" ? progress : 1)),
           value: point.value,
         };
       });
@@ -165,6 +167,13 @@ export default function AnalyticsPeriodChart({
           context.fill();
         });
       } else {
+        // Wipe the line in from its starting edge.
+        context.save();
+        context.beginPath();
+        if (rtl)
+          context.rect(width * (1 - progress), 0, width * progress, height);
+        else context.rect(0, 0, width * progress, height);
+        context.clip();
         const line = new Path2D();
         let previous: { x: number; y: number; value: number | null } | null =
           null;
@@ -221,6 +230,7 @@ export default function AnalyticsPeriodChart({
           context.lineWidth = 2;
           context.stroke();
         });
+        context.restore();
       }
       const selected = activeIndex === null ? null : positions[activeIndex];
       if (selected && selected.value !== null) {

@@ -5,7 +5,12 @@ import { ArrowRightIcon, ChartBarsIcon, RefreshIcon, GroupIcon } from "@/icons";
 import { Link } from "@/i18n/navigation";
 import type { DashboardOverviewResponse } from "@/lib/api/types";
 import AnalyticsMetricCard from "./AnalyticsMetricCard";
-import { metricTrend } from "@/components/analytics/analyticsTrends";
+import {
+  blockInfo,
+  metricInfo,
+  metricTrend,
+} from "@/components/analytics/analyticsTrends";
+import InfoTip from "@/components/common/InfoTip";
 
 interface EngagementOverviewProps {
   overview: DashboardOverviewResponse | null;
@@ -41,6 +46,7 @@ export default function EngagementOverview({
       icon: GroupIcon,
     },
   ] as const;
+  const sectionInfo = blockInfo(overview, "audience_engagement");
   return (
     <section aria-label={t("engagementTitle")}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -48,6 +54,9 @@ export default function EngagementOverview({
           <h2 className="text-base font-semibold text-gray-900 dark:text-white/90">
             {t("engagementTitle")}
           </h2>
+          {sectionInfo && (
+            <InfoTip text={sectionInfo} title={t("engagementTitle")} />
+          )}
           <span className="rounded-md bg-gray-100 px-2 py-0.5 text-theme-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
             {periodLabel}
           </span>
@@ -79,6 +88,7 @@ export default function EngagementOverview({
             description={t(metric.description)}
             icon={<metric.icon />}
             iconStart
+            info={metricInfo(overview, metric.field, ["audience_engagement"])}
             progress={metric.value}
             trend={metricTrend(overview, metric.field, ["audience_engagement"])}
           />

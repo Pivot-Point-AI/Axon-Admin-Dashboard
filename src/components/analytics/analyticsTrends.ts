@@ -42,6 +42,7 @@ const aliases: Record<string, string[]> = {
   today_returning_user_rate_pct: [
     "returning_users_today",
     "today_returning_user_rate",
+    "returning_user_rate",
   ],
   stickiness_ratio_pct: [
     "daily_to_monthly_activity",
@@ -79,14 +80,26 @@ const aliases: Record<string, string[]> = {
   ],
   average_intent_confidence: ["average_confidence", "intent_confidence"],
   high_confidence_rate_pct: ["high_confidence_rate"],
-  llm_fallback_rate_pct: ["fallback_rate", "llm_fallback_rate"],
+  llm_fallback_rate_pct: [
+    "fallback_rate",
+    "llm_fallback_rate",
+    "ai_fallback_rate",
+  ],
   average_response_time: [
     "average_response_time_ms",
     "avg_response_time_ms",
     "average_latency_ms",
   ],
-  p95_response_time: ["p95_response_time_ms", "p95_latency_ms"],
-  slow_turns_count_above_1500ms: ["slow_interactions", "slow_turns"],
+  p95_response_time: [
+    "p95_response_time_ms",
+    "p95_latency_ms",
+    "percentile_95",
+  ],
+  slow_turns_count_above_1500ms: [
+    "slow_interactions",
+    "slow_turns",
+    "slow_responses",
+  ],
   turn_success_count: ["successful_interactions", "successful_turns"],
   turn_failed_count: ["failed_interactions", "failed_turns"],
   recorded_errors: ["recognized_errors", "error_count", "errors_count"],
@@ -103,7 +116,11 @@ const aliases: Record<string, string[]> = {
   abandoned_flows_count: ["total_drop_offs", "drop_offs"],
   flow_drop_off_rate_pct: ["drop_off_rate"],
   average_steps_per_completed_flow: ["steps_to_completion"],
-  total_classified_turns: ["classified_turns", "interactions_classified"],
+  total_classified_turns: [
+    "classified_turns",
+    "interactions_classified",
+    "classified_interactions",
+  ],
   llm_fallback_count: ["ai_fallbacks"],
   guardrail_violations_count: ["safety_blocks"],
   total_measured_turns: ["measured_interactions"],
@@ -193,14 +210,6 @@ export function readMetricTrend(value: unknown): MetricTrendData | null {
     metric.value,
     growth.current_count,
   );
-  const calculatedChange =
-    currentCount !== null && previousCount !== null
-      ? previousCount !== 0
-        ? ((currentCount - previousCount) / Math.abs(previousCount)) * 100
-        : currentCount === 0
-          ? 0
-          : null
-      : null;
   const change = firstNumber(
     metric.change_pct,
     metric.growth_pct,
@@ -213,7 +222,6 @@ export function readMetricTrend(value: unknown): MetricTrendData | null {
     growth.growth_pct,
     growth.change_pct,
     growth.pct,
-    calculatedChange,
   );
   const reportedDirection = firstString(
     trend.direction,
@@ -240,32 +248,25 @@ export function readMetricTrend(value: unknown): MetricTrendData | null {
   const history =
     metric.sparkline ?? trend.sparkline ?? metric.history ?? trend.history;
   const points = readMetricHistory(history);
-  // Text that reads like a comparison, whatever the field is called. When it
-  // starts with a figure ("-80.0% vs yesterday") it is the server's own display
-  // of the change; otherwise it is just the comparison wording.
-  const phrase = [metric, trend, growth]
-    .flatMap((block) => Object.values(block))
-    .find(
-      (value): value is string =>
-        typeof value === "string" &&
-        /\bvs\.?(?:\s|$)|compared|yesterday|last (?:week|month|period)|previous/i.test(
-          value,
-        ),
-    );
-  const phraseHasFigure = phrase ? /^[\s↑↓▲▼↗↘—–+-]*\d/.test(phrase) : false;
+  // The API's own comparison, whatever its exact field name: any key that says
+  // "comparison", holding text or an object with a label.
   const comparison = firstString(
-    metric.comparison_label,
+    ...[metric, trend, growth].flatMap((block) =>
+      Object.entries(block)
+        .filter(([key]) => /compar/i.test(key))
+        .map(([, value]) =>
+          typeof value === "object" && value !== null
+            ? firstString(
+                ...["label", "text", "display", "name", "period"].map(
+                  (key) => (value as Record<string, unknown>)[key],
+                ),
+              )
+            : value,
+        ),
+    ),
     metric.change_label,
     metric.trend_label,
-    metric.comparison,
-    trend.comparison_label,
     trend.change_label,
-    trend.comparison,
-    trend.label,
-    trend.vs,
-    metric.compared_to,
-    growth.comparison_label,
-    phrase && !phraseHasFigure ? phrase : null,
   );
   if (direction === null && !points.some((point) => point.value !== null))
     return null;
@@ -290,7 +291,6 @@ export function readMetricTrend(value: unknown): MetricTrendData | null {
         )
         ? metric.display
         : null,
-      phrase && phraseHasFigure ? phrase : null,
     ),
     favorable: firstBoolean(
       trend.is_positive,
@@ -396,16 +396,9 @@ export function metricTrend(
       if (result) return result;
     }
   }
-  const direct =
-    readMetricTrend(root[`${field}_growth`]) ?? readMetricTrend(root[field]);
-  if (
-    direct &&
-    field === "daily_active_users" &&
-    direct.comparison === null &&
-    direct.previousCount !== null
-  )
-    return { ...direct, comparison: "yesterday" };
-  return direct;
+  return (
+    readMetricTrend(root[`${field}_growth`]) ?? readMetricTrend(root[field])
+  );
 }
 
 export function lowerMetricIsBetter(field: string): boolean {
@@ -431,11 +424,30 @@ const infoKeys = [
   "tooltip",
   "help_text",
   "hint",
+  "explanation",
+  "about",
   "description",
 ];
 
+/** First `stat_info` anywhere below a value, for responses that nest it. */
+function deepInfo(value: unknown, depth = 0): string | null {
+  if (depth > 3 || value === null || typeof value !== "object") return null;
+  const items = Array.isArray(value) ? value : Object.values(value);
+  for (const item of items) {
+    if (item === null || typeof item !== "object") continue;
+    const own = firstString(asAnalyticsRecord(item).stat_info);
+    if (own) return own;
+  }
+  for (const item of items) {
+    const found = deepInfo(item, depth + 1);
+    if (found) return found;
+  }
+  return null;
+}
+
 /** The server's own explanation, wherever the response chose to put it: on
- * the entry, in a nested `stat`/`meta` object, or in a `<name>_info` sibling. */
+ * the entry, in a nested `stat`/`meta` object, in a `<name>_info` sibling, in
+ * a root map keyed by name, or deeper inside the entry. */
 function readInfo(
   record: Record<string, unknown>,
   root?: Record<string, unknown>,
@@ -451,13 +463,25 @@ function readInfo(
       const found = firstString(source[key]);
       if (found) return found;
     }
-  if (root && name)
-    return firstString(
+  if (root && name) {
+    const sibling = firstString(
       root[`${name}_info`],
       root[`${name}_stat_info`],
       root[`${name}_description`],
     );
-  return null;
+    if (sibling) return sibling;
+    for (const map of [
+      "stat_info",
+      "stat_infos",
+      "info",
+      "infos",
+      "descriptions",
+    ]) {
+      const found = firstString(asAnalyticsRecord(root[map])[name]);
+      if (found) return found;
+    }
+  }
+  return deepInfo(record);
 }
 
 export function metricInfo(
@@ -466,8 +490,13 @@ export function metricInfo(
   blocks: string[] = ["top_kpis"],
 ): string | null {
   const root = asAnalyticsRecord(data);
+  const allBlocks = Object.keys(root).filter(
+    (key) => root[key] !== null && typeof root[key] === "object",
+  );
   const record =
-    findMetric(root, field, blocks) ?? asAnalyticsRecord(root[field]);
+    findMetric(root, field, blocks) ??
+    findMetric(root, field, allBlocks) ??
+    asAnalyticsRecord(root[field]);
   return readInfo(record, root, field);
 }
 

@@ -10,7 +10,12 @@ import {
 import { Link } from "@/i18n/navigation";
 import type { DashboardOverviewResponse } from "@/lib/api/types";
 import AnalyticsMetricCard from "./AnalyticsMetricCard";
-import { metricTrend } from "@/components/analytics/analyticsTrends";
+import {
+  blockInfo,
+  metricInfo,
+  metricTrend,
+} from "@/components/analytics/analyticsTrends";
+import InfoTip from "@/components/common/InfoTip";
 
 interface FlowOutcomesProps {
   overview: DashboardOverviewResponse | null;
@@ -32,6 +37,9 @@ export default function FlowOutcomes({
         });
   const completed = overview?.flow_completion_rate_pct ?? 0;
   const abandoned = overview?.flow_abandonment_rate_pct ?? 0;
+  const sectionInfo = blockInfo(overview, "banking_journeys");
+  const info = (field: string) =>
+    metricInfo(overview, field, ["banking_journeys"]);
   return (
     <section aria-label={t("flowTitle")}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -40,6 +48,9 @@ export default function FlowOutcomes({
             <h2 className="text-base font-semibold text-gray-900 dark:text-white/90">
               {t("flowTitle")}
             </h2>
+            {sectionInfo && (
+              <InfoTip text={sectionInfo} title={t("flowTitle")} />
+            )}
             <span className="rounded-md bg-gray-100 px-2 py-0.5 text-theme-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
               {periodLabel}
             </span>
@@ -64,6 +75,7 @@ export default function FlowOutcomes({
           }
           description={t("flowsInitiatedDescription")}
           icon={<PlayIcon />}
+          info={info("total_flows_initiated")}
           segments={
             overview
               ? [
@@ -96,6 +108,7 @@ export default function FlowOutcomes({
           value={percent(overview?.flow_completion_rate_pct)}
           description={t("flowCompletionDescription")}
           icon={<CheckCircleIcon />}
+          info={info("flow_completion_rate_pct")}
           iconStart
           progress={overview?.flow_completion_rate_pct}
           trend={metricTrend(overview, "flow_completion_rate_pct", [
@@ -108,6 +121,7 @@ export default function FlowOutcomes({
           value={percent(overview?.flow_abandonment_rate_pct)}
           description={t("flowAbandonmentDescription")}
           icon={<CloseLineIcon />}
+          info={info("flow_abandonment_rate_pct")}
           iconStart
           progress={overview?.flow_abandonment_rate_pct}
           trend={metricTrend(overview, "flow_abandonment_rate_pct", [

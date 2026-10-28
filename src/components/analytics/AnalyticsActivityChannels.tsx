@@ -1,4 +1,5 @@
 "use client";
+import { valueInfo } from "./analyticsTrends";
 import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import { useFormatter, useTranslations } from "next-intl";
 import { PieChartIcon } from "@/icons";
@@ -31,7 +32,7 @@ export default function AnalyticsActivityChannels({
   return (
     <AnalyticsChartCard
       title={t("channelsTitle")}
-      info={tInfo("channels")}
+      info={valueInfo(value) ?? tInfo("channels")}
       description={t("channelsDescription")}
       icon={<PieChartIcon />}
       actions={<AnalyticsJourneyPeriod />}

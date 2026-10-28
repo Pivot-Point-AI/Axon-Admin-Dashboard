@@ -152,6 +152,7 @@ export default function AnalyticsCompletionAbandonment({
       icon={<TrendLineIcon />}
       info={
         blocksInfo(data, [
+          "completion_vs_abandonment_rate",
           "flow_breakdown_by_type",
           "journey_outcomes_detail",
           "journey_outcomes",

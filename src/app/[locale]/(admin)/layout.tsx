@@ -52,7 +52,7 @@ export default function AdminLayout({
         onClick={toggleSidebar}
         className={cn(
           // A compact round handle on the sidebar edge, halfway down.
-          "group fixed top-1/2 z-999999 hidden size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-theme-sm transition-[inset-inline-start,background-color,color,border-color,box-shadow] duration-300 ease-in-out hover:border-brand-500 hover:bg-brand-500 hover:text-white hover:shadow-focus-ring focus-visible:border-brand-500 focus-visible:bg-brand-500 focus-visible:text-white focus-visible:shadow-focus-ring focus-visible:outline-none xl:flex rtl:translate-x-1/2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-brand-500 dark:hover:bg-brand-500 dark:hover:text-white",
+          "group fixed top-1/2 z-999 hidden size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-theme-sm transition-[inset-inline-start,background-color,color,border-color,box-shadow] duration-300 ease-in-out hover:border-brand-500 hover:bg-brand-500 hover:text-white hover:shadow-focus-ring focus-visible:border-brand-500 focus-visible:bg-brand-500 focus-visible:text-white focus-visible:shadow-focus-ring focus-visible:outline-none xl:flex rtl:translate-x-1/2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-brand-500 dark:hover:bg-brand-500 dark:hover:text-white",
           sidebarWide ? "start-64" : "start-22.5",
         )}
       >

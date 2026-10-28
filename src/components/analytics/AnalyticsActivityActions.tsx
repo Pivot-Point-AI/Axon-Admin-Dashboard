@@ -1,4 +1,5 @@
 "use client";
+import { blocksInfo } from "./analyticsTrends";
 import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import { useFormatter, useTranslations } from "next-intl";
 import { ChartBarsIcon } from "@/icons";
@@ -63,7 +64,10 @@ export default function AnalyticsActivityActions({
   return (
     <AnalyticsChartCard
       title={t("actionsTitle")}
-      info={tInfo("actions")}
+      info={
+        blocksInfo(data, ["actions_delivered", "dispatched_actions"]) ??
+        tInfo("actions")
+      }
       description={t(
         history.length ? "actionsHistoryDescription" : "actionsDescription",
       )}

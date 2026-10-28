@@ -1,5 +1,5 @@
 import { ADMIN_API_BASE_URL, apiRequest } from "./client";
-import type { AnalyticsFilters } from "./analytics";
+import { periodQuery, type AnalyticsFilters } from "./analytics";
 import type { DashboardOverviewResponse } from "./types";
 
 export function getDashboardOverview(
@@ -12,11 +12,7 @@ export function getDashboardOverview(
     {
       bearerToken,
       signal,
-      query: {
-        period: filters.period,
-        start_date: filters.start_date,
-        end_date: filters.end_date,
-      },
+      query: periodQuery(filters),
       baseUrl: ADMIN_API_BASE_URL,
     },
   );

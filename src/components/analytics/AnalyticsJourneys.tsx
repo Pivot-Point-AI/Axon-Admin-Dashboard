@@ -1,5 +1,6 @@
 "use client";
 
+import { blockInfo } from "./analyticsTrends";
 import AnalyticsCardScope from "./AnalyticsCardScope";
 import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import AnalyticsCardActions from "./AnalyticsCardActions";
@@ -45,7 +46,9 @@ export default function AnalyticsJourneys({ data }: AnalyticsJourneysProps) {
             title={t("design.journeyDetailTitle")}
             description={t("design.journeyDetailDescription")}
             icon={<TableIcon />}
-            info={tInfo("journeyDetail")}
+            info={
+              blockInfo(d, "journey_outcomes_detail") ?? tInfo("journeyDetail")
+            }
             actions={
               <AnalyticsCardActions>
                 <div className="w-full sm:w-64">

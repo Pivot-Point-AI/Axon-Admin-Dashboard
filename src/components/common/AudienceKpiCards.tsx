@@ -15,8 +15,6 @@ import {
 
 interface AudienceKpiCardsProps {
   data: unknown;
-  /** Another response to take a comparison from when `data` has none. */
-  fallback?: unknown;
 }
 
 const cards = [
@@ -26,10 +24,7 @@ const cards = [
   { field: "active_sessions", label: "activeSessions", icon: ChatIcon },
 ] as const;
 
-export default function AudienceKpiCards({
-  data,
-  fallback,
-}: AudienceKpiCardsProps) {
+export default function AudienceKpiCards({ data }: AudienceKpiCardsProps) {
   const t = useTranslations("dashboardAnalytics");
   const tInfo = useTranslations("analytics.design.info");
   const format = useFormatter();
@@ -70,10 +65,7 @@ export default function AudienceKpiCards({
                       : "activeSessions",
               )
             }
-            trend={
-              metricTrend(data, field) ??
-              (fallback ? metricTrend(fallback, field) : null)
-            }
+            trend={metricTrend(data, field)}
           />
         );
       })}

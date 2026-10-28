@@ -1,4 +1,5 @@
 "use client";
+import { blocksInfo } from "./analyticsTrends";
 import { useMemo } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { TableIcon } from "@/icons";
@@ -110,7 +111,9 @@ export default function AnalyticsActivityErrors({
   return (
     <AnalyticsChartCard
       title={t("errorsTitle")}
-      info={tInfo("errors")}
+      info={
+        blocksInfo(data, ["recognized_errors", "errors"]) ?? tInfo("errors")
+      }
       description={t("errorsDescription")}
       icon={<TableIcon />}
       actions={<AnalyticsJourneyPeriod />}

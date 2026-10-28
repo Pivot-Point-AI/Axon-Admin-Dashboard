@@ -118,14 +118,37 @@ export function languageRows(value: unknown): {
 }
 
 export function languageName(code: string, locale: string): string {
+  let name = code;
   try {
-    return (
-      new Intl.DisplayNames([locale], { type: "language" }).of(code) ?? code
-    );
+    name =
+      new Intl.DisplayNames([locale], { type: "language" }).of(code) ?? code;
   } catch {
-    return code;
+    name = code;
   }
+  // A full name sent as the key ("english") has no code to resolve; show it
+  // capitalized rather than in the raw lowercase form.
+  return name.toLowerCase() === code.toLowerCase() && /^\p{L}{4,}$/u.test(code)
+    ? code.charAt(0).toLocaleUpperCase(locale) + code.slice(1)
+    : name;
 }
+
+const tableListKeys = [
+  "rows",
+  "points",
+  "series",
+  "categories",
+  "interactions",
+  "actions",
+  "errors",
+  "items",
+  "entries",
+  "results",
+  "history",
+  "data",
+  "steps",
+  "journeys",
+  "records",
+];
 
 /** Flatten structured records into table columns; no recursive layout is
  * needed even when telemetry includes nested timing or error details. */
@@ -149,8 +172,13 @@ export function analyticsTableRows(value: unknown): Record<string, unknown>[] {
     }
     return row;
   };
-  if (Array.isArray(value))
-    return value.map((row) =>
+  // A block can carry its records in a list beside its description, such as
+  // {description, stat_info, points: [...]}; the list is the table.
+  const wrapped = asAnalyticsRecord(value);
+  const listKey = tableListKeys.find((key) => Array.isArray(wrapped[key]));
+  const source = listKey ? wrapped[listKey] : value;
+  if (Array.isArray(source))
+    return source.map((row) =>
       typeof row === "object" && row !== null ? flatten(row) : { value: row },
     );
   return Object.entries(asAnalyticsRecord(value)).map(([name, child]) => ({

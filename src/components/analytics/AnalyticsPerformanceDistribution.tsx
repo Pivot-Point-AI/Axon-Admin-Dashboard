@@ -1,4 +1,5 @@
 "use client";
+import { blocksInfo } from "./analyticsTrends";
 import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
@@ -22,7 +23,10 @@ export default function AnalyticsPerformanceDistribution({
   return (
     <AnalyticsChartCard
       title={t("distributionTitle")}
-      info={tInfo("distribution")}
+      info={
+        blocksInfo(data, ["response_time_distribution"]) ??
+        tInfo("distribution")
+      }
       description={t("distributionDescription")}
       icon={<TimeIcon />}
       actions={<AnalyticsJourneyPeriod />}

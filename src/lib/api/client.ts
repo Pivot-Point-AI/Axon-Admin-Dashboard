@@ -173,6 +173,9 @@ export async function apiRequest<T>(
 
   const headers: Record<string, string> = {
     Accept: "application/json",
+    // ngrok answers browser-like requests with an HTML warning page unless
+    // this header is present; harmless for any other host.
+    "ngrok-skip-browser-warning": "true",
   };
   if (body !== undefined) {
     headers["Content-Type"] = "application/json";

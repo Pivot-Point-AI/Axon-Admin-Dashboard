@@ -51,7 +51,7 @@ export function MetricTrendBadge({
       ? label
       : t("versus", { period: label })
     : null;
-  // The server's own wording ("+52.17% vs last month") is split so the figure
+  // The server's own `display` ("+52.17% vs last month") is split so the figure
   // sits in the colored chip and the comparison reads as plain, muted text.
   const supplied = trend.display
     ? trend.display.replace(/^[\s↑↓▲▼↗↘—–]+/, "").trim()
@@ -79,7 +79,9 @@ export function MetricTrendBadge({
         ) : supplied || trend.change !== null ? null : (
           <span aria-hidden="true">—</span>
         )}
-        {trend.change !== null ? (
+        {supplied ? (
+          <span>{chip}</span>
+        ) : trend.change !== null ? (
           <span>
             {format.number(trend.change / 100, {
               style: "percent",
@@ -87,8 +89,6 @@ export function MetricTrendBadge({
               signDisplay: "exceptZero",
             })}
           </span>
-        ) : supplied ? (
-          <span>{chip}</span>
         ) : trend.direction === "flat" ? (
           <span title={t("missing")}>{"\u2014"}</span>
         ) : null}

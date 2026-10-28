@@ -215,6 +215,7 @@ export default function AnalyticsJourneysByCategory({
       icon={<PieChartIcon />}
       info={
         blocksInfo(data, [
+          "journeys_by_category",
           "flow_breakdown_by_type",
           "journey_outcomes_detail",
           "journey_outcomes",

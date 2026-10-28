@@ -1,5 +1,6 @@
 "use client";
 
+import { blocksInfo } from "./analyticsTrends";
 import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
@@ -59,7 +60,13 @@ export default function AnalyticsLatencyOverview({
   return (
     <ComponentCard
       title={t("overviewTitle")}
-      info={tInfo("latencyOverview")}
+      info={
+        blocksInfo(data, [
+          "response_time_percentiles",
+          "speech_recognition_percentiles",
+          "ai_generation_percentiles",
+        ]) ?? tInfo("latencyOverview")
+      }
       description={t("overviewDescription")}
       className="overflow-hidden p-0 sm:p-0 [&>div:first-child]:mb-0 [&>div:first-child]:px-5 [&>div:first-child]:pt-5"
     >

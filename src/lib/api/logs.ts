@@ -159,7 +159,12 @@ export async function fetchAudioObjectUrl(
 ): Promise<string> {
   const response = await fetch(
     `${ADMIN_API_BASE_URL}/logs/audio/${encodeURIComponent(fileName)}`,
-    { headers: { Authorization: `Bearer ${bearerToken}` } },
+    {
+      headers: {
+        Authorization: `Bearer ${bearerToken}`,
+        "ngrok-skip-browser-warning": "true",
+      },
+    },
   );
   if (!response.ok) {
     throw new ApiError(

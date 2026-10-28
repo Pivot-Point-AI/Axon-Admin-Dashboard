@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import useOverviewFallback from "./useOverviewFallback";
 import AudienceKpiCards from "@/components/common/AudienceKpiCards";
 import MetricHeader from "@/components/common/MetricHeader";
 import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
@@ -27,6 +26,7 @@ import AnalyticsValue from "./AnalyticsValue";
 import MetricTrend, { MetricTrendBadge } from "./MetricTrend";
 import MetricSparkline from "./MetricSparkline";
 import {
+  blockInfo,
   lowerMetricIsBetter,
   metricInfo,
   metricTrend,
@@ -44,7 +44,6 @@ export default function AnalyticsMetrics({
   data,
 }: AnalyticsMetricsProps) {
   const t = useTranslations("analytics");
-  const overview = useOverviewFallback(section === "users");
   const latency = asAnalyticsRecord(data.end_to_end_latency_ms);
   const tokens = asAnalyticsRecord(data.token_usage);
   const tokenCategories = asAnalyticsRecord(tokens.categories);
@@ -64,7 +63,7 @@ export default function AnalyticsMetrics({
       (Array.isArray(data.errors) ? data.errors.length : null),
   };
   if (section === "users")
-    return <AudienceKpiCards data={data} fallback={overview} />;
+    return <AudienceKpiCards data={data} />;
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {sectionMetrics[section].map((field, index) => {
@@ -188,14 +187,22 @@ export function AnalyticsMetricList({
       />
     ) : undefined;
 
-  // One explanation for the whole card: each row's own text, one per line.
+  // One explanation for the whole card: the response's own text for the card,
+  // else each row's text, one per line.
+  const cardBlock: Record<string, string> = {
+    audienceHealth: "audience_and_retention",
+    conversationDetails: "conversation_details",
+    journeyDetails: "journey_details",
+  };
   const info =
-    fields
+    (cardBlock[title] ? blockInfo(data, cardBlock[title]) : null) ??
+    (fields
       .flatMap((field) => {
         const text = metricInfo(data, field, rowBlocks);
         return text ? [`${t(`fields.${field}`)}: ${text}`] : [];
       })
-      .join("\n") || (tInfo.has(title) ? tInfo(title) : null);
+      .join("\n") ||
+      (tInfo.has(title) ? tInfo(title) : null));
 
   return (
     <ComponentCard

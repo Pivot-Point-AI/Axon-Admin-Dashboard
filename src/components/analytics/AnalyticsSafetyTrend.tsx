@@ -1,5 +1,6 @@
 "use client";
 
+import { blocksInfo } from "./analyticsTrends";
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
@@ -65,7 +66,13 @@ export default function AnalyticsSafetyTrend({
     <ComponentCard
       compact
       title={t("trendTitle")}
-      info={tInfo("safetyTrend")}
+      info={
+        blocksInfo(data, [
+          "fallbacks_and_safety",
+          "safety_blocks_by_risk",
+          "safety_blocks_by_reason",
+        ]) ?? tInfo("safetyTrend")
+      }
       description={t("trendDescription")}
       icon={<PieChartIcon />}
       actions={
