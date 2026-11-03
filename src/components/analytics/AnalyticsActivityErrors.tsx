@@ -1,5 +1,5 @@
 "use client";
-import { blocksInfo } from "./analyticsTrends";
+import { blocksInfo, blockDescription } from "./analyticsTrends";
 import { useMemo } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { TableIcon } from "@/icons";
@@ -114,7 +114,10 @@ export default function AnalyticsActivityErrors({
       info={
         blocksInfo(data, ["recognized_errors", "errors"]) ?? tInfo("errors")
       }
-      description={t("errorsDescription")}
+      description={
+        blockDescription(data, "recognized_errors", "errors") ??
+        t("errorsDescription")
+      }
       icon={<TableIcon />}
       actions={<AnalyticsJourneyPeriod />}
     >

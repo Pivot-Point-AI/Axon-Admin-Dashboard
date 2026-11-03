@@ -26,7 +26,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAdminAuth } from "@/context/AdminAuthContext";
-import { PencilIcon, PlusIcon, TrashBinIcon } from "@/icons/index";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashBinIcon,
+} from "@/icons/index";
 import { ApiError } from "@/lib/api/client";
 import { asRecordArray, recordId } from "@/lib/api/normalize";
 
@@ -154,7 +160,48 @@ export default function MasterDataSection({
         ? acc.filter((row) => String(row[filter.key] ?? "") === selected)
         : acc;
     }, rows);
-  const visibleItems = applyFilters(items);
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  } | null>(null);
+  const needle = query.trim().toLowerCase();
+  const searchable = fields.filter((field) => field.type !== "checkbox");
+  const matches = (row: Record<string, unknown>) =>
+    !needle ||
+    searchable.some((field) =>
+      String(row[field.key] ?? "")
+        .toLowerCase()
+        .includes(needle),
+    );
+  const sortField = fields.find((field) => field.key === sort?.key);
+  const collator = new Intl.Collator(undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+  const visibleItems = applyFilters(items)
+    .filter(matches)
+    .sort((a, b) => {
+      if (!sort || !sortField) return 0;
+      const order =
+        sortField.type === "checkbox"
+          ? Number(asBoolean(a[sort.key])) - Number(asBoolean(b[sort.key]))
+          : collator.compare(
+              String(a[sort.key] ?? ""),
+              String(b[sort.key] ?? ""),
+            );
+      return sort.direction === "asc" ? order : -order;
+    });
+
+  // Click cycles a column: ascending, descending, then back to the API order.
+  const toggleSort = (key: string) =>
+    setSort((current) =>
+      current?.key !== key
+        ? { key, direction: "asc" }
+        : current.direction === "asc"
+          ? { key, direction: "desc" }
+          : null,
+    );
 
   const changeFilter = (index: number, value: string) => {
     // Changing a filter invalidates the ones that cascade from it.
@@ -356,7 +403,10 @@ export default function MasterDataSection({
     );
   };
 
-  const pagination = usePagination(visibleItems, JSON.stringify(filterValues));
+  const pagination = usePagination(
+    visibleItems,
+    JSON.stringify([filterValues, needle, sort]),
+  );
 
   return (
     <div className="axon-master-data space-y-5">
@@ -364,9 +414,21 @@ export default function MasterDataSection({
       <MasterDataMetrics items={items} loading={loading || !!error} />
       <div className="axon-management-panel rounded-xl border border-brand-100 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-          <h4 className="me-auto self-center text-base font-semibold text-gray-800 dark:text-white/90">
+          <h4 className="self-center text-base font-semibold text-gray-800 dark:text-white/90">
             {title}
           </h4>
+          <div className="flex flex-1 flex-wrap gap-3">
+            <Input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("searchPlaceholder", {
+                title: title.toLowerCase(),
+              })}
+              aria-label={t("search")}
+              className="min-w-60 bg-gray-50 dark:bg-gray-900"
+            />
+          </div>
           {filters.length > 0 && (
             <div className="flex flex-1 flex-wrap items-end gap-3 lg:justify-end">
               {filters.map((filter, index) => {
@@ -404,7 +466,7 @@ export default function MasterDataSection({
             </div>
           )}
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <RowsPerPage pagination={pagination} disabled={loading} />
             <Button
               size="sm"
@@ -437,15 +499,40 @@ export default function MasterDataSection({
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-gray-800">
               <TableRow>
-                {fields.map((field) => (
-                  <TableCell
-                    key={field.key}
-                    isHeader
-                    className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                  >
-                    {field.label}
-                  </TableCell>
-                ))}
+                {fields.map((field) => {
+                  const active = sort?.key === field.key;
+                  const SortIcon =
+                    active && sort.direction === "desc"
+                      ? ArrowDownIcon
+                      : ArrowUpIcon;
+                  return (
+                    <TableCell
+                      key={field.key}
+                      isHeader
+                      ariaSort={
+                        active
+                          ? sort.direction === "asc"
+                            ? "ascending"
+                            : "descending"
+                          : "none"
+                      }
+                      className="px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleSort(field.key)}
+                        title={t("sortBy", { field: field.label })}
+                        className={`group inline-flex items-center gap-1.5 rounded-md font-medium transition-colors hover:text-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 dark:hover:text-gray-200 ${active ? "text-brand-600 dark:text-brand-300" : ""}`}
+                      >
+                        {field.label}
+                        <SortIcon
+                          aria-hidden="true"
+                          className={`size-3 transition-opacity ${active ? "opacity-100" : "opacity-0 group-hover:opacity-50 group-focus-visible:opacity-50"}`}
+                        />
+                      </button>
+                    </TableCell>
+                  );
+                })}
                 {hasActions && (
                   <TableCell
                     isHeader
@@ -468,7 +555,9 @@ export default function MasterDataSection({
                   <TableCell className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
                     {items.length === 0
                       ? "No entries yet."
-                      : "No entries match the selected filters."}
+                      : needle
+                        ? t("noSearchMatch")
+                        : "No entries match the selected filters."}
                   </TableCell>
                 </TableRow>
               ) : (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import AudienceKpiCards from "@/components/common/AudienceKpiCards";
 import MetricHeader from "@/components/common/MetricHeader";
 import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
@@ -22,13 +22,17 @@ import {
 import type { AnalyticsSection } from "@/lib/api/analytics";
 import { analyticsNumber, asAnalyticsRecord } from "./analyticsData";
 import { sectionMetrics } from "./analyticsPresentation";
+import AnalyticsTopKpis from "./AnalyticsTopKpis";
 import AnalyticsValue from "./AnalyticsValue";
 import MetricTrend, { MetricTrendBadge } from "./MetricTrend";
 import MetricSparkline from "./MetricSparkline";
 import {
   blockInfo,
+  formattedValue,
+  kpiEntries,
   lowerMetricIsBetter,
   metricInfo,
+  metricRecord,
   metricTrend,
   metricValue,
 } from "./analyticsTrends";
@@ -37,6 +41,49 @@ interface AnalyticsMetricsProps {
   section: AnalyticsSection;
   data: Record<string, unknown>;
 }
+const journeyRates = [
+  "flow_completion_rate_pct",
+  "flow_abandonment_rate_pct",
+  "total_failed_flows",
+];
+
+/** Journeys rates come with the count behind them, e.g. "327/744". */
+function journeyFigure(
+  section: AnalyticsSection,
+  field: string,
+  data: Record<string, unknown>,
+  values: Record<string, unknown>,
+  format: ReturnType<typeof useFormatter>,
+): { percent: boolean; figure: string | null } | null {
+  if (section !== "flows" || !journeyRates.includes(field)) return null;
+  const value = analyticsNumber(values[field]);
+  const record = metricRecord(data, field) ?? {};
+  // A failed-journeys KPI that arrives as a share (non-whole, or with a rate
+  // beside it) is shown as a percentage.
+  const percent =
+    field !== "total_failed_flows" ||
+    analyticsNumber(record.rate_pct) !== null ||
+    (value !== null && !Number.isInteger(value));
+  const started = analyticsNumber(values.total_initialized_flows);
+  const reported =
+    typeof record.formatted_value === "string" &&
+    record.formatted_value.includes("(")
+      ? analyticsNumber(record.formatted_value.split("(")[0].replace(/,/g, ""))
+      : null;
+  const count =
+    reported ??
+    (percent && value !== null && started !== null
+      ? Math.round((value / 100) * started)
+      : null);
+  return {
+    percent,
+    figure:
+      count !== null && started !== null
+        ? `${format.number(count)}/${format.number(started)}`
+        : null,
+  };
+}
+
 const icons = [GroupIcon, ChatIcon, BoltIcon, PieChartIcon];
 const journeyIcons = [GroupIcon, CheckCircleIcon, BoltIcon, TimeIcon];
 export default function AnalyticsMetrics({
@@ -44,6 +91,7 @@ export default function AnalyticsMetrics({
   data,
 }: AnalyticsMetricsProps) {
   const t = useTranslations("analytics");
+  const format = useFormatter();
   const latency = asAnalyticsRecord(data.end_to_end_latency_ms);
   const tokens = asAnalyticsRecord(data.token_usage);
   const tokenCategories = asAnalyticsRecord(tokens.categories);
@@ -62,15 +110,23 @@ export default function AnalyticsMetrics({
       metricValue(data, "recorded_errors") ??
       (Array.isArray(data.errors) ? data.errors.length : null),
   };
-  if (section === "users")
-    return <AudienceKpiCards data={data} />;
+  if (section === "users") return <AudienceKpiCards data={data} />;
+  // Performance and activity logs show the KPIs the API itself lists.
+  if (
+    (section === "performance" || section === "logs") &&
+    kpiEntries(data).length
+  )
+    return <AnalyticsTopKpis data={data} />;
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div
+      className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${sectionMetrics[section].length === 3 ? "xl:grid-cols-3" : "xl:grid-cols-4"}`}
+    >
       {sectionMetrics[section].map((field, index) => {
         const Icon = section === "flows" ? journeyIcons[index] : icons[index];
         // A figure the server leaves out for the period means nothing was counted.
         const value = analyticsNumber(values[field]) ?? 0;
         const trend = metricTrend(data, field);
+        const journeys = journeyFigure(section, field, data, values, format);
         const sparkline =
           (section === "performance" || section === "logs") &&
           trend &&
@@ -82,6 +138,9 @@ export default function AnalyticsMetrics({
           >
             <MetricHeader
               label={t(`fields.${field}`)}
+              detail={
+                journeys?.figure ?? formattedValue(metricRecord(data, field))
+              }
               icon={<Icon />}
               info={
                 metricInfo(data, field) ??
@@ -92,7 +151,10 @@ export default function AnalyticsMetrics({
             />
             <div className="mt-2.5 flex min-w-0 flex-nowrap items-center gap-x-1.5">
               <p className="flex shrink-0 items-baseline gap-1.5 text-lg font-bold tracking-tight text-gray-950 tabular-nums sm:text-xl dark:text-white/90">
-                <AnalyticsValue value={value} field={field} />
+                <AnalyticsValue
+                  value={value}
+                  field={journeys?.percent ? "rate_pct" : field}
+                />
                 {field.endsWith("response_time") && value !== null && (
                   <span className="ms-1 text-xs font-normal text-gray-400 dark:text-gray-500">
                     {t("design.milliseconds")}
@@ -138,7 +200,7 @@ const rowBlocks = [
   "top_kpis",
 ];
 
-const audienceHealthIcons: Record<
+export const audienceHealthIcons: Record<
   string,
   {
     icon: (props: { className?: string }) => React.JSX.Element;

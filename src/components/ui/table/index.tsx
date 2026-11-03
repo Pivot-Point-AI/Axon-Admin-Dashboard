@@ -32,6 +32,7 @@ interface TableCellProps {
   className?: string; // Optional className for styling
   rowSpan?: number;
   colSpan?: number;
+  ariaSort?: "ascending" | "descending" | "none";
 }
 
 // Table Component
@@ -70,6 +71,7 @@ const TableCell: React.FC<TableCellProps> = ({
   className,
   rowSpan,
   colSpan,
+  ariaSort,
 }) => {
   const CellTag = isHeader ? "th" : "td";
   return (
@@ -77,6 +79,7 @@ const TableCell: React.FC<TableCellProps> = ({
       scope={isHeader ? "col" : undefined}
       rowSpan={rowSpan}
       colSpan={colSpan}
+      aria-sort={isHeader ? ariaSort : undefined}
       className={className}
     >
       {children}

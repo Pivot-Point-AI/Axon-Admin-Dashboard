@@ -1,11 +1,13 @@
 "use client";
 import AnalyticsCardScope from "./AnalyticsCardScope";
 import AnalyticsActivityOutcomes from "./AnalyticsActivityOutcomes";
-import AnalyticsActivityChannels from "./AnalyticsActivityChannels";
 import AnalyticsActivityColumns from "./AnalyticsActivityColumns";
-import AnalyticsActivityActions from "./AnalyticsActivityActions";
 import AnalyticsActivityErrors from "./AnalyticsActivityErrors";
-import AnalyticsSlowInteractions from "./AnalyticsSlowInteractions";
+import AnalyticsDataTable from "./AnalyticsDataTable";
+import { analyticsTableRows } from "./analyticsData";
+import { blockDescription, blocksInfo } from "./analyticsTrends";
+import AnalyticsIntentBreakdown from "./AnalyticsIntentBreakdown";
+import AnalyticsSummaryBlock from "./AnalyticsSummaryBlock";
 
 interface AnalyticsActivityProps {
   data: Record<string, unknown>;
@@ -17,12 +19,9 @@ export default function AnalyticsActivity({
 }: AnalyticsActivityProps) {
   return (
     <div className="space-y-4">
-      <div className="grid items-stretch gap-4 lg:grid-cols-2">
+      <div className="grid items-stretch gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <AnalyticsCardScope section="logs" data={data}>
           {(d) => <AnalyticsActivityOutcomes data={d} date={date} />}
-        </AnalyticsCardScope>
-        <AnalyticsCardScope section="logs" data={data}>
-          {(d) => <AnalyticsActivityChannels value={d.sources} />}
         </AnalyticsCardScope>
         <AnalyticsCardScope section="logs" data={data}>
           {(d) => (
@@ -38,14 +37,47 @@ export default function AnalyticsActivity({
           )}
         </AnalyticsCardScope>
       </div>
+      {/* Full width, like the Text-to-Speech summary on the Performance tab. */}
       <AnalyticsCardScope section="logs" data={data}>
-        {(d) => <AnalyticsActivityActions data={d} />}
+        {(d) => (
+          <AnalyticsSummaryBlock
+            data={d}
+            block="flow_token_metrics"
+            gauge={false}
+            extras={false}
+          />
+        )}
       </AnalyticsCardScope>
       <AnalyticsCardScope section="logs" data={data}>
-        {(d) => <AnalyticsSlowInteractions value={d.slow_turns} />}
+        {(d) => (
+          <AnalyticsIntentBreakdown
+            data={d}
+            // `actions_delivered` is the older name for the same block.
+            block={
+              analyticsTableRows(d.token_breakdown_by_intent).length > 0
+                ? "token_breakdown_by_intent"
+                : "actions_delivered"
+            }
+          />
+        )}
       </AnalyticsCardScope>
       <AnalyticsCardScope section="logs" data={data}>
         {(d) => <AnalyticsActivityErrors data={d} />}
+      </AnalyticsCardScope>
+      {/* The errors exactly as the API lists them, whatever their columns. */}
+      <AnalyticsCardScope section="logs" data={data}>
+        {(d) =>
+          analyticsTableRows(d.recognized_errors ?? d.errors).length > 0 ? (
+            <AnalyticsDataTable
+              field="recognized_errors"
+              value={d.recognized_errors ?? d.errors}
+              description={
+                blockDescription(d, "recognized_errors", "errors") ?? undefined
+              }
+              info={blocksInfo(d, ["recognized_errors", "errors"])}
+            />
+          ) : null
+        }
       </AnalyticsCardScope>
     </div>
   );

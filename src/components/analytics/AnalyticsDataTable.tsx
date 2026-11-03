@@ -24,6 +24,8 @@ interface AnalyticsDataTableProps {
   embedded?: boolean;
   paginated?: boolean;
   query?: string;
+  description?: string;
+  info?: string | null;
 }
 
 export default function AnalyticsDataTable({
@@ -33,6 +35,8 @@ export default function AnalyticsDataTable({
   embedded = false,
   paginated = false,
   query = "",
+  description,
+  info,
 }: AnalyticsDataTableProps) {
   const t = useTranslations("analytics");
   const [expanded, setExpanded] = useState(false);
@@ -119,13 +123,16 @@ export default function AnalyticsDataTable({
                         className={`max-w-sm px-4 py-3 align-top text-theme-xs leading-5 break-words text-gray-700 dark:text-gray-300 ${numericColumns.has(column) ? "text-end font-medium tabular-nums" : "text-start"}`}
                       >
                         {typeof scalar === "string" && scalar.length > 150 ? (
-                          <details>
+                          <details className="group">
                             <summary className="cursor-pointer list-none rounded text-start focus-visible:outline-2 focus-visible:outline-brand-400 [&::-webkit-details-marker]:hidden">
-                              <span className="mb-1 line-clamp-2 block text-gray-600 dark:text-gray-400">
+                              <span className="mb-1 line-clamp-2 block text-gray-600 group-open:hidden dark:text-gray-400">
                                 {scalar.slice(0, 150)}…
                               </span>
-                              <span className="font-medium text-brand-600 dark:text-brand-300">
+                              <span className="font-medium text-brand-600 group-open:hidden dark:text-brand-300">
                                 {t("design.viewDetails")}
+                              </span>
+                              <span className="hidden font-medium text-brand-600 group-open:inline dark:text-brand-300">
+                                {t("design.hideDetails")}
                               </span>
                             </summary>
                             <p className="mt-2 break-words whitespace-pre-wrap">
@@ -186,6 +193,8 @@ export default function AnalyticsDataTable({
   return (
     <ComponentCard
       title={t(`fields.${field}`)}
+      description={description}
+      info={info}
       icon={visualization ? undefined : <TableIcon />}
       actions={
         rows.length > 0 ? (

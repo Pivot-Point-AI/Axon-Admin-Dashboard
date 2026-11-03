@@ -53,6 +53,11 @@ export default function AnalyticsCardScope({
     accessToken,
   ]);
   const [revision, setRevision] = useState(0);
+  // The last data shown, kept on screen while a new period loads so the card
+  // (and anything open inside it, like its full view) is not torn down.
+  const [lastData, setLastData] = useState<Record<string, unknown> | null>(
+    null,
+  );
   const [fetched, setFetched] = useState<{
     key: string;
     data: Record<string, unknown> | null;
@@ -91,6 +96,8 @@ export default function AnalyticsCardScope({
     : parent.period;
   const current = fetched?.key === requestKey ? fetched : null;
   const cardData = override ? current?.data : data;
+  if (cardData && cardData !== lastData) setLastData(cardData);
+  const stale = !cardData && !current?.failed ? lastData : null;
   return (
     <AnalyticsPeriodContext.Provider
       value={{
@@ -108,8 +115,17 @@ export default function AnalyticsCardScope({
           }),
       }}
     >
-      {cardData ? (
-        children(cardData)
+      {cardData || stale ? (
+        <div
+          aria-busy={Boolean(stale)}
+          className={
+            stale
+              ? "pointer-events-none h-full opacity-60 transition-opacity"
+              : "h-full"
+          }
+        >
+          {children((cardData ?? stale)!)}
+        </div>
       ) : (
         <div className="space-y-3" aria-busy={!current?.failed}>
           <AnalyticsHistoryState

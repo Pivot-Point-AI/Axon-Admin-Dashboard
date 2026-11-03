@@ -10,6 +10,8 @@ interface AnalyticsPeriodMetricsProps {
   points: AnalyticsPeriodPoint[];
   metricLabel?: string;
   isAcquisition?: boolean;
+  /** How many windows to show; the card shows two, its full view all of them. */
+  limit?: number;
 }
 
 const tones = [
@@ -21,11 +23,14 @@ const tones = [
 export default function AnalyticsPeriodMetrics({
   points,
   isAcquisition = false,
+  limit = 2,
 }: AnalyticsPeriodMetricsProps) {
   const format = useFormatter();
   return (
-    <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {points.slice(0, 2).map((point, index) => (
+    <dl
+      className={`mt-4 grid grid-cols-1 gap-3 ${limit > 2 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+    >
+      {points.slice(0, limit).map((point, index) => (
         <div
           key={point.label}
           className={`relative rounded-xl p-3 sm:p-3.5 ${tones[index % tones.length]}`}

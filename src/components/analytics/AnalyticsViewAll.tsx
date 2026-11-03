@@ -169,11 +169,11 @@ export default function AnalyticsViewAll({
         type="button"
         aria-haspopup="dialog"
         onClick={() => setOpen(true)}
-        className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-theme-xs font-medium text-gray-700 shadow-theme-xs transition-colors hover:border-brand-300 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-600 dark:hover:bg-gray-800"
+        className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-[0.6875rem] font-medium whitespace-nowrap text-gray-700 shadow-theme-xs transition-colors hover:border-brand-300 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-600 dark:hover:bg-gray-800"
       >
         <ChartBarsIcon
           aria-hidden="true"
-          className="size-4 text-blue-light-500 dark:text-blue-light-300"
+          className="size-3.5 text-blue-light-500 dark:text-blue-light-300"
         />
         {t("viewAll")}
       </button>
@@ -191,7 +191,7 @@ export default function AnalyticsViewAll({
         >
           <div
             onClick={(event) => event.stopPropagation()}
-            className="axon-pop flex max-h-full w-full max-w-6xl flex-col rounded-3xl border border-gray-200 bg-white shadow-theme-xl dark:border-gray-800 dark:bg-gray-900"
+            className="axon-pop flex max-h-full w-full max-w-7xl flex-col rounded-3xl border border-gray-200 bg-white shadow-theme-xl dark:border-gray-800 dark:bg-gray-900"
           >
             <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-3 border-b border-gray-100 px-5 py-4 sm:px-7 dark:border-gray-800">
               <span
@@ -223,13 +223,13 @@ export default function AnalyticsViewAll({
                 </button>
               </div>
             </header>
-            <div className="min-h-0 flex-1 overflow-y-auto rounded-b-3xl bg-gray-50/60 px-5 py-5 sm:px-7 sm:py-6 lg:overflow-visible dark:bg-gray-950/40">
+            <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto rounded-b-3xl bg-gray-50/60 px-5 py-5 sm:px-7 sm:py-6 dark:bg-gray-950/40">
               <div
-                className={`grid items-stretch gap-5 ${panel ? "lg:grid-cols-3" : ""}`}
+                className={`grid items-stretch gap-5 ${panel ? "md:grid-cols-[minmax(0,1fr)_20rem]" : ""}`}
               >
                 <section
                   aria-label={title}
-                  className={`flex min-h-80 min-w-0 flex-col justify-center rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs sm:p-6 dark:border-gray-800 dark:bg-gray-900 ${panel ? "lg:col-span-2" : ""}`}
+                  className={`flex min-h-80 min-w-0 flex-col justify-center rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs sm:p-6 dark:border-gray-800 dark:bg-gray-900`}
                 >
                   {children}
                 </section>

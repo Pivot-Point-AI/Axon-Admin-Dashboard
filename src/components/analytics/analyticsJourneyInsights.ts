@@ -88,6 +88,12 @@ export function journeyCategories(data: Record<string, unknown>) {
         "total_completed_flows",
         "completed_count",
       );
+      const failed = reportedCount(
+        row,
+        "failed",
+        "total_failed_flows",
+        "failed_count",
+      );
       const abandoned = reportedCount(
         row,
         "abandoned",
@@ -113,12 +119,25 @@ export function journeyCategories(data: Record<string, unknown>) {
         (total !== null && total > 0 && abandoned !== null && abandoned <= total
           ? (abandoned / total) * 100
           : null);
+      const failedRate =
+        rate(
+          row.failed_rate_pct,
+          row.failed_rate,
+          row.failure_rate_pct,
+          row.failure_rate,
+          row.flow_failure_rate_pct,
+        ) ??
+        (total !== null && total > 0 && failed !== null && failed <= total
+          ? (failed / total) * 100
+          : null);
       if (
         total === null &&
         completed === null &&
         abandoned === null &&
+        failed === null &&
         completionRate === null &&
-        abandonmentRate === null
+        abandonmentRate === null &&
+        failedRate === null
       )
         return [];
       return [
@@ -126,9 +145,11 @@ export function journeyCategories(data: Record<string, unknown>) {
           key,
           count: total,
           completed,
+          failed,
           abandoned,
           completionRate,
           abandonmentRate,
+          failedRate,
         },
       ];
     }),
@@ -146,9 +167,11 @@ export function journeyCategories(data: Record<string, unknown>) {
             key: existing.key,
             count: existing.count ?? row.count,
             completed: existing.completed ?? row.completed,
+            failed: existing.failed ?? row.failed,
             abandoned: existing.abandoned ?? row.abandoned,
             completionRate: existing.completionRate ?? row.completionRate,
             abandonmentRate: existing.abandonmentRate ?? row.abandonmentRate,
+            failedRate: existing.failedRate ?? row.failedRate,
           }
         : row,
     );
@@ -170,6 +193,14 @@ export function journeyCategories(data: Record<string, unknown>) {
       row.abandoned !== null &&
       row.abandoned <= row.count
         ? (row.abandoned / row.count) * 100
+        : null),
+    failedRate:
+      row.failedRate ??
+      (row.count !== null &&
+      row.count > 0 &&
+      row.failed !== null &&
+      row.failed <= row.count
+        ? (row.failed / row.count) * 100
         : null),
   }));
 }
@@ -204,6 +235,7 @@ export interface JourneyTrendPoint {
   timestamp: number;
   started: number | null;
   completed: number | null;
+  failed: number | null;
   abandoned: number | null;
 }
 
@@ -224,11 +256,24 @@ export function journeyTrendPoints(
         row.initialized,
         row.total_initialized_flows,
       );
-      const completed = count(row.completed, row.total_completed_flows);
+      const completed = count(
+        row.completed,
+        row.total_completed_flows,
+        row.completed_flows,
+        row.completed_count,
+        row.completed_journeys,
+        row.journeys_completed,
+        row.successful,
+        row.success,
+      );
+      const failed = count(row.failed, row.total_failed_flows);
       const abandoned = count(row.abandoned, row.total_abandoned_flows);
-      return started === null && completed === null && abandoned === null
+      return started === null &&
+        completed === null &&
+        failed === null &&
+        abandoned === null
         ? []
-        : [{ timestamp, started, completed, abandoned }];
+        : [{ timestamp, started, completed, failed, abandoned }];
     })
     .sort((a, b) => a.timestamp - b.timestamp);
   if (history.length) return history;
@@ -238,6 +283,7 @@ export function journeyTrendPoints(
   for (const [key, field] of [
     ["started", "total_initialized_flows"],
     ["completed", "total_completed_flows"],
+    ["failed", "total_failed_flows"],
     ["abandoned", "total_abandoned_flows"],
   ] as const) {
     for (const point of metricTrend(data, field)?.points ?? []) {
@@ -254,6 +300,7 @@ export function journeyTrendPoints(
         timestamp,
         started: null,
         completed: null,
+        failed: null,
         abandoned: null,
       };
       row[key] = point.value;

@@ -8,6 +8,8 @@ interface MetricHeaderProps {
   /** A larger icon tile. The icon always leads and the info button trails. */
   iconStart?: boolean;
   info?: string | null;
+  /** A faded figure beside the label, e.g. "327/744". */
+  detail?: string | null;
 }
 
 export default function MetricHeader({
@@ -16,6 +18,7 @@ export default function MetricHeader({
   badge,
   iconStart = false,
   info,
+  detail,
 }: MetricHeaderProps) {
   return (
     <div className="flex items-center gap-3">
@@ -28,6 +31,11 @@ export default function MetricHeader({
       <div className="min-w-0 flex-1">
         <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200">
           {label}
+          {detail && (
+            <span className="ms-2 text-theme-xs font-medium tabular-nums opacity-50">
+              {detail}
+            </span>
+          )}
         </h3>
         {badge && <div className="mt-1">{badge}</div>}
       </div>

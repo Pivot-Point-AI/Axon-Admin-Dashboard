@@ -74,7 +74,7 @@ export default function AnalyticsRing({
   );
   return (
     <div
-      className={`relative shrink-0 ${size === "xl" ? "size-72" : size === "lg" ? "size-48" : "size-44"}`}
+      className={`relative aspect-square max-w-full shrink-0 ${size === "xl" ? "w-72" : size === "lg" ? "w-48" : "w-44"}`}
     >
       <AnalyticsChartCanvas
         draw={draw}

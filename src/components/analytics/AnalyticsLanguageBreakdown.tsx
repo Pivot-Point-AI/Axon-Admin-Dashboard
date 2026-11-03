@@ -1,6 +1,6 @@
 "use client";
 
-import { valueInfo } from "./analyticsTrends";
+import { valueInfo, valueDescription } from "./analyticsTrends";
 import MetricHeader from "@/components/common/MetricHeader";
 import CountUpText from "@/components/common/CountUpText";
 import AnalyticsSliceHover from "./AnalyticsSliceHover";
@@ -57,7 +57,7 @@ export default function AnalyticsLanguageBreakdown({
   return (
     <ComponentCard
       title={t("design.languageTitle")}
-      description={t("design.languageDescription")}
+      description={valueDescription(value) ?? t("design.languageDescription")}
       icon={<GlobeIcon />}
       info={valueInfo(value) ?? tInfo("language")}
       actions={<AnalyticsJourneyPeriod />}

@@ -1,5 +1,5 @@
 "use client";
-import { blocksInfo } from "./analyticsTrends";
+import { blocksInfo, blockDescription } from "./analyticsTrends";
 import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
@@ -27,7 +27,10 @@ export default function AnalyticsPerformanceDistribution({
         blocksInfo(data, ["response_time_distribution"]) ??
         tInfo("distribution")
       }
-      description={t("distributionDescription")}
+      description={
+        blockDescription(data, "response_time_distribution") ??
+        t("distributionDescription")
+      }
       icon={<TimeIcon />}
       actions={<AnalyticsJourneyPeriod />}
     >

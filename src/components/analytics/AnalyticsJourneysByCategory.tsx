@@ -1,6 +1,6 @@
 "use client";
 
-import { blocksInfo } from "./analyticsTrends";
+import { blocksInfo, blockDescription } from "./analyticsTrends";
 import useReveal from "./useReveal";
 import CountUpText from "@/components/common/CountUpText";
 import AnalyticsSliceHover from "./AnalyticsSliceHover";
@@ -107,7 +107,9 @@ function CategoryPie({
     <div
       className={`flex flex-col items-center justify-center gap-5 sm:flex-row ${large ? "min-h-96 gap-10" : "min-h-48"}`}
     >
-      <div className={`relative shrink-0 ${large ? "size-72" : "size-48"}`}>
+      <div
+        className={`relative aspect-square max-w-full shrink-0 ${large ? "w-72" : "w-48"}`}
+      >
         <AnalyticsChartCanvas
           draw={draw}
           aria-hidden="true"
@@ -212,6 +214,7 @@ export default function AnalyticsJourneysByCategory({
     <ComponentCard
       compact
       title={t("journeysByCategory")}
+      description={blockDescription(data, "journeys_by_category") ?? undefined}
       icon={<PieChartIcon />}
       info={
         blocksInfo(data, [

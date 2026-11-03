@@ -3,6 +3,7 @@ import type { AnalyticsTrendPoint } from "./AnalyticsTrendChart";
 import { analyticsNumber } from "./analyticsData";
 import { analyticsTimestamp, periodFilters } from "./analyticsPeriods";
 import { analyticsSummaryData } from "./analyticsSummaryData";
+import { metricValue } from "./analyticsTrends";
 import { latencyData } from "./analyticsLatencyData";
 import { qualityKey, qualityRows } from "./analyticsQualityData";
 import { errorSnapshot } from "./analyticsTelemetryData";
@@ -56,7 +57,13 @@ export function dailyTrendPoint(
     point.started = analyticsNumber(
       data.total_initialized_flows ?? data.total_flows_initiated,
     );
-    point.completed = analyticsNumber(data.total_completed_flows);
+    point.completed = analyticsNumber(
+      data.total_completed_flows ??
+        data.completed_flows ??
+        data.journeys_completed ??
+        metricValue(data, "total_completed_flows"),
+    );
+    point.failed = analyticsNumber(data.total_failed_flows);
     point.abandoned = analyticsNumber(data.total_abandoned_flows);
   } else if (section === "performance") {
     const latency = latencyData(data.end_to_end_latency_ms);
@@ -112,7 +119,12 @@ export async function loadDailyHistory(
           point ?? {
             timestamp: analyticsTimestamp(date),
             ...(section === "flows"
-              ? { started: null, completed: null, abandoned: null }
+              ? {
+                  started: null,
+                  completed: null,
+                  failed: null,
+                  abandoned: null,
+                }
               : section === "performance"
                 ? { average: null, p95: null }
                 : section === "logs"

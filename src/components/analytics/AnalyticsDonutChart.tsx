@@ -65,7 +65,7 @@ export default function AnalyticsDonutChart({
       <div
         key={rows.map((row) => row.count).join(",")}
         aria-hidden="true"
-        className={`axon-pie-sweep relative flex ${large ? "size-72 sm:size-80" : "size-52"} shrink-0 items-center justify-center rounded-full shadow-theme-md ring-4 ring-gray-100 dark:ring-gray-800`}
+        className={`axon-pie-sweep relative flex ${large ? "w-72 sm:w-80" : "w-52"} aspect-square max-w-full shrink-0 items-center justify-center rounded-full shadow-theme-md ring-4 ring-gray-100 dark:ring-gray-800`}
         style={{ background: `conic-gradient(${stops.join(", ")})` }}
       >
         <AnalyticsSliceLabels

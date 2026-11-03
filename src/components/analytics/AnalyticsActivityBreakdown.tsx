@@ -7,7 +7,7 @@ import { ChartBarsIcon } from "@/icons";
 import AnalyticsColumnChart from "./AnalyticsColumnChart";
 import AnalyticsPeriodChart from "./AnalyticsPeriodChart";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
-import { valueInfo } from "./analyticsTrends";
+import { valueInfo, valueDescription } from "./analyticsTrends";
 import { chartColor, chartRows } from "./analyticsChartData";
 
 type ActivityView = "peak_activity_hours" | "activity_by_day_of_week";
@@ -44,7 +44,10 @@ export default function AnalyticsActivityBreakdown({
   return (
     <ComponentCard
       title={t("design.activityTitle")}
-      description={t(`design.chartDescriptions.${view}`)}
+      description={
+        valueDescription(view === "peak_activity_hours" ? hours : weekdays) ??
+        t(`design.chartDescriptions.${view}`)
+      }
       className="h-full"
       icon={<ChartBarsIcon />}
       info={

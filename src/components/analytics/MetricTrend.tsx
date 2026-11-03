@@ -15,6 +15,8 @@ interface MetricTrendProps {
   stacked?: boolean;
   /** Show the whole comparison; the parent lets the badge wrap to a new line. */
   full?: boolean;
+  /** Only the colored chip: no comparison text beside it. */
+  chipOnly?: boolean;
 }
 export function MetricTrendBadge({
   trend,
@@ -22,9 +24,10 @@ export function MetricTrendBadge({
   showComparison = true,
   stacked = false,
   full = false,
+  chipOnly = false,
 }: Pick<
   MetricTrendProps,
-  "trend" | "lowerIsBetter" | "showComparison" | "stacked" | "full"
+  "trend" | "lowerIsBetter" | "showComparison" | "stacked" | "full" | "chipOnly"
 >) {
   const t = useTranslations("metricTrends"),
     format = useFormatter();
@@ -70,7 +73,7 @@ export function MetricTrendBadge({
             ? t(trend.direction === "up" ? "up" : "down")
             : undefined
         }
-        className={`inline-flex shrink-0 items-center gap-1 rounded-md px-1 py-0.5 font-medium tabular-nums ${sentiment === "positive" ? "bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-400" : sentiment === "negative" ? "bg-error-50 text-error-700 dark:bg-error-500/15 dark:text-error-400" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"}`}
+        className={`inline-flex shrink-0 items-center rounded-md font-medium tabular-nums ${chipOnly ? "gap-0.5 px-1 py-0.5 text-[0.625rem]" : "gap-1 px-1 py-0.5"} ${sentiment === "positive" ? "bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-400" : sentiment === "negative" ? "bg-error-50 text-error-700 dark:bg-error-500/15 dark:text-error-400" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"}`}
       >
         {trend.direction === "up" ? (
           <ArrowUpIcon aria-hidden="true" className="size-3 shrink-0" />
@@ -93,31 +96,34 @@ export function MetricTrendBadge({
           <span title={t("missing")}>{"\u2014"}</span>
         ) : null}
       </span>
-      {rest ? (
-        <span
-          className={`min-w-0 ${full ? "text-theme-xs" : "text-[0.6875rem]"} text-gray-500 dark:text-gray-400 ${full ? "whitespace-nowrap" : "truncate"}`}
-          title={rest}
-        >
-          {rest}
-        </span>
-      ) : (
-        showComparison &&
-        text && (
+      {!chipOnly &&
+        (rest ? (
           <span
-            className={`min-w-0 ${full ? "text-theme-xs" : "text-[0.6875rem]"} text-gray-500 dark:text-gray-400 ${stacked ? "break-words whitespace-normal" : full ? "whitespace-nowrap" : "truncate"}`}
-            title={`${text}${trend.previousCount !== null ? ` (${format.number(trend.previousCount)})` : ""}`}
+            className={`min-w-0 ${full ? "text-theme-xs" : "text-[0.6875rem]"} text-gray-500 dark:text-gray-400 ${full ? "whitespace-nowrap" : "truncate"}`}
+            title={rest}
           >
-            {text}
-            {trend.previousCount !== null && (
-              <span
-                className={stacked || full ? "" : "hidden @min-[15rem]:inline"}
-              >
-                {` (${format.number(trend.previousCount)})`}
-              </span>
-            )}
+            {rest}
           </span>
-        )
-      )}
+        ) : (
+          showComparison &&
+          text && (
+            <span
+              className={`min-w-0 ${full ? "text-theme-xs" : "text-[0.6875rem]"} text-gray-500 dark:text-gray-400 ${stacked ? "break-words whitespace-normal" : full ? "whitespace-nowrap" : "truncate"}`}
+              title={`${text}${trend.previousCount !== null ? ` (${format.number(trend.previousCount)})` : ""}`}
+            >
+              {text}
+              {trend.previousCount !== null && (
+                <span
+                  className={
+                    stacked || full ? "" : "hidden @min-[15rem]:inline"
+                  }
+                >
+                  {` (${format.number(trend.previousCount)})`}
+                </span>
+              )}
+            </span>
+          )
+        ))}
     </span>
   );
 }

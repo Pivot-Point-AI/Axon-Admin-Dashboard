@@ -19,7 +19,7 @@ import AnalyticsBreakdown from "./AnalyticsBreakdown";
 import AnalyticsActivityBreakdown from "./AnalyticsActivityBreakdown";
 import AnalyticsDataTable from "./AnalyticsDataTable";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
-import AnalyticsAcquisition from "./AnalyticsAcquisition";
+import AnalyticsGrowthRetention from "./AnalyticsGrowthRetention";
 import AnalyticsLatencyOverview from "./AnalyticsLatencyOverview";
 import AnalyticsJourneys from "./AnalyticsJourneys";
 import AnalyticsQuality from "./AnalyticsQuality";
@@ -305,20 +305,18 @@ export default function AnalyticsSummary({
                 </AnalyticsCardScope>
               </>
             )}
-            {section !== "chats" && groups.length > 0 && (
-              <div
-                className={`grid items-stretch gap-5 ${groups.length > 1 ? "xl:grid-cols-2" : ""}`}
-              >
-                {groups.map((group) =>
-                  group.title === "newUsers" ? (
-                    <AnalyticsCardScope
-                      key={group.title}
-                      section={section}
-                      data={data}
-                    >
-                      {(d) => <AnalyticsAcquisition data={d} />}
-                    </AnalyticsCardScope>
-                  ) : (
+            {section === "users" && (
+              <AnalyticsCardScope section="users" data={data}>
+                {(d) => <AnalyticsGrowthRetention data={d} />}
+              </AnalyticsCardScope>
+            )}
+            {section !== "chats" &&
+              section !== "users" &&
+              groups.length > 0 && (
+                <div
+                  className={`grid items-stretch gap-5 ${groups.length > 1 ? "xl:grid-cols-2" : ""}`}
+                >
+                  {groups.map((group) => (
                     <AnalyticsCardScope
                       key={group.title}
                       section={section}
@@ -332,10 +330,9 @@ export default function AnalyticsSummary({
                         />
                       )}
                     </AnalyticsCardScope>
-                  ),
-                )}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
             {!dedicatedLayout &&
               tables.map((field) => (
                 <AnalyticsDataTable

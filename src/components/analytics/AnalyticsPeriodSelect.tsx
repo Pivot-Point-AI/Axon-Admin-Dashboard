@@ -119,14 +119,14 @@ export default function AnalyticsPeriodSelect({
           setFrom(start);
           setTo(end);
         }}
-        className={`inline-flex max-w-full items-center justify-between gap-3 rounded-xl border shadow-theme-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 ${size === "md" ? "min-h-12 w-full px-4 py-3 text-sm font-semibold sm:min-w-48" : "min-h-10 px-3 py-2 text-theme-xs font-medium"} ${open ? "border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-600 dark:bg-brand-500/10 dark:text-brand-300" : "border-gray-200 bg-white text-gray-700 hover:border-brand-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-600 dark:hover:bg-gray-800"}`}
+        className={`inline-flex max-w-full items-center justify-between gap-1.5 rounded-lg border shadow-theme-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 ${size === "md" ? "min-h-12 w-full px-4 py-3 text-sm font-semibold sm:min-w-48" : "min-h-8 px-2 py-1 text-[0.6875rem] font-medium"} ${open ? "border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-600 dark:bg-brand-500/10 dark:text-brand-300" : "border-gray-200 bg-white text-gray-700 hover:border-brand-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-600 dark:hover:bg-gray-800"}`}
       >
         <CalenderIcon
           aria-hidden="true"
-          className={`shrink-0 text-blue-light-500 dark:text-blue-light-300 ${size === "md" ? "size-5" : "size-4"}`}
+          className={`shrink-0 text-blue-light-500 dark:text-blue-light-300 ${size === "md" ? "size-5" : "size-3.5"}`}
         />
         <span
-          className={`min-w-0 break-words whitespace-normal ${size === "md" ? "flex-1 text-start" : ""}`}
+          className={`min-w-0 ${size === "md" ? "flex-1 text-start break-words whitespace-normal" : "whitespace-nowrap"}`}
         >
           {label}
         </span>
@@ -135,7 +135,7 @@ export default function AnalyticsPeriodSelect({
         >
           <ChevronDownIcon
             aria-hidden="true"
-            className={`size-4 text-gray-400 transition-transform dark:text-gray-500 ${open ? "rotate-180" : ""}`}
+            className={`${size === "md" ? "size-4" : "size-3.5"} text-gray-400 transition-transform dark:text-gray-500 ${open ? "rotate-180" : ""}`}
           />
         </span>
       </button>

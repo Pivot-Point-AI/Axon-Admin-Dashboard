@@ -52,6 +52,24 @@ fs.mkdirSync(OUT, { recursive: true });
     console.log('saved', name);
   };
 
+  // ILLUSTRATIVE ONLY: the safety trend is empty on the live system, so the guide's
+  // screenshot would show "No Data". Fill just that one series in the browser; the
+  // dashboard code and the API are untouched. Sample values, not real measurements.
+  await page.route('**/dashboard-analytics/nlp-summary*', async (route) => {
+    const response = await route.fetch();
+    const body = await response.json().catch(() => null);
+    if (!body || typeof body !== 'object') return route.fulfill({ response });
+    const day = 86400000;
+    const sample = [[0, 1, 2, 3], [0, 0, 3, 5], [0, 2, 2, 4], [1, 1, 4, 6], [0, 1, 3, 3], [0, 0, 2, 4], [0, 1, 1, 2]];
+    body.guardrail_violations_trend = {
+      points: sample.map(([critical, high, medium, low], i) => ({
+        date: new Date(Date.now() - (sample.length - 1 - i) * day).toISOString().slice(0, 10),
+        critical, high, medium, low,
+      })),
+    };
+    return route.fulfill({ response, json: body });
+  });
+
   await page.goto(BASE + '/signin', { waitUntil: 'networkidle' });
   await shot('01-signin');
   await page.getByPlaceholder(/email or username/i).fill(USER);

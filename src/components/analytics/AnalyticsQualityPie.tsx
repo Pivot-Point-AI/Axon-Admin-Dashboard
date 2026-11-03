@@ -1,6 +1,6 @@
 "use client";
 
-import { valueInfo } from "./analyticsTrends";
+import { valueInfo, valueDescription } from "./analyticsTrends";
 import { useFormatter, useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
 import { ChartBarsIcon, PieChartIcon } from "@/icons";
@@ -102,22 +102,21 @@ export default function AnalyticsQualityPie({
     values: [format.number(row.count), share(row.count)],
     bar: total > 0 ? row.count / total : 0,
   }));
+  const description =
+    valueDescription(value) ??
+    t(confidence ? "confidenceDescription" : "intentDescription");
   return (
     <ComponentCard
       compact
       title={title}
       info={valueInfo(value) ?? tInfo(confidence ? "confidence" : "intent")}
-      description={t(
-        confidence ? "confidenceDescription" : "intentDescription",
-      )}
+      description={description}
       icon={confidence ? <PieChartIcon /> : <ChartBarsIcon />}
       actions={
         <AnalyticsCardActions>
           <AnalyticsViewAll
             title={title}
-            description={t(
-              confidence ? "confidenceDescription" : "intentDescription",
-            )}
+            description={description}
             icon={confidence ? <PieChartIcon /> : <ChartBarsIcon />}
             columns={[t("category"), t("count"), t("share")]}
             entries={entries}

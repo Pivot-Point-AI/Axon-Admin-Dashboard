@@ -48,7 +48,6 @@ export const analyticsFields = {
   nlp: [
     "total_classified_turns",
     "average_intent_confidence",
-    "high_confidence_rate_pct",
     "intent_confidence_buckets",
     "llm_fallback_count",
     "llm_fallback_rate_pct",

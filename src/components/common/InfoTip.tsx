@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { InfoIcon } from "@/icons";
@@ -31,6 +31,7 @@ export default function InfoTip({ text, title, label }: InfoTipProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const [pinned, setPinned] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const open = pinned || hovered;
   useClickOutside(ref, () => setPinned(false));
@@ -47,6 +48,26 @@ export default function InfoTip({ text, title, label }: InfoTipProps) {
     );
     setPosition({ top: rect.bottom, left });
   };
+
+  // Once rendered, the pop-up's real height decides whether it fits below the
+  // button; if not it opens above, and is kept inside the viewport either way.
+  useLayoutEffect(() => {
+    const rect = ref.current?.getBoundingClientRect();
+    const height = popupRef.current?.offsetHeight;
+    if (!open || !rect || !height) return;
+    const popup = popupRef.current;
+    if (!popup) return;
+    const fitsBelow = rect.bottom + height <= window.innerHeight - 8;
+    const fitsAbove = rect.top - height >= 8;
+    const flip = !fitsBelow && fitsAbove;
+    popup.style.top = `${
+      flip
+        ? rect.top - height
+        : Math.max(8, Math.min(rect.bottom, window.innerHeight - height - 8))
+    }px`;
+    popup.classList.toggle("pb-3", flip);
+    popup.classList.toggle("pt-3", !flip);
+  }, [open, text]);
 
   // A fixed pop-up would drift from its button, so it closes on scroll.
   useEffect(() => {
@@ -110,6 +131,7 @@ export default function InfoTip({ text, title, label }: InfoTipProps) {
               className="axon-fade-in pointer-events-none fixed inset-0 z-9999 bg-gray-950/10 backdrop-blur-[1.5px] dark:bg-gray-950/30"
             />
             <div
+              ref={popupRef}
               className="fixed z-99999 pt-3"
               style={{ top: position.top, left: position.left }}
               onMouseDown={(event) => event.stopPropagation()}

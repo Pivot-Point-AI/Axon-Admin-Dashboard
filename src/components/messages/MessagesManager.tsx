@@ -5,6 +5,7 @@ import PageRefresh from "@/components/common/PageRefresh";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import Pagination from "@/components/common/Pagination";
+import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
 import {
   Table,
@@ -41,6 +42,8 @@ export default function MessagesManager() {
   const [drafts, setDrafts] = useState<Record<string, MessageDraft>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [editSession, setEditSession] = useState(0);
+  const [kind, setKind] = useState("");
+  const [query, setQuery] = useState("");
 
   const load = useCallback(async () => {
     if (!accessToken) return;
@@ -107,7 +110,20 @@ export default function MessagesManager() {
     }
   };
 
-  const pagination = usePagination(messages);
+  // Keys read "group.type.state" (action_status.activate_card.completed); the
+  // second part is what the type filter lists.
+  const part = (message: Record<string, unknown>, index: number) =>
+    String(message.message_key ?? "").split(".")[index] ?? "";
+  const unique = (values: string[]) =>
+    [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const kinds = unique(messages.map((message) => part(message, 1)));
+  const needle = query.trim().toLowerCase();
+  const visible = messages.filter(
+    (message) =>
+      (!kind || part(message, 1) === kind) &&
+      (!needle || JSON.stringify(message).toLowerCase().includes(needle)),
+  );
+  const pagination = usePagination(visible, `${kind}|${needle}`);
   const headings = [
     t("messageKey"),
     t("parameters"),
@@ -129,6 +145,41 @@ export default function MessagesManager() {
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           {t("title")}
         </h3>
+        <div className="flex flex-1 flex-wrap gap-3">
+          <Input
+            type="search"
+            aria-label={t("search")}
+            placeholder={t("search")}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            className="min-w-60 bg-gray-50 dark:bg-gray-900"
+          />
+          {[
+            {
+              id: "kind",
+              label: t("allTypes"),
+              value: kind,
+              options: kinds,
+              change: setKind,
+            },
+          ].map((filter) => (
+            <select
+              key={filter.id}
+              aria-label={filter.label}
+              value={filter.value}
+              onChange={(event) => filter.change(event.target.value)}
+              disabled={loading || messages.length === 0}
+              className="h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+            >
+              <option value="">{filter.label}</option>
+              {filter.options.map((option) => (
+                <option key={option} value={option}>
+                  {option.replaceAll("_", " ")}
+                </option>
+              ))}
+            </select>
+          ))}
+        </div>
         <div className="flex items-center gap-3">
           <RowsPerPage pagination={pagination} disabled={loading} />
           <Button
@@ -177,13 +228,19 @@ export default function MessagesManager() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading || messages.length === 0 ? (
+            {loading || visible.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={headings.length}
                   className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400"
                 >
-                  {t(loading ? "loading" : "empty")}
+                  {t(
+                    loading
+                      ? "loading"
+                      : messages.length === 0
+                        ? "empty"
+                        : "noMatch",
+                  )}
                 </TableCell>
               </TableRow>
             ) : (

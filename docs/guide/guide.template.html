@@ -101,6 +101,32 @@
   .task ol li::before { content: counter(s); position: absolute; left: 0; top: .1mm; width: 5.6mm; height: 5.6mm; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 700; font-size: 8.2pt; text-align: center; line-height: 5.6mm; }
   .task figure { margin: 0; } .task figure img { width: 100%; }
   .task .callout { margin: 2mm 0 0; }
+
+  /* Corporate refinement */
+  body { counter-reset: fig; font-size: 10.3pt; }
+  figcaption b.fig::before { counter-increment: fig; content: "Figure " counter(fig) "."; }
+  h1, h2, h3, h4 { font-weight: 600; }
+  .cover { background: #fff; color: var(--ink); border-top: 5mm solid #101828; padding-top: 22mm; }
+  .cover .mark { color: var(--ink); font-size: 11pt; letter-spacing: .32em; }
+  .cover .rule { background: var(--brand); width: 12mm; height: .9mm; border-radius: 0; }
+  .cover h1 { color: var(--ink); font-size: 34pt; font-weight: 600; letter-spacing: -.01em; }
+  .cover .sub { color: var(--muted); font-size: 12pt; }
+  .cover .shot { border: 1px solid var(--line); box-shadow: 0 2mm 6mm rgba(16,24,40,.14); border-radius: 1.5mm 1.5mm 0 0; }
+  .cover .meta { color: var(--muted); border-top: 1px solid var(--line); }
+  .cover .meta b { color: var(--ink); } .cover .meta { padding-bottom: 18mm; }
+  .chapter > h2 { background: none; border: 0; border-bottom: 1px solid var(--ink); border-radius: 0; padding: 0 0 3mm; margin-bottom: 7mm; font-size: 24pt; font-weight: 600; }
+  .chapter > h2 .num { color: var(--muted); font-size: 24pt; font-weight: 400; min-width: 14mm; }
+  h4 { color: var(--ink); }
+  .callout, .callout.warn { background: var(--soft); border: 1px solid var(--line); border-left: 1mm solid #98a2b3; border-radius: 0 1.5mm 1.5mm 0; }
+  .callout b.t, .callout.warn b.t { color: var(--ink); font-size: 8.6pt; letter-spacing: .08em; }
+  .glance { background: #fff; border: 1px solid var(--line); border-left: 1mm solid #98a2b3; border-radius: 0 1.5mm 1.5mm 0; }
+  .glance b { color: var(--ink); text-transform: uppercase; font-size: 8.6pt; letter-spacing: .08em; padding-top: .4mm; }
+  .card, .step { border-radius: 1.5mm; }
+  .step { border-top: 1px solid var(--line); } .step b { color: var(--muted); font-weight: 600; }
+  th { background: #f2f4f7; text-transform: none; }
+  figure img { border-radius: 1.2mm; box-shadow: 0 .6mm 2.4mm rgba(16,24,40,.1); }
+  .pill { border-radius: 1mm; background: #f2f4f7; color: var(--ink); }
+  ol.legend li::before, .task ol li::before { background: var(--brand); }
 </style>
 </head>
 <body>
@@ -179,7 +205,7 @@
 
   <h3>2.1 Signing in</h3>
   <p>Open the dashboard address provided by your administrator and sign in with your username and password. If you have forgotten your password, use <b>Forgot password</b> on the sign-in page; a single-use reset link lets you choose a new one. Sessions expire after a period of inactivity, in which case you are returned to the sign-in page.</p>
-  <figure class="mid"><img src="img/01-signin.jpg"><figcaption><b>Figure 1.</b> The sign-in page.</figcaption></figure>
+  <figure class="mid"><img src="img/01-signin.jpg"><figcaption><b class="fig"></b> The sign-in page.</figcaption></figure>
 
   <h3>2.2 Finding your way around</h3>
   <p>The left sidebar groups every page. Use the round arrow on its edge to collapse or expand it.</p>
@@ -194,8 +220,8 @@
   <h3>2.3 Light, dark and mobile</h3>
   <p>The dashboard follows your preference for light or dark appearance and can be switched at any time with the moon icon. It is fully responsive: on a phone the sidebar becomes a slide-out menu and cards stack in a single column.</p>
   <div class="grid2">
-    <figure style="margin:0"><img src="img/22-dark-mode.jpg"><figcaption><b>Figure 2.</b> Dark theme.</figcaption></figure>
-    <figure class="narrow" style="margin:0"><img src="img/40-mobile-dashboard.jpg" style="width:48mm"><figcaption><b>Figure 3.</b> Mobile layout.</figcaption></figure>
+    <figure style="margin:0"><img src="img/22-dark-mode.jpg"><figcaption><b class="fig"></b> Dark theme.</figcaption></figure>
+    <figure class="narrow" style="margin:0"><img src="img/40-mobile-dashboard.jpg" style="width:48mm"><figcaption><b class="fig"></b> Mobile layout.</figcaption></figure>
   </div>
 </section>
 
@@ -203,7 +229,7 @@
 <section class="chapter">
   <h2><span class="num">3</span>The Dashboard</h2>
   <p class="lead">The Dashboard is the first page after sign-in. It answers three questions at a glance: <i>who is using the assistant, how engaged are they, and are banking tasks being completed?</i> Use the period selector beside <b>Last Updated</b> to change the reporting window, and <b>View All</b> on a section to open the matching Analytics tab.</p>
-  <figure class="tall short"><img src="img/02-dashboard-a.jpg"><figcaption><b>Figure 4.</b> The Dashboard.</figcaption></figure>
+  <figure class="tall short"><img src="img/02-dashboard-a.jpg"><figcaption><b class="fig"></b> The Dashboard.</figcaption></figure>
   <ol class="legend">
     <li><b>Headline cards</b> with change badges</li>
     <li><b>Period selector</b> and refresh</li>
@@ -239,7 +265,7 @@
 
   <h3>4.1 Reporting period</h3>
   <p>The period selector at the top right of the page controls every card on the tab. Choose a quick range such as <b>Today</b>, <b>Yesterday</b>, <b>Last 7 days</b> or <b>Last 30 days</b>, or pick a custom start and end date. Many cards also carry their own period button so you can compare windows side by side. While a panel is open the page behind it is softly blurred to keep your focus on the choice.</p>
-  <figure class="mid"><img src="img/21-period-filter.jpg"><figcaption><b>Figure 5.</b> Choosing a reporting period.</figcaption></figure>
+  <figure class="mid"><img src="img/21-period-filter.jpg"><figcaption><b class="fig"></b> Choosing a reporting period.</figcaption></figure>
 
   <h3>4.2 Reading a metric card</h3>
   <p>Every headline card follows the same pattern: the figure, a coloured change badge, and the comparison it refers to (for example <i>vs last week</i>).</p>
@@ -252,13 +278,13 @@
 
   <h4>The ⓘ information button</h4>
   <p>Select or hover over the ⓘ beside a card title for a plain-language explanation: what the number means, the <b>formula</b> behind it and a worked <b>example</b>. The page dims and blurs while the explanation is open. Click the button to keep it open, and press <code>Esc</code> or click elsewhere to close it.</p>
-  <figure class="mid"><img src="img/20-info-tooltip.jpg"><figcaption><b>Figure 6.</b> The explanation panel for Total Unique Users.</figcaption></figure>
+  <figure class="mid"><img src="img/20-info-tooltip.jpg"><figcaption><b class="fig"></b> The explanation panel for Total Unique Users.</figcaption></figure>
 </section>
 
 <section class="chapter" style="page-break-before: always;">
   <h2><span class="num">4.3</span>Audience</h2>
   <p>Understand your customer base and whether people return.</p>
-  <figure class="tall"><img src="img/10-analytics-users-a.jpg"><figcaption><b>Figure 7.</b> The Audience tab.</figcaption></figure>
+  <figure class="tall"><img src="img/10-analytics-users-a.jpg"><figcaption><b class="fig"></b> The Audience tab.</figcaption></figure>
   <ol class="legend" style="grid-template-columns:1fr;">
     <li><b>Tab bar</b>: switch between Audience, Conversations, Journeys, AI Quality, Performance and Activity Logs.</li>
     <li><b>Reporting period</b>: the window every card on the tab reports on.</li>
@@ -274,18 +300,22 @@
 <section class="chapter" style="page-break-before: always;">
   <h2><span class="num">4.4</span>Conversations</h2>
   <p>See how much customers talk to the assistant and when they are busiest.</p>
-  <figure class="tall"><img src="img/11-analytics-chats.jpg"><figcaption><b>Figure 8.</b> The Conversations tab.</figcaption></figure>
+  <figure class="tall short"><img src="img/11-analytics-chats.jpg"><figcaption><b class="fig"></b> The Conversations tab.</figcaption></figure>
   <ul>
     <li><b>Headline cards</b>: Total Messages, Total Sessions, Session Engagement and Turns Per Conversation.</li>
     <li><b>Activity</b>: one card with a switch between <b>Activity By Hour</b> (to find peak hours) and <b>Activity By Weekday</b> (to find the busiest days).</li>
   </ul>
+  <h3>The Activity card</h3>
+  <p>Use the switch at the top right of the card to change the view. The hourly view shows sessions across the 24-hour day; the weekday view shows how volume changes from Sunday to Saturday. Hover over, tap or focus a point to read its exact value.</p>
+  <figure class="mid"><img src="img/60-activity-hour.jpg"><figcaption><b class="fig"></b> Activity By Hour: session volume across the day.</figcaption></figure>
+  <figure class="mid"><img src="img/61-activity-weekday.jpg"><figcaption><b class="fig"></b> Activity By Weekday: the busiest and quietest days.</figcaption></figure>
   <div class="callout"><b class="t">TIP</b><p>Use the hourly view to plan support cover and maintenance windows: schedule changes in the quietest hours.</p></div>
 </section>
 
 <section class="chapter" style="page-break-before: always;">
   <h2><span class="num">4.5</span>Journeys</h2>
   <p>A journey is a multi-step banking task such as a fund transfer, bill payment or adding a beneficiary. This tab shows how many start, finish or are abandoned.</p>
-  <figure class="tall"><img src="img/12-analytics-flows.jpg"><figcaption><b>Figure 9.</b> The Journeys tab.</figcaption></figure>
+  <figure class="tall"><img src="img/12-analytics-flows.jpg"><figcaption><b class="fig"></b> The Journeys tab.</figcaption></figure>
   <ul>
     <li><b>Headline cards</b>: Journeys Started, Journeys Completed, Completion Rate and Abandonment Rate.</li>
     <li><b>Journey Trends</b>: started, completed and abandoned journeys over time.</li>
@@ -298,7 +328,7 @@
 <section class="chapter" style="page-break-before: always;">
   <h2><span class="num">4.6</span>AI Quality</h2>
   <p>Check that the assistant understands customers and keeps conversations safe.</p>
-  <figure class="tall"><img src="img/13-analytics-nlp.jpg"><figcaption><b>Figure 10.</b> The AI Quality tab.</figcaption></figure>
+  <figure class="tall"><img src="img/13-analytics-nlp.jpg"><figcaption><b class="fig"></b> The AI Quality tab.</figcaption></figure>
   <ul>
     <li><b>Headline cards</b>: Classified Interactions, Average Confidence, High-Confidence Rate and AI Fallback Rate.</li>
     <li><b>Confidence Distribution</b>: the share of requests understood with high, medium or low confidence. A large low-confidence slice means requests are being misread.</li>
@@ -311,7 +341,7 @@
 <section class="chapter" style="page-break-before: always;">
   <h2><span class="num">4.7</span>Performance</h2>
   <p>Measure how quickly the assistant responds. For all speed measures, lower is better.</p>
-  <figure class="tall"><img src="img/14-analytics-performance.jpg"><figcaption><b>Figure 11.</b> The Performance tab.</figcaption></figure>
+  <figure class="tall"><img src="img/14-analytics-performance.jpg"><figcaption><b class="fig"></b> The Performance tab.</figcaption></figure>
   <ul>
     <li><b>Headline cards</b>: Measured Interactions, Average Response Time, 95th Percentile and Slow Responses (over 1,500 ms).</li>
     <li><b>Average Time By Stage</b>: where time is spent: parsing, intent classification, flow execution and AI generation.</li>
@@ -324,7 +354,7 @@
 <section class="chapter" style="page-break-before: always;">
   <h2><span class="num">4.8</span>Activity Logs</h2>
   <p>Review how interactions ended and where errors occur.</p>
-  <figure class="tall"><img src="img/15-analytics-logs.jpg"><figcaption><b>Figure 12.</b> The Activity Logs tab.</figcaption></figure>
+  <figure class="tall"><img src="img/15-analytics-logs.jpg"><figcaption><b class="fig"></b> The Activity Logs tab.</figcaption></figure>
   <ul>
     <li><b>Headline cards</b>: Successful Interactions, Failed Interactions, Tokens Used and Recorded Errors.</li>
     <li><b>Interaction Outcomes</b>: a gauge of the success rate with successful and failed counts, beside <b>Conversation Channels</b> (voice versus text).</li>
@@ -343,55 +373,61 @@
   <div class="module">
     <h3>5.1 Institutions</h3>
     <p>Register financial institutions, issue license keys and track subscription expiry. Summary cards show total, active, expiring-soon (within 30 days) and expired licenses. Use <b>New Institution</b> to add one; each row offers actions such as editing and renewing the license.</p>
-    <figure><img src="img/3-institutions.jpg"><figcaption><b>Figure 13.</b> Institutions.</figcaption></figure>
+    <figure><img src="img/3-institutions.jpg"><figcaption><b class="fig"></b> Institutions.</figcaption></figure>
   </div>
 
-  <div class="module">
+  <div class="module" style="break-inside:auto">
     <h3>5.2 Logs</h3>
-    <p>A live view of assistant activity. The session list on the left filters the stream to one conversation. <b>Real-Time</b> streams events as they happen; <b>History</b> searches past events. Use <b>Pause</b>, <b>Clear</b>, <b>Copy</b> and <b>Download</b> to work with the stream, and <b>Full screen</b> for more room.</p>
-    <figure><img src="img/3-logs.jpg"><figcaption><b>Figure 14.</b> Logs.</figcaption></figure>
+    <p>Follow what the assistant is doing, as it happens or after the fact. The session list on the left narrows either view to a single conversation; choose <b>All Sessions (Live)</b> to see everything. Switch between the two views with the <b>Real-Time</b> and <b>History</b> buttons.</p>
+    <h4>Real-Time (live log)</h4>
+    <p>New events appear as soon as they are recorded. The <b>Connected</b> badge confirms the live link is working. Each line shows the time, the level (<code>INFO</code>, <code>WARNING</code> or <code>ERROR</code>), the event name and its details. Use <b>Pause</b> to hold the stream while you read, <b>Clear</b> to empty the screen, <b>Copy</b> or <b>Download</b> to keep the lines, and <b>Full screen</b> for more room.</p>
+    <figure><img src="img/62-logs-realtime.jpg"><figcaption><b class="fig"></b> Logs, Real-Time view, showing sample events.</figcaption></figure>
+    <h4>History</h4>
+    <p>Search events that were recorded earlier. Pick a start and end date, optionally narrow by <b>Session ID</b>, <b>User ID</b> or <b>Flow</b>, set the <b>Fetch limit</b>, then choose <b>Load</b>. Results are paged; use <b>Rows per page</b> and the page buttons to move through them, and <b>Copy</b> or <b>Download</b> to export what you see.</p>
+    <figure><img src="img/63-logs-history.jpg"><figcaption><b class="fig"></b> Logs, History view, showing sample events.</figcaption></figure>
+    <div class="callout"><b class="t">NOTE</b><p>The log lines in these screenshots are illustrative samples. Your own entries will show your real sessions, and identifiers such as session and user IDs are blurred or shortened for privacy in this guide.</p></div>
   </div>
 
   <div class="module">
     <h3>5.3 Dashboard Users</h3>
     <p>Create and manage the accounts that can sign in to this dashboard. Cards count Super Admins, Managers and Viewers. Search by name, email or role, filter by role, and use <b>New User</b> to add an account.</p>
-    <figure><img src="img/3-users.jpg"><figcaption><b>Figure 15.</b> Dashboard Users.</figcaption></figure>
+    <figure><img src="img/3-users.jpg"><figcaption><b class="fig"></b> Dashboard Users.</figcaption></figure>
   </div>
 
   <div class="module">
     <h3>5.4 Configurations</h3>
     <p>Adjust how the assistant behaves. Settings are numeric or on/off and can be filtered by type. Changes apply as soon as they are saved, so edit with care.</p>
-    <figure><img src="img/3-configurations.jpg"><figcaption><b>Figure 16.</b> Configurations.</figcaption></figure>
+    <figure><img src="img/3-configurations.jpg"><figcaption><b class="fig"></b> Configurations.</figcaption></figure>
   </div>
 
   <div class="module">
     <h3>5.5 Master Data</h3>
     <p>Maintain reference data in six tabs: <span class="pill">Banks</span><span class="pill">Billers</span><span class="pill">Donations</span><span class="pill">Cards</span><span class="pill">Biller Types</span><span class="pill">Biller Categories</span> Each tab lists its records with an active flag and offers add, edit and delete.</p>
-    <figure><img src="img/3-master-data.jpg"><figcaption><b>Figure 17.</b> Master Data.</figcaption></figure>
+    <figure><img src="img/3-master-data.jpg"><figcaption><b class="fig"></b> Master Data.</figcaption></figure>
   </div>
 
   <div class="module">
     <h3>5.6 Messages</h3>
     <p>Review and customise the automated voice and chat message templates across all supported languages. Each row shows the message key, its parameters, language, text and status.</p>
-    <figure><img src="img/3-messages.jpg"><figcaption><b>Figure 18.</b> Messages.</figcaption></figure>
+    <figure><img src="img/3-messages.jpg"><figcaption><b class="fig"></b> Messages.</figcaption></figure>
   </div>
 
   <div class="module">
     <h3>5.7 Flows</h3>
     <p>Enable or disable conversational banking task flows. Each row is an intent with an <b>Enabled</b> switch; a disabled flow is no longer offered to customers.</p>
-    <figure><img src="img/3-flows.jpg"><figcaption><b>Figure 19.</b> Flows.</figcaption></figure>
+    <figure><img src="img/3-flows.jpg"><figcaption><b class="fig"></b> Flows.</figcaption></figure>
   </div>
 
   <div class="module">
     <h3>5.8 Languages</h3>
     <p>Configure the languages the assistant supports and choose the <b>primary</b> language used by default. Add a language with <b>New Language</b>, and enable or disable existing ones.</p>
-    <figure><img src="img/3-languages.jpg"><figcaption><b>Figure 20.</b> Languages.</figcaption></figure>
+    <figure><img src="img/3-languages.jpg"><figcaption><b class="fig"></b> Languages.</figcaption></figure>
   </div>
 
   <div class="module">
     <h3>5.9 FAQs</h3>
     <p>Keep customer support content up to date. Set the FAQ page header and introduction, organise questions into sections, and use <b>Add FAQ</b> to write a new question and answer. Filter by status to see drafts or published items.</p>
-    <figure><img src="img/3-faqs.jpg"><figcaption><b>Figure 21.</b> FAQs.</figcaption></figure>
+    <figure><img src="img/3-faqs.jpg"><figcaption><b class="fig"></b> FAQs.</figcaption></figure>
   </div>
 
   <div class="module">
@@ -407,27 +443,27 @@
   <div class="glance"><b>Before you start</b><span>You need an account with permission to manage the area. If a button is missing, ask a Super Admin to review your role.</span></div>
   <div class="task">
     <div><h3>6.1 Add an institution</h3><ol><li>Open <b>Institutions</b> from the sidebar.</li><li>Choose <b>New Institution</b> at the top right of <i>Manage Institutions</i>.</li><li>Enter the <b>Institution Name</b> and pick the <b>License Expires At</b> date and time.</li><li>Select <b>Create Institution</b>.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>The institution appears in the list with its license expiry and status. Use the icons in its <b>Actions</b> column to edit it or manage its license later.</p></div></div>
-    <figure><img src="img/50-new-institution.jpg"><figcaption><b>Figure 23.</b> Add an institution.</figcaption></figure>
+    <figure><img src="img/50-new-institution.jpg"><figcaption><b class="fig"></b> Add an institution.</figcaption></figure>
   </div>
   <div class="task">
     <div><h3>6.2 Add a dashboard user</h3><ol><li>Open <b>Dashboard Users</b>.</li><li>Choose <b>New User</b>.</li><li>Enter the <b>Username</b> and <b>Email</b>, and choose the <b>Role</b>.</li><li>Select <b>Create User</b>.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>Roles control what the person can do: Super Admin, Manager or Viewer. Choose the lowest role that fits their job.</p></div></div>
-    <figure><img src="img/51-new-user.jpg"><figcaption><b>Figure 24.</b> Add a dashboard user.</figcaption></figure>
+    <figure><img src="img/51-new-user.jpg"><figcaption><b class="fig"></b> Add a dashboard user.</figcaption></figure>
   </div>
   <div class="task">
     <div><h3>6.3 Add a language</h3><ol><li>Open <b>Languages</b>.</li><li>Choose <b>New Language</b> and pick the language from the list.</li><li>Leave <b>Enabled</b> on so customers can use it.</li><li>Select <b>Create Language</b>.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>To make it the default, use <b>Set as Primary</b> on its row. Only one language is primary at a time.</p></div></div>
-    <figure><img src="img/52-new-language.jpg"><figcaption><b>Figure 25.</b> Add a language.</figcaption></figure>
+    <figure><img src="img/52-new-language.jpg"><figcaption><b class="fig"></b> Add a language.</figcaption></figure>
   </div>
   <div class="task">
     <div><h3>6.4 Add an FAQ</h3><ol><li>Open <b>FAQs</b> and choose <b>Add FAQ</b>.</li><li>Type a <b>Section title</b>, or choose an existing section.</li><li>Write the <b>Question</b> and the <b>Answer</b>.</li><li>Optionally open <b>Display order</b> to place it, and keep <b>Active</b> on to show it on the customer FAQ page.</li><li>Select <b>Save FAQ</b>.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>Write answers the way a customer would ask the question. Short, direct answers work best.</p></div></div>
-    <figure><img src="img/53-add-faq.jpg"><figcaption><b>Figure 26.</b> Add an FAQ.</figcaption></figure>
+    <figure><img src="img/53-add-faq.jpg"><figcaption><b class="fig"></b> Add an FAQ.</figcaption></figure>
   </div>
   <div class="task">
     <div><h3>6.5 Add a bank (or other reference data)</h3><ol><li>Open <b>Master Data</b> and choose the <b>Banks</b> tab.</li><li>Choose <b>Add Bank</b>.</li><li>Enter the <b>Bank Name</b> and <b>Abbreviation</b>, and keep <b>Active</b> on.</li><li>Select <b>Save</b>.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>Billers, donations, card types, biller types and biller categories follow the same pattern on their own tabs.</p></div></div>
-    <figure><img src="img/54-add-bank.jpg"><figcaption><b>Figure 27.</b> Add a bank (or other reference data).</figcaption></figure>
+    <figure><img src="img/54-add-bank.jpg"><figcaption><b class="fig"></b> Add a bank (or other reference data).</figcaption></figure>
   </div>
   <div class="task">
     <div><h3>6.6 Change a configuration setting</h3><ol><li>Open <b>Configurations</b>.</li><li>Choose <b>Edit</b> above the list. The values become editable.</li><li>Change a <b>Value</b>. The allowed range is shown beneath the field.</li><li>Select <b>Save</b> on that row, then <b>Cancel editing</b> when you are done.</li></ol><div class="callout"><b class="t">GOOD TO KNOW</b><p>Changes apply as soon as they are saved, and they affect how the assistant behaves for every customer. Change one setting at a time and note the original value.</p></div></div>
-    <figure><img src="img/55-edit-configurations.jpg"><figcaption><b>Figure 28.</b> Change a configuration setting.</figcaption></figure>
+    <figure><img src="img/55-edit-configurations.jpg"><figcaption><b class="fig"></b> Change a configuration setting.</figcaption></figure>
   </div>
 </section>
 

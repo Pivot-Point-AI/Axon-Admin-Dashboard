@@ -1,80 +1,73 @@
 "use client";
-import { valueInfo } from "./analyticsTrends";
+
 import AnalyticsCardScope from "./AnalyticsCardScope";
-import { useTranslations } from "next-intl";
-import { ChartBarsIcon } from "@/icons";
-import AnalyticsChartCard from "./AnalyticsChartCard";
-import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
-import AnalyticsPerformanceDistribution from "./AnalyticsPerformanceDistribution";
-import AnalyticsRankingChart from "./AnalyticsRankingChart";
-import AnalyticsReportedTrend from "./AnalyticsReportedTrend";
+import AnalyticsIntentBreakdown from "./AnalyticsIntentBreakdown";
 import AnalyticsSlowInteractions from "./AnalyticsSlowInteractions";
-import { telemetryDistribution } from "./analyticsTelemetryData";
+import AnalyticsSummaryBlock from "./AnalyticsSummaryBlock";
 
 interface AnalyticsPerformanceProps {
   data: Record<string, unknown>;
 }
-const colors = [
-  "brand-500",
-  "theme-purple-500",
-  "blue-light-400",
-  "success-500",
+
+const summaries = [
+  "average_response_time_summary",
+  "speech_to_text_summary",
+  "text_to_speech_summary",
 ];
+
+const breakdowns = [
+  "turn_time_breakdown_by_intent",
+  "speech_to_text_breakdown_by_intent",
+  "text_to_speech_breakdown_by_intent",
+];
+
 export default function AnalyticsPerformance({
   data,
 }: AnalyticsPerformanceProps) {
-  const t = useTranslations("analytics.telemetry");
-  const tInfo = useTranslations("analytics.design.info");
-  const common = useTranslations("analytics.design");
-  const label = (key: string) =>
-    t.has(`stageLabels.${key}`)
-      ? t(`stageLabels.${key}`)
-      : key.replaceAll("_", " ");
   return (
     <div className="space-y-4">
       <div className="grid items-stretch gap-4 lg:grid-cols-2">
-        <AnalyticsCardScope section="performance" data={data}>
-          {(d) => (
-            <AnalyticsChartCard
-              title={t("stageTitle")}
-              info={valueInfo(d.stage_averages_ms) ?? tInfo("stage")}
-              description={t("stageDescription")}
-              icon={<ChartBarsIcon />}
-              actions={<AnalyticsJourneyPeriod />}
-            >
-              <AnalyticsRankingChart
-                rows={telemetryDistribution(d.stage_averages_ms)}
-                label={label}
-                color={(_, index) => colors[index % colors.length]}
-                unit={common("milliseconds")}
-              />
-            </AnalyticsChartCard>
-          )}
-        </AnalyticsCardScope>
-        <AnalyticsCardScope section="performance" data={data}>
-          {(d) => (
-            <AnalyticsReportedTrend
-              title={t("responseTrendTitle")}
-              description={t("responseTrendDescription")}
-              info={valueInfo(d.response_time_trend) ?? tInfo("responseTrend")}
-              source={d.response_time_trend}
-              snapshot={d}
-              compactAxis
-              series={[
-                {
-                  key: "average",
-                  label: t("averageResponse"),
-                  token: "brand-500",
-                },
-                { key: "p95", label: t("p95"), token: "theme-purple-500" },
-              ]}
-            />
-          )}
-        </AnalyticsCardScope>
+        {summaries.map((block, index) => (
+          <div
+            key={block}
+            className={`min-w-0 ${index === summaries.length - 1 && summaries.length % 2 === 1 ? "lg:col-span-2" : ""}`}
+          >
+            <AnalyticsCardScope section="performance" data={data}>
+              {(d) => (
+                <AnalyticsSummaryBlock
+                  data={d}
+                  block={block}
+                  changes={block === "average_response_time_summary"}
+                />
+              )}
+            </AnalyticsCardScope>
+          </div>
+        ))}
       </div>
-      <AnalyticsCardScope section="performance" data={data}>
-        {(d) => <AnalyticsPerformanceDistribution data={d} />}
-      </AnalyticsCardScope>
+      <div className="grid items-stretch gap-4 lg:grid-cols-2">
+        {breakdowns.map((block, index) => (
+          <div
+            key={block}
+            className={`min-w-0 ${index === 0 ? "lg:col-span-2" : ""}`}
+          >
+            <AnalyticsCardScope section="performance" data={data}>
+              {(d) => (
+                <AnalyticsIntentBreakdown
+                  data={d}
+                  block={block}
+                  variant={
+                    block === "speech_to_text_breakdown_by_intent"
+                      ? "pie"
+                      : block === "text_to_speech_breakdown_by_intent"
+                        ? "rose"
+                        : "line"
+                  }
+                />
+              )}
+            </AnalyticsCardScope>
+          </div>
+        ))}
+      </div>
       <AnalyticsCardScope section="performance" data={data}>
         {(d) => <AnalyticsSlowInteractions value={d.top_slowest_turns} />}
       </AnalyticsCardScope>

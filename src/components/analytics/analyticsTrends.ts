@@ -111,7 +111,7 @@ const aliases: Record<string, string[]> = {
   total_user_messages: ["user_messages"],
   total_assistant_messages: ["assistant_messages"],
   total_cancelled_flows: ["cancelled_by_users", "cancelled_journeys"],
-  total_failed_flows: ["failed_journeys"],
+  total_failed_flows: ["failed_journeys", "journeys_failed", "failed_flows"],
   total_abandoned_flows: ["abandoned_journeys"],
   abandoned_flows_count: ["total_drop_offs", "drop_offs"],
   flow_drop_off_rate_pct: ["drop_off_rate"],
@@ -352,7 +352,70 @@ function findMetric(
       )
         return typeof entry === "number" ? { value: entry } : record;
     }
+  // A KPI the response names its own way: match on a distinctive word.
+  const pattern = loosePatterns[field];
+  if (pattern)
+    for (const block of blocks)
+      for (const [key, entry] of blockEntries(root, block)) {
+        const record = asAnalyticsRecord(entry);
+        if (
+          [
+            key,
+            record.key,
+            record.field,
+            record.metric,
+            record.label,
+            record.title,
+          ].some((value) => typeof value === "string" && pattern.test(value))
+        )
+          return typeof entry === "number" ? { value: entry } : record;
+      }
   return null;
+}
+
+/** Fields whose KPI may be sent under a different name; matched by word. */
+const loosePatterns: Record<string, RegExp> = {
+  total_failed_flows: /fail/i,
+};
+
+/** The entries of a KPI block exactly as the response lists them. */
+export function kpiEntries(
+  data: unknown,
+  block = "top_kpis",
+): { key: string; record: Record<string, unknown> }[] {
+  return blockEntries(asAnalyticsRecord(data), block).flatMap(([key, entry]) =>
+    typeof entry === "number" || typeof entry === "string"
+      ? [{ key, record: { value: entry } }]
+      : entry !== null && typeof entry === "object"
+        ? [{ key, record: asAnalyticsRecord(entry) }]
+        : [],
+  );
+}
+
+/** The API's own formatted text for a KPI (e.g. "394 (46.0%)"), when it adds
+ * something beyond the plain number. */
+export function formattedValue(
+  record: Record<string, unknown> | null | undefined,
+): string | null {
+  const text = record?.formatted_value;
+  if (typeof text !== "string" || !text.trim()) return null;
+  const plain = analyticsNumber(text.replace(/,/g, ""));
+  const value = analyticsNumber(record?.value);
+  // "394" for a value of 394 says nothing new.
+  return plain !== null && plain === value ? null : text.trim();
+}
+
+/** The KPI entry the response holds for a metric, whatever it calls it. */
+export function metricRecord(
+  data: unknown,
+  field: string,
+  blocks: string[] = ["top_kpis"],
+): Record<string, unknown> | null {
+  const root = asAnalyticsRecord(data);
+  const allBlocks = Object.keys(root).filter(
+    (key) => root[key] !== null && typeof root[key] === "object",
+  );
+  return findMetric(root, field, blocks) ?? findMetric(root, field, allBlocks);
 }
 
 /** Current figure for a metric reported inside a KPI block rather than at the
@@ -420,6 +483,7 @@ export function trendSentiment(
 
 const infoKeys = [
   "stat_info",
+  "display_info",
   "info",
   "tooltip",
   "help_text",
@@ -452,6 +516,7 @@ function readInfo(
   record: Record<string, unknown>,
   root?: Record<string, unknown>,
   name?: string,
+  keys: string[] = infoKeys,
 ): string | null {
   const nested = [
     record,
@@ -459,7 +524,7 @@ function readInfo(
     asAnalyticsRecord(record.meta),
   ];
   for (const source of nested)
-    for (const key of infoKeys) {
+    for (const key of keys) {
       const found = firstString(source[key]);
       if (found) return found;
     }
@@ -481,7 +546,7 @@ function readInfo(
       if (found) return found;
     }
   }
-  return deepInfo(record);
+  return keys === infoKeys ? deepInfo(record) : null;
 }
 
 export function metricInfo(
@@ -498,6 +563,60 @@ export function metricInfo(
     findMetric(root, field, allBlocks) ??
     asAnalyticsRecord(root[field]);
   return readInfo(record, root, field);
+}
+
+const descriptionKeys = ["description", "desc", "summary", "subtitle"];
+
+/** A metric's one-line description and its separate explanation (tooltip). */
+export function metricDetails(
+  record: unknown,
+  root?: unknown,
+  name?: string,
+): { description: string | null; info: string | null } {
+  const entry = asAnalyticsRecord(record);
+  const description = firstString(...descriptionKeys.map((key) => entry[key]));
+  const info = readInfo(
+    entry,
+    asAnalyticsRecord(root),
+    name,
+    infoKeys.filter((key) => key !== "description"),
+  );
+  return { description, info: info === description ? null : info };
+}
+
+/** The one-line description the response gives a card's data block. */
+export function blockDescription(
+  data: unknown,
+  ...blocks: string[]
+): string | null {
+  const root = asAnalyticsRecord(data);
+  for (const block of blocks) {
+    const found = metricDetails(root[block]).description;
+    if (found) return found;
+  }
+  return null;
+}
+
+/** The description carried by a chart's own data object. */
+export function valueDescription(value: unknown): string | null {
+  return metricDetails(value).description;
+}
+
+/** The same details for a metric found by name inside the response's blocks. */
+export function fieldDetails(
+  data: unknown,
+  field: string,
+  blocks: string[] = ["top_kpis"],
+) {
+  const root = asAnalyticsRecord(data);
+  const allBlocks = Object.keys(root).filter(
+    (key) => root[key] !== null && typeof root[key] === "object",
+  );
+  const record =
+    findMetric(root, field, blocks) ??
+    findMetric(root, field, allBlocks) ??
+    asAnalyticsRecord(root[field]);
+  return metricDetails(record, root, field);
 }
 
 /** The explanation attached to a chart's own data object. */

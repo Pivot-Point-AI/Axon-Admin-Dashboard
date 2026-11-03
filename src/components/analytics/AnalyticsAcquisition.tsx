@@ -17,7 +17,7 @@ import { analyticsNumber, asAnalyticsRecord } from "./analyticsData";
 import MetricTrend from "./MetricTrend";
 import {
   blockInfo,
-  metricTrend,
+  metricDetails,
   readMetricTrend,
   type MetricTrendData,
 } from "./analyticsTrends";
@@ -26,14 +26,16 @@ interface AnalyticsAcquisitionProps {
   data: Record<string, unknown>;
 }
 
-interface AcquisitionRow {
+export interface AcquisitionRow {
   key: string;
   label: string;
   value: number | string | null;
   trend: MetricTrendData | null;
+  description?: string | null;
+  info?: string | null;
 }
 
-const icons = [
+export const acquisitionIcons = [
   UserIcon,
   CalenderIcon,
   GroupIcon,
@@ -43,11 +45,28 @@ const icons = [
   BoltIcon,
 ];
 
-const legacyFields = [
-  "new_users_today",
-  "new_users_this_week",
-  "new_users_this_month",
-];
+export function acquisitionRows(
+  data: Record<string, unknown>,
+): AcquisitionRow[] {
+  // Only what the response lists: its own label, value, comparison and wording.
+  const block = asAnalyticsRecord(data.new_user_acquisition);
+  const listed = Array.isArray(block.metrics) ? block.metrics : [];
+  return listed.map((entry, index) => {
+    const record = asAnalyticsRecord(entry);
+    const label =
+      typeof record.metric === "string" ? record.metric : `#${index + 1}`;
+    return {
+      key: label,
+      label,
+      value:
+        typeof record.value === "string"
+          ? record.value
+          : analyticsNumber(record.value),
+      trend: readMetricTrend(record),
+      ...metricDetails(record, data, label),
+    };
+  });
+}
 
 export default function AnalyticsAcquisition({
   data,
@@ -57,31 +76,7 @@ export default function AnalyticsAcquisition({
   const format = useFormatter();
   const reporting = useAnalyticsPeriod();
 
-  // The response lists every acquisition metric with its own label, value and
-  // comparison; older responses only carry the three headline counts.
-  const block = asAnalyticsRecord(data.new_user_acquisition);
-  const listed = Array.isArray(block.metrics) ? block.metrics : [];
-  const rows: AcquisitionRow[] = listed.length
-    ? listed.map((entry, index) => {
-        const record = asAnalyticsRecord(entry);
-        const label =
-          typeof record.metric === "string" ? record.metric : `#${index + 1}`;
-        return {
-          key: label,
-          label,
-          value:
-            typeof record.value === "string"
-              ? record.value
-              : analyticsNumber(record.value),
-          trend: readMetricTrend(record),
-        };
-      })
-    : legacyFields.map((field) => ({
-        key: field,
-        label: t(`fields.${field}`),
-        value: analyticsNumber(data[field]),
-        trend: metricTrend(data, field, ["new_user_acquisition"]),
-      }));
+  const rows = acquisitionRows(data);
 
   const actions = reporting ? (
     <AnalyticsJourneyPeriod
@@ -101,7 +96,7 @@ export default function AnalyticsAcquisition({
     >
       <dl className="divide-y divide-gray-100 border-t border-gray-200 pt-4 dark:divide-gray-800 dark:border-gray-700">
         {rows.map((row, index) => {
-          const RowIcon = icons[index % icons.length];
+          const RowIcon = acquisitionIcons[index % acquisitionIcons.length];
           return (
             <div
               key={row.key}

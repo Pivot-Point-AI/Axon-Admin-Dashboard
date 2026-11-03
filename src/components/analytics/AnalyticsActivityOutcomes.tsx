@@ -1,5 +1,5 @@
 "use client";
-import { blocksInfo } from "./analyticsTrends";
+import { blocksInfo, blockDescription } from "./analyticsTrends";
 import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
 import { useFormatter, useTranslations } from "next-intl";
 import { CheckCircleIcon } from "@/icons";
@@ -69,9 +69,10 @@ export default function AnalyticsActivityOutcomes({
     <AnalyticsChartCard
       title={t("outcomesTitle")}
       info={blocksInfo(data, ["interaction_outcomes"]) ?? tInfo("outcomes")}
-      description={t(
-        history.length ? "outcomesHistoryDescription" : "outcomesDescription",
-      )}
+      description={
+        blockDescription(data, "interaction_outcomes") ??
+        t(history.length ? "outcomesHistoryDescription" : "outcomesDescription")
+      }
       icon={<CheckCircleIcon />}
       actions={<AnalyticsJourneyPeriod />}
     >

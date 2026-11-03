@@ -7,6 +7,8 @@ import type { MetricTrendData } from "./analyticsTrends";
 
 export interface AnalyticsPeriodPoint {
   label: string;
+  /** Shorter text for the axis; the tooltip keeps the full label. */
+  axisLabel?: string;
   value: number | null;
   trend?: MetricTrendData | null;
 }
@@ -41,6 +43,9 @@ export default function AnalyticsPeriodChart({
   const tooltipId = useId();
   const activePoint = activeIndex === null ? null : points[activeIndex];
   // Nothing recorded for this period: say so instead of drawing an empty plot.
+  // The parent rebuilds `points` on every render; only a change in what is
+  // plotted should replay the grow-in animation.
+  const signature = points.map((p) => `${p.label}:${p.value}`).join("|");
   const empty = points.every((point) => !point.value);
   useLayoutEffect(() => {
     const canvas = ref.current;
@@ -69,6 +74,8 @@ export default function AnalyticsPeriodChart({
         .trim();
       const muted = theme.getPropertyValue("--color-gray-500").trim();
       const rtl = document.documentElement.dir === "rtl";
+      // Dense series read as a trend line: no markers, no curve overshoot.
+      const dense = points.length > 40;
       context.font = `11px ${styles.fontFamily}`;
       context.lineWidth = 1;
       const maximum = Math.max(
@@ -127,7 +134,7 @@ export default function AnalyticsPeriodChart({
           (index % labelStep === 0 && last - index >= labelStep / 2) ||
           index === last
         )
-          context.fillText(point.label, x, height - 8);
+          context.fillText(point.axisLabel ?? point.label, x, height - 8);
         return {
           x,
           y:
@@ -185,14 +192,16 @@ export default function AnalyticsPeriodChart({
           if (previous === null) line.moveTo(point.x, point.y);
           else {
             const middle = (previous.x + point.x) / 2;
-            line.bezierCurveTo(
-              middle,
-              previous.y,
-              middle,
-              point.y,
-              point.x,
-              point.y,
-            );
+            if (dense) line.lineTo(point.x, point.y);
+            else
+              line.bezierCurveTo(
+                middle,
+                previous.y,
+                middle,
+                point.y,
+                point.x,
+                point.y,
+              );
           }
           previous = point;
         });
@@ -216,10 +225,10 @@ export default function AnalyticsPeriodChart({
           context.fill(fillPath);
         }
         context.strokeStyle = color;
-        context.lineWidth = 2.5;
+        context.lineWidth = dense ? 1.75 : 2.5;
         context.stroke(line);
         positions.forEach(({ x, y, value }) => {
-          if (value === null) return;
+          if (value === null || dense) return;
           context.beginPath();
           context.arc(x, y, 4.5, 0, 2 * Math.PI);
           context.fillStyle = color;
@@ -286,7 +295,7 @@ export default function AnalyticsPeriodChart({
       if (elapsed < 1) frame = requestAnimationFrame(step);
     });
     return () => cancelAnimationFrame(frame);
-  }, [points, variant]);
+  }, [signature, variant]);
   // The same reported values are available through pointer, touch, and keyboard input.
   return (
     <div className={`relative ${fillHeight ? "h-full min-h-64" : ""}`}>

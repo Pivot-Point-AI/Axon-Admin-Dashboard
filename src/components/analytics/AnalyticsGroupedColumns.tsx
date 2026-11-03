@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useFormatter } from "next-intl";
 import AnalyticsJourneyPlot from "./AnalyticsJourneyPlot";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
@@ -13,6 +14,8 @@ export interface AnalyticsColumnGroup {
   key: string;
   label: string;
   values: Record<string, number | null>;
+  /** Shown under the label, e.g. a trend badge. */
+  note?: ReactNode;
 }
 interface AnalyticsGroupedColumnsProps {
   rows: AnalyticsColumnGroup[];
@@ -82,7 +85,9 @@ export default function AnalyticsGroupedColumns({
             }
           >
             <div
-              key={JSON.stringify(rows)}
+              key={JSON.stringify(
+                rows.map(({ key, label, values }) => ({ key, label, values })),
+              )}
               className="axon-reveal-up relative grid h-full"
               style={{
                 gridTemplateColumns: `repeat(${rows.length}, minmax(0, 1fr))`,
@@ -133,6 +138,20 @@ export default function AnalyticsGroupedColumns({
               </span>
             ))}
           </div>
+          {rows.some((row) => row.note) && (
+            <div
+              className="mt-2 grid ps-11"
+              style={{
+                gridTemplateColumns: `repeat(${rows.length}, minmax(0, 1fr))`,
+              }}
+            >
+              {rows.map((row) => (
+                <span key={row.key} className="flex justify-center px-1">
+                  {row.note}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

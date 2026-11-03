@@ -1,6 +1,6 @@
 "use client";
 
-import { blocksInfo } from "./analyticsTrends";
+import { blocksInfo, blockDescription } from "./analyticsTrends";
 import { useMemo } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
@@ -57,6 +57,7 @@ export default function AnalyticsJourneyTrends({
   const series = [
     { key: "started", token: "brand-500", label: t("started") },
     { key: "completed", token: "success-500", label: t("completed") },
+    { key: "failed", token: "error-500", label: t("failed") },
     { key: "abandoned", token: "orange-400", label: t("abandoned") },
   ];
   const count = (value: number | null) =>
@@ -71,9 +72,17 @@ export default function AnalyticsJourneyTrends({
     values: [
       count(point.started),
       count(point.completed),
+      count(point.failed),
       count(point.abandoned),
     ],
   }));
+  const description =
+    blockDescription(
+      data,
+      "journey_trends",
+      "daily_flow_trends",
+      "flow_trends",
+    ) ?? t("journeyTrendsDescription");
   const chart = (tall = false) => (
     <AnalyticsTrendChart
       key={period}
@@ -88,7 +97,7 @@ export default function AnalyticsJourneyTrends({
     <ComponentCard
       compact
       title={t("journeyTrends")}
-      description={t("journeyTrendsDescription")}
+      description={description}
       icon={<TrendWaveIcon />}
       info={
         blocksInfo(data, [
@@ -101,12 +110,13 @@ export default function AnalyticsJourneyTrends({
         <AnalyticsCardActions>
           <AnalyticsViewAll
             title={t("journeyTrends")}
-            description={t("journeyTrendsDescription")}
+            description={description}
             icon={<TrendWaveIcon />}
             columns={[
               t("dateColumn"),
               t("started"),
               t("completed"),
+              t("failed"),
               t("abandoned"),
             ]}
             entries={entries}

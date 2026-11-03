@@ -14,7 +14,7 @@ import AnalyticsPeriodChart from "./AnalyticsPeriodChart";
 import { chartColor, chartKinds, chartRows } from "./analyticsChartData";
 import { analyticsNumber, asAnalyticsRecord } from "./analyticsData";
 import { ChartBarsIcon, PieChartIcon } from "@/icons";
-import { valueInfo } from "./analyticsTrends";
+import { valueInfo, valueDescription } from "./analyticsTrends";
 
 interface AnalyticsBreakdownProps {
   field: string;
@@ -65,9 +65,10 @@ export default function AnalyticsBreakdown({
     <ComponentCard
       title={t(`fields.${field}`)}
       description={
-        t.has(`design.chartDescriptions.${field}`)
+        valueDescription(value) ??
+        (t.has(`design.chartDescriptions.${field}`)
           ? t(`design.chartDescriptions.${field}`)
-          : undefined
+          : undefined)
       }
       info={
         valueInfo(value) ??

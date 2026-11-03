@@ -15,14 +15,14 @@ export const sectionMetrics: Record<AnalyticsSection, readonly string[]> = {
   ],
   flows: [
     "total_initialized_flows",
-    "total_completed_flows",
+    "total_failed_flows",
     "flow_completion_rate_pct",
     "flow_abandonment_rate_pct",
   ],
   nlp: [
     "total_classified_turns",
     "average_intent_confidence",
-    "high_confidence_rate_pct",
+    "llm_fallback_count",
     "llm_fallback_rate_pct",
   ],
   performance: [
@@ -102,7 +102,6 @@ export const metricGroups: Partial<
       title: "journeyDetails",
       fields: [
         "total_cancelled_flows",
-        "total_failed_flows",
         "total_abandoned_flows",
         "abandoned_flows_count",
         "flow_drop_off_rate_pct",
