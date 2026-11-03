@@ -28,17 +28,14 @@ export default function FaqSections({
   ];
   return (
     <ComponentCard title={t("sections")} description={t("sectionsHint")}>
-      <nav
-        aria-label={t("sectionNavigation")}
-        className="custom-scrollbar max-h-128 space-y-1 overflow-y-auto"
-      >
+      <nav aria-label={t("sectionNavigation")} className="space-y-0.5">
         {options.map(({ name, count }) => (
           <button
             key={name === null ? "all" : `section:${name}`}
             type="button"
             aria-pressed={selected === name}
             onClick={() => onSelect(name)}
-            className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-3 text-start text-sm transition-colors focus-visible:outline-2 focus-visible:outline-brand-400 ${selected === name ? "bg-brand-50 font-medium text-brand-700 dark:bg-brand-500/15 dark:text-brand-300" : "text-gray-500 hover:bg-gray-50 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"}`}
+            className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-start text-theme-xs transition-colors focus-visible:outline-2 focus-visible:outline-brand-400 ${selected === name ? "bg-brand-50 font-medium text-brand-700 dark:bg-brand-500/15 dark:text-brand-300" : "text-gray-500 hover:bg-gray-50 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"}`}
           >
             {name === null ? (
               <GridIcon aria-hidden="true" className="size-4 shrink-0" />
@@ -56,7 +53,7 @@ export default function FaqSections({
           </button>
         ))}
       </nav>
-      <p className="mt-5 rounded-xl bg-brand-25 p-4 text-theme-xs leading-5 text-gray-500 dark:bg-brand-500/10 dark:text-gray-400">
+      <p className="mt-3 rounded-xl bg-brand-25 p-3 text-theme-xs leading-5 text-gray-500 dark:bg-brand-500/10 dark:text-gray-400">
         {t("sectionFootnote")}
       </p>
     </ComponentCard>

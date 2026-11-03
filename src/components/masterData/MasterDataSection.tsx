@@ -413,60 +413,67 @@ export default function MasterDataSection({
       <PageRefresh loading={loading} error={!!error} onRefresh={load} />
       <MasterDataMetrics items={items} loading={loading || !!error} />
       <div className="axon-management-panel rounded-xl border border-brand-100 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-          <h4 className="self-center text-base font-semibold text-gray-800 dark:text-white/90">
+        <div className="mb-3 flex flex-wrap items-end gap-3">
+          <h4 className="w-full text-base font-semibold text-gray-800 md:w-auto md:pb-2 dark:text-white/90">
             {title}
           </h4>
-          <div className="flex flex-1 flex-wrap gap-3">
-            <Input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t("searchPlaceholder", {
-                title: title.toLowerCase(),
-              })}
-              aria-label={t("search")}
-              className="min-w-60 bg-gray-50 dark:bg-gray-900"
-            />
-          </div>
-          {filters.length > 0 && (
-            <div className="flex flex-1 flex-wrap items-end gap-3 lg:justify-end">
-              {filters.map((filter, index) => {
-                const choices = filter.options(applyFilters(items, index));
-                return (
-                  <div key={filter.key} className="min-w-44">
-                    <Label htmlFor={`filter-${filter.key}`}>
-                      {filter.label}
-                    </Label>
-                    <select
-                      id={`filter-${filter.key}`}
-                      value={filterValues[filter.key] ?? ""}
-                      onChange={(e) => changeFilter(index, e.target.value)}
-                      className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
-                    >
-                      <option value="">All</option>
-                      {choices.map((choice) => (
-                        <option key={choice} value={choice}>
-                          {choice}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                );
-              })}
-              {Object.values(filterValues).some(Boolean) && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setFilterValues({})}
-                >
-                  Clear filters
-                </Button>
-              )}
+          <div className="flex flex-1 flex-wrap items-end gap-3">
+            <div className="min-w-60 flex-1">
+              <Input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={t("searchPlaceholder", {
+                  title: title.toLowerCase(),
+                })}
+                aria-label={t("search")}
+                className="h-10! bg-gray-50 dark:bg-gray-900"
+              />
             </div>
-          )}
-
-          <div className="flex flex-wrap items-center gap-3">
+            {filters.length > 0 && (
+              <>
+                {filters.map((filter, index) => {
+                  const choices = filter.options(applyFilters(items, index));
+                  return (
+                    <div
+                      key={filter.key}
+                      className="min-w-40 flex-1 sm:w-44 sm:flex-none"
+                    >
+                      <Label
+                        htmlFor={`filter-${filter.key}`}
+                        className="sr-only"
+                      >
+                        {filter.label}
+                      </Label>
+                      <select
+                        id={`filter-${filter.key}`}
+                        value={filterValues[filter.key] ?? ""}
+                        onChange={(e) => changeFilter(index, e.target.value)}
+                        className="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
+                      >
+                        <option value="">{`All ${filter.label}`}</option>
+                        {choices.map((choice) => (
+                          <option key={choice} value={choice}>
+                            {choice}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })}
+                {Object.values(filterValues).some(Boolean) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setFilterValues({})}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+          <div className="flex w-full flex-wrap items-center justify-between gap-3 md:w-auto md:justify-end">
             <RowsPerPage pagination={pagination} disabled={loading} />
             <Button
               size="sm"

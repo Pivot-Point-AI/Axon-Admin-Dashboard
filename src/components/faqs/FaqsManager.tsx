@@ -91,7 +91,7 @@ export default function FaqsManager() {
         />
       )}
       <div className="grid items-start gap-4 xl:grid-cols-7">
-        <aside className="hidden min-w-0 xl:col-span-2 xl:block">
+        <aside className="hidden min-w-0 xl:sticky xl:top-24 xl:col-span-2 xl:block">
           <FaqSections
             items={data?.items ?? []}
             selected={selected}

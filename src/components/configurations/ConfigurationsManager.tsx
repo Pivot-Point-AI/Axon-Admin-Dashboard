@@ -133,13 +133,13 @@ export default function ConfigurationsManager() {
               placeholder={t("searchSettings")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="min-w-60 bg-gray-50 dark:bg-gray-900"
+              className="h-10! min-w-60 bg-gray-50 dark:bg-gray-900"
             />
             <select
               aria-label={t("allTypes")}
               value={kindFilter}
               onChange={(e) => setKindFilter(e.target.value)}
-              className="h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+              className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
             >
               <option value="">{t("allTypes")}</option>
               {(["boolean", "integer", "number", "string"] as ConfigKind[]).map(

@@ -152,7 +152,7 @@ export default function MessagesManager() {
             placeholder={t("search")}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="min-w-60 bg-gray-50 dark:bg-gray-900"
+            className="h-10! min-w-60 bg-gray-50 dark:bg-gray-900"
           />
           {[
             {
@@ -169,7 +169,7 @@ export default function MessagesManager() {
               value={filter.value}
               onChange={(event) => filter.change(event.target.value)}
               disabled={loading || messages.length === 0}
-              className="h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+              className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
             >
               <option value="">{filter.label}</option>
               {filter.options.map((option) => (

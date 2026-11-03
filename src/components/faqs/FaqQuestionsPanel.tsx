@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
-import Pagination from "@/components/common/Pagination";
+import Pagination, { RowsPerPage } from "@/components/common/Pagination";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
 import { DocsIcon, PlusIcon, SearchOutlineIcon } from "@/icons";
@@ -57,7 +57,7 @@ export default function FaqQuestionsPanel({
   const hasFilters =
     query.trim() !== "" || status !== "all" || selected !== null;
   const selectClass =
-    "h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-600 focus-visible:outline-2 focus-visible:outline-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300";
+    "h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-600 focus-visible:outline-2 focus-visible:outline-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300";
   return (
     <ComponentCard
       title={selected ?? t("items")}
@@ -66,7 +66,7 @@ export default function FaqQuestionsPanel({
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
-            className="h-11"
+            className="h-10"
             disabled={items === null || loading || busyId !== null}
             startIcon={<PlusIcon aria-hidden="true" className="size-4" />}
             onClick={onCreate}
@@ -76,25 +76,25 @@ export default function FaqQuestionsPanel({
         </div>
       }
     >
-      <div className="mb-5 grid grid-cols-2 items-center gap-3 sm:flex sm:flex-wrap">
-        <div className="relative col-span-2 min-w-0 grow">
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-60 grow basis-60">
           <SearchOutlineIcon
             aria-hidden="true"
-            className="pointer-events-none absolute start-3.5 top-3.5 size-4 text-gray-400 dark:text-gray-500"
+            className="pointer-events-none absolute start-3.5 top-3 size-4 text-gray-400 dark:text-gray-500"
           />
           <Input
             aria-label={t("search")}
             placeholder={t("design.searchPlaceholder")}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="ps-10"
+            className="h-10! ps-10"
           />
         </div>
         <select
           aria-label={t("design.statusFilter")}
           value={status}
           onChange={(event) => setStatus(event.target.value)}
-          className={`${selectClass} w-full min-w-0 sm:w-auto`}
+          className={`${selectClass} min-w-0 grow sm:grow-0`}
         >
           <option value="all">{t("design.allStatuses")}</option>
           <option value="active">{statusText("active")}</option>
@@ -104,7 +104,7 @@ export default function FaqQuestionsPanel({
           aria-label={t("design.sectionFilter")}
           value={selected ?? ""}
           onChange={(event) => onSelectSection(event.target.value || null)}
-          className={`${selectClass} w-full min-w-0 xl:hidden`}
+          className={`${selectClass} min-w-0 grow sm:grow-0 xl:hidden`}
         >
           <option value="">{t("design.allSections")}</option>
           {sections.map((section) => (
@@ -113,6 +113,7 @@ export default function FaqQuestionsPanel({
             </option>
           ))}
         </select>
+        <RowsPerPage pagination={pagination} disabled={loading} />
       </div>
       {error && (
         <p
@@ -127,6 +128,7 @@ export default function FaqQuestionsPanel({
           variant="header"
           pagination={pagination}
           disabled={loading}
+          showRows={false}
         />
       )}
       <div aria-busy={loading} className="space-y-1.5">
@@ -177,7 +179,7 @@ export default function FaqQuestionsPanel({
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-4 h-11"
+                className="mt-4 h-10"
                 onClick={() => {
                   setQuery("");
                   setStatus("all");
