@@ -4807,6 +4807,7 @@
             "description": "Consolidated User Growth & Retention lifecycle audit"
           }
         },
+        
         "additionalProperties": true,
         "type": "object",
         "title": "UserStatsSummaryResponse"
@@ -4853,7 +4854,7 @@
       }
 
     },
-    
+
     "securitySchemes": {
       "HTTPBearer": {
         "type": "http",
