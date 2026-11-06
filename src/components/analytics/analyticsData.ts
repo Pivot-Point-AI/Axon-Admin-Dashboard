@@ -78,12 +78,14 @@ export function distributionRows(value: unknown): DistributionRow[] {
       analyticsNumber(item.total) ??
       analyticsNumber(item.frequency) ??
       analyticsNumber(item.users) ??
+      analyticsNumber(item.sessions) ??
       analyticsNumber(item.value);
     if (count === null || count < 0) return [];
     const percentage =
       analyticsNumber(item.percentage) ??
       analyticsNumber(item.percentage_pct) ??
-      analyticsNumber(item.share_pct);
+      analyticsNumber(item.share_pct) ??
+      analyticsNumber(item.session_share_pct);
     return [{ key, count, percentage }];
   });
   const denominator =
@@ -115,6 +117,15 @@ export function languageRows(value: unknown): {
       percentage: ((total - sum) / total) * 100,
     });
   return { rows, total };
+}
+
+/** Whether language rows count sessions (`sessions`) rather than users. */
+export function languageUnit(value: unknown): "sessions" | "users" {
+  const list = asAnalyticsRecord(value).languages;
+  return Array.isArray(list) &&
+    list.some((row) => analyticsNumber(asAnalyticsRecord(row).sessions) !== null)
+    ? "sessions"
+    : "users";
 }
 
 export function languageName(code: string, locale: string): string {

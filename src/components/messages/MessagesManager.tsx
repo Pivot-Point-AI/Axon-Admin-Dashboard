@@ -30,6 +30,10 @@ import {
   messageUpdate,
   type MessageDraft,
 } from "./messageFields";
+import {
+  toolbarSearchClass,
+  toolbarSelectClass,
+} from "@/components/form/toolbarControls";
 
 export default function MessagesManager() {
   const t = useTranslations("messageEditor");
@@ -152,7 +156,7 @@ export default function MessagesManager() {
             placeholder={t("search")}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="h-10! min-w-60 bg-gray-50 dark:bg-gray-900"
+            className={`${toolbarSearchClass} min-w-60`}
           />
           {[
             {
@@ -169,7 +173,7 @@ export default function MessagesManager() {
               value={filter.value}
               onChange={(event) => filter.change(event.target.value)}
               disabled={loading || messages.length === 0}
-              className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+              className={toolbarSelectClass}
             >
               <option value="">{filter.label}</option>
               {filter.options.map((option) => (

@@ -11,6 +11,10 @@ interface AnalyticsJourneyPeriodProps {
   onCustomChange?: (start: string, end: string) => void;
   start?: string;
   end?: string;
+  /** Limit the presets offered; defaults to all of them. */
+  options?: readonly JourneyPeriod[];
+  /** How a custom choice is made: one day, a range, or a whole week. */
+  customMode?: "day" | "range" | "week";
 }
 
 export default function AnalyticsJourneyPeriod({
@@ -19,6 +23,8 @@ export default function AnalyticsJourneyPeriod({
   onCustomChange,
   start,
   end,
+  options,
+  customMode,
 }: AnalyticsJourneyPeriodProps) {
   const reporting = useAnalyticsPeriod();
   // Without its own handler the control drives the page-wide filter.
@@ -29,8 +35,8 @@ export default function AnalyticsJourneyPeriod({
   return (
     <AnalyticsPeriodSelect
       value={current === "customRange" ? undefined : current}
-      options={dated ? ["today", "yesterday"] : undefined}
-      customMode={dated ? "day" : "range"}
+      options={options ?? (dated ? ["today", "yesterday"] : undefined)}
+      customMode={customMode ?? (dated ? "day" : "range")}
       onChange={change}
       start={
         start ??

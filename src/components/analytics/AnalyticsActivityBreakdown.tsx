@@ -6,7 +6,11 @@ import ComponentCard from "@/components/common/ComponentCard";
 import { ChartBarsIcon } from "@/icons";
 import AnalyticsColumnChart from "./AnalyticsColumnChart";
 import AnalyticsPeriodChart from "./AnalyticsPeriodChart";
+import AnalyticsCardActions from "./AnalyticsCardActions";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
+import AnalyticsJourneyPeriod from "./AnalyticsJourneyPeriod";
+import { useAnalyticsPeriod } from "./AnalyticsPeriodContext";
+import type { AnalyticsPeriod } from "./analyticsPeriods";
 import { valueInfo, valueDescription } from "./analyticsTrends";
 import { chartColor, chartRows } from "./analyticsChartData";
 
@@ -15,6 +19,14 @@ type ActivityView = "peak_activity_hours" | "activity_by_day_of_week";
 const views: ActivityView[] = [
   "peak_activity_hours",
   "activity_by_day_of_week",
+];
+
+// A weekday breakdown needs several days, so it only offers week-long ranges.
+const weekPeriods: readonly AnalyticsPeriod[] = [
+  "last7Days",
+  "last14Days",
+  "last30Days",
+  "allTime",
 ];
 
 interface AnalyticsActivityBreakdownProps {
@@ -28,6 +40,7 @@ export default function AnalyticsActivityBreakdown({
 }: AnalyticsActivityBreakdownProps) {
   const t = useTranslations("analytics");
   const tInfo = useTranslations("analytics.design.info");
+  const reporting = useAnalyticsPeriod();
   const [view, setView] = useState<ActivityView>("peak_activity_hours");
   const rows = chartRows(
     view,
@@ -55,27 +68,44 @@ export default function AnalyticsActivityBreakdown({
         tInfo("activity")
       }
       actions={
-        <div
-          role="group"
-          aria-label={t("design.activityTitle")}
-          className="flex rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800"
-        >
-          {views.map((option) => (
-            <button
-              key={option}
-              type="button"
-              aria-pressed={view === option}
-              onClick={() => setView(option)}
-              className={`rounded-md px-3 py-1.5 text-theme-xs font-medium focus-visible:outline-2 focus-visible:outline-brand-400 ${
-                view === option
-                  ? "bg-white text-gray-900 shadow-theme-xs dark:bg-gray-900 dark:text-white"
-                  : "text-gray-500 dark:text-gray-400"
-              }`}
-            >
-              {t(`fields.${option}`)}
-            </button>
-          ))}
-        </div>
+        <AnalyticsCardActions>
+          <div
+            role="group"
+            aria-label={t("design.activityTitle")}
+            className="flex rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800"
+          >
+            {views.map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={view === option}
+                onClick={() => {
+                  setView(option);
+                  // One day can't show a weekday pattern; move to a week.
+                  if (
+                    option === "activity_by_day_of_week" &&
+                    (reporting?.period === "today" ||
+                      reporting?.period === "yesterday")
+                  )
+                    reporting.onChange("last7Days");
+                }}
+                className={`rounded-md px-3 py-1.5 text-theme-xs font-medium focus-visible:outline-2 focus-visible:outline-brand-400 ${
+                  view === option
+                    ? "bg-white text-gray-900 shadow-theme-xs dark:bg-gray-900 dark:text-white"
+                    : "text-gray-500 dark:text-gray-400"
+                }`}
+              >
+                {t(`fields.${option}`)}
+              </button>
+            ))}
+          </div>
+          <AnalyticsJourneyPeriod
+            options={
+              view === "activity_by_day_of_week" ? weekPeriods : undefined
+            }
+            customMode={view === "activity_by_day_of_week" ? "week" : undefined}
+          />
+        </AnalyticsCardActions>
       }
     >
       {!rows.length ? (

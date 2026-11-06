@@ -16,16 +16,28 @@ import {
 
 interface AnalyticsTopKpisProps {
   data: Record<string, unknown>;
+  /** Show the API's `ratio_display` (e.g. "967/2,189") under each title. */
+  showRatio?: boolean;
 }
 
 const icons = [GroupIcon, ChatIcon, BoltIcon, PieChartIcon, TimeIcon];
-const lowerIsBetter = /slow|latency|time|fail|error|abandon|drop/i;
+const lowerIsBetter =
+  /slow|latency|time|fail|error|abandon|drop|unclassified|fallback/i;
 
 /** The KPI cards exactly as the API's `top_kpis` block describes them. */
-export default function AnalyticsTopKpis({ data }: AnalyticsTopKpisProps) {
+export default function AnalyticsTopKpis({
+  data,
+  showRatio = false,
+}: AnalyticsTopKpisProps) {
   const t = useTranslations("analytics");
   const format = useFormatter();
   const entries = kpiEntries(data);
+  const hasRatio =
+    showRatio &&
+    entries.some(
+      ({ record }) =>
+        typeof record.ratio_display === "string" && record.ratio_display.trim(),
+    );
   return (
     <div
       className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${entries.length === 3 ? "xl:grid-cols-3" : "xl:grid-cols-4"}`}
@@ -41,7 +53,7 @@ export default function AnalyticsTopKpis({ data }: AnalyticsTopKpisProps) {
         const value = analyticsNumber(
           record.value ?? record.current_value ?? record.count,
         );
-        const unit = unitOf(
+        const statedUnit = unitOf(
           record,
           [
             rawLabel,
@@ -51,7 +63,18 @@ export default function AnalyticsTopKpis({ data }: AnalyticsTopKpisProps) {
           ].join(" "),
           key,
         );
+        // The API says when a figure is a percentage, e.g. "Percentage of queries…".
+        const percentage =
+          /^percentage/i.test(String(record.description ?? "")) ||
+          String(record.stat_info ?? "").includes("(%)");
+        const unit = statedUnit ?? (percentage ? "%" : null);
         const details = metricDetails(record);
+        // The count behind a figure, e.g. "967/2,189", when the API sends one.
+        const ratio =
+          typeof record.ratio_display === "string" &&
+          record.ratio_display.trim()
+            ? record.ratio_display.trim()
+            : null;
         // The API's wording first; the standard hint keeps every card aligned.
         const description =
           details.description ??
@@ -71,6 +94,18 @@ export default function AnalyticsTopKpis({ data }: AnalyticsTopKpisProps) {
             <MetricHeader
               label={label}
               detail={formattedValue(record)}
+              // The count behind the figure sits under the title; cards without one
+              // keep an invisible line so every header is the same height.
+              badge={
+                hasRatio ? (
+                  <span
+                    aria-hidden={ratio ? undefined : true}
+                    className={`block text-theme-xs leading-4 font-medium tabular-nums ${ratio ? "text-gray-500 dark:text-gray-400" : "invisible"}`}
+                  >
+                    {ratio ?? "0/0"}
+                  </span>
+                ) : undefined
+              }
               icon={<Icon />}
               info={info}
             />

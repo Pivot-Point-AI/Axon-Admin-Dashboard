@@ -21,6 +21,13 @@ export const errorCategories = [
   "unknown",
 ] as const;
 
+/** How many occurrences a listed error stands for. The API lists each
+ * distinct error once with a `count`; a row without one is a single event. */
+export function errorWeight(row: Record<string, unknown>): number {
+  const count = telemetryNumber(row.count, row.occurrences);
+  return count === null ? 1 : Math.round(count);
+}
+
 /** The KPI is the full count; the error list can be a capped sample. */
 export function errorSnapshot(data: Record<string, unknown>) {
   const source = data.errors ?? data.recognized_errors;
@@ -32,18 +39,23 @@ export function errorSnapshot(data: Record<string, unknown>) {
     others: 0,
     unknown: 0,
   };
-  for (const error of errors) counts[classifyError(error)]++;
+  let listed = 0;
+  for (const error of errors) {
+    const weight = errorWeight(error);
+    counts[classifyError(error)] += weight;
+    listed += weight;
+  }
   const reported = telemetryNumber(
     data.recorded_errors,
     metricValue(data, "recorded_errors"),
   );
-  const total = Math.max(errors.length, reported ?? 0);
-  counts.unknown = total - errors.length;
+  const total = Math.max(listed, reported ?? 0);
+  counts.unknown = total - listed;
   return {
     counts,
     total,
-    listed: errors.length,
-    truncated: total > errors.length,
+    listed,
+    truncated: total > listed,
     available: Array.isArray(source) || reported !== null,
   };
 }

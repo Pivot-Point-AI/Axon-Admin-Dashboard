@@ -15,9 +15,9 @@ export const sectionMetrics: Record<AnalyticsSection, readonly string[]> = {
   ],
   flows: [
     "total_initialized_flows",
-    "total_failed_flows",
     "flow_completion_rate_pct",
     "flow_abandonment_rate_pct",
+    "total_failed_flows",
   ],
   nlp: [
     "total_classified_turns",

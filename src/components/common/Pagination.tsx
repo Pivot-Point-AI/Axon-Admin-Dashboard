@@ -22,7 +22,7 @@ export function RowsPerPage({
   return (
     <label
       htmlFor={id}
-      className="flex shrink-0 items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+      className="flex shrink-0 items-center gap-2 text-theme-xs text-gray-600 dark:text-gray-400"
     >
       {t("rowsPerPage")}
       <select
@@ -30,7 +30,7 @@ export function RowsPerPage({
         value={pagination.pageSize}
         disabled={disabled}
         onChange={(event) => pagination.setPageSize(Number(event.target.value))}
-        className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus-visible:outline-2 focus-visible:outline-brand-400 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+        className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-theme-xs text-gray-700 focus-visible:outline-2 focus-visible:outline-brand-400 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
       >
         {[10, 20, 30, 50, 100].map((size) => (
           <option key={size} value={size}>

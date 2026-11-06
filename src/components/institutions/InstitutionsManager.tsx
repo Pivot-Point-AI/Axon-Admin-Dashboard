@@ -38,6 +38,7 @@ import {
   updateInstitution,
 } from "@/lib/api/institutions";
 import type { InstitutionItem } from "@/lib/api/types";
+import { toolbarButtonClass } from "@/components/form/toolbarControls";
 
 function toDateTimeLocalValue(iso: string | null): string {
   if (!iso) return "";
@@ -331,9 +332,8 @@ export default function InstitutionsManager() {
             <RowsPerPage pagination={pagination} disabled={loading} />
             <Button
               size="sm"
-              startIcon={
-                <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
-              }
+              className={toolbarButtonClass}
+              startIcon={<PlusIcon aria-hidden="true" className="size-4" />}
               onClick={openCreate}
             >
               New Institution
@@ -510,7 +510,7 @@ export default function InstitutionsManager() {
                 <div className="text-gray-500 dark:text-gray-400">
                   Institution ID
                 </div>
-                <div className="font-mono mb-2 break-all text-gray-800 dark:text-white/90">
+                <div className="mb-2 font-mono break-all text-gray-800 dark:text-white/90">
                   {createResult.institutionId}
                 </div>
                 <div className="text-gray-500 dark:text-gray-400">

@@ -39,6 +39,7 @@ import {
   updatePrimaryLanguage,
 } from "@/lib/api/languages";
 import { asRecordArray } from "@/lib/api/normalize";
+import { toolbarButtonClass } from "@/components/form/toolbarControls";
 
 // Common ISO 639-1 languages to pick from when adding a new language — the
 // code is derived from the selection rather than typed by hand, so it can
@@ -290,9 +291,8 @@ export default function LanguagesManager() {
           <RowsPerPage pagination={pagination} disabled={loading} />
           <Button
             size="sm"
-            startIcon={
-              <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
-            }
+            className={toolbarButtonClass}
+            startIcon={<PlusIcon aria-hidden="true" className="size-4" />}
             onClick={openCreate}
           >
             New Language
@@ -380,7 +380,7 @@ export default function LanguagesManager() {
                 return (
                   <TableRow key={code}>
                     <TableCell className="px-4 py-3 text-sm font-medium">
-                      <span className="font-mono inline-block rounded-md bg-gray-100 px-2.5 py-1 text-theme-xs font-semibold text-gray-800 dark:bg-white/5 dark:text-gray-200">
+                      <span className="inline-block rounded-md bg-gray-100 px-2.5 py-1 font-mono text-theme-xs font-semibold text-gray-800 dark:bg-white/5 dark:text-gray-200">
                         {code}
                       </span>
                     </TableCell>

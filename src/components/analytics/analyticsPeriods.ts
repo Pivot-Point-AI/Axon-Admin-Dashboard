@@ -13,6 +13,16 @@ export type AnalyticsPeriod = (typeof analyticsPeriods)[number];
 const dateKey = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
+/** The Sunday-to-Saturday week containing `date` (YYYY-MM-DD), matching the weekday chart. */
+export function weekBounds(date: string): { start: string; end: string } {
+  const day = new Date(`${date}T12:00:00`);
+  const start = new Date(day);
+  start.setDate(day.getDate() - day.getDay());
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start: dateKey(start), end: dateKey(end) };
+}
+
 export function periodFilters(
   period: AnalyticsPeriod,
   now = new Date(),

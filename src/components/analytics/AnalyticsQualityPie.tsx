@@ -114,28 +114,32 @@ export default function AnalyticsQualityPie({
       icon={confidence ? <PieChartIcon /> : <ChartBarsIcon />}
       actions={
         <AnalyticsCardActions>
-          <AnalyticsViewAll
-            title={title}
-            description={description}
-            icon={confidence ? <PieChartIcon /> : <ChartBarsIcon />}
-            columns={[t("category"), t("count"), t("share")]}
-            entries={entries}
-          >
-            {all.length ? (
-              <div className="flex justify-center py-4">
-                <AnalyticsRing
-                  rows={ranked}
-                  total={total}
-                  label={t("total")}
-                  color={color}
-                  nameOf={label}
-                  size="xl"
-                />
-              </div>
-            ) : (
-              <AnalyticsEmptyState />
-            )}
-          </AnalyticsViewAll>
+          {/* Confidence has only a few buckets, all already on the card. */}
+          {!confidence && (
+            <AnalyticsViewAll
+              title={title}
+              description={description}
+              icon={confidence ? <PieChartIcon /> : <ChartBarsIcon />}
+              columns={[t("category"), t("count"), t("share")]}
+              entries={entries}
+              countNoun="categories"
+            >
+              {all.length ? (
+                <div className="flex justify-center py-4">
+                  <AnalyticsRing
+                    rows={ranked}
+                    total={total}
+                    label={t("total")}
+                    color={color}
+                    nameOf={label}
+                    size="2xl"
+                  />
+                </div>
+              ) : (
+                <AnalyticsEmptyState />
+              )}
+            </AnalyticsViewAll>
+          )}
           <AnalyticsJourneyPeriod />
         </AnalyticsCardActions>
       }

@@ -39,6 +39,11 @@ export interface AnalyticsFilters {
   date?: string;
   start_time?: string;
   end_time?: string;
+  /**
+   * Performance summary only: which flows count towards `average_turn_time`,
+   * e.g. `spin_wheel:true,balance_inquiry:false` (or a JSON object).
+   */
+  include_flows?: string;
 }
 
 /**
@@ -63,10 +68,14 @@ export function getAnalyticsSummary<K extends AnalyticsSection>(
   filters: AnalyticsFilters,
   signal?: AbortSignal,
 ) {
-  const query =
+  const base =
     ["nlp", "performance", "logs"].includes(section) && filters.date
       ? { date: filters.date }
       : periodQuery(filters);
+  const query =
+    section === "performance" && filters.include_flows
+      ? { ...base, include_flows: filters.include_flows }
+      : base;
   return apiRequest<AnalyticsResponses[K]>(
     `/dashboard-analytics/${analyticsEndpoints[section]}`,
     { bearerToken, signal, query, baseUrl: ADMIN_API_BASE_URL },

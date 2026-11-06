@@ -73,6 +73,11 @@
     "sessionId": "Session ID",
     "userId": "User ID",
     "flowId": "Flow ID",
+    "flowStatus": "Flow status",
+    "flowStatusAll": "All statuses",
+    "flowStatusCompleted": "Completed",
+    "flowStatusAbandoned": "Abandoned",
+    "flowStatusFailed": "Failed",
     "historyPrompt": "Choose a date range and load the recorded logs.",
     "sessions": "Sessions",
     "allSessions": "All Sessions (Live)",
@@ -676,6 +681,7 @@
       "languages": "Languages",
       "totalUsers": "{count} users in total",
       "totalUsersLabel": "Total users",
+      "totalSessionsLabel": "Total sessions",
       "showAll": "Show all",
       "viewAll": "View all",
       "successRate": "Success rate",
@@ -713,6 +719,7 @@
       "viewDetails": "View details",
       "hideDetails": "Hide details",
       "recordsCount": "{count, plural, one {# record} other {# records}}",
+      "categoryTotal": "{count, plural, one {# category} other {# categories}}",
       "activeAudience": "Active Audience",
       "activeAudienceDescription": "Unique users across daily, weekly, and monthly windows.",
       "activeAudienceGranularity": {
@@ -832,6 +839,8 @@
       },
       "quickRanges": "Quick Date Ranges",
       "chooseDate": "Choose a date",
+      "chooseWeek": "Choose a week",
+      "anyDayInWeek": "Any day in the week",
       "customRange": "Custom dates",
       "dateRange": "{from} to {to}",
       "anyStart": "Any start date",
@@ -1143,6 +1152,9 @@
     "lastUpdated": "Last Updated",
     "totalRecords": "Total Records",
     "activeRecords": "Active Records",
-    "inactiveRecords": "Inactive Records"
+    "inactiveRecords": "Inactive Records",
+    "totalShort": "Total",
+    "activeShort": "Active",
+    "inactiveShort": "Inactive"
   }
 }

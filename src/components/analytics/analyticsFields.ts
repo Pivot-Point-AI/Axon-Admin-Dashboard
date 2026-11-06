@@ -51,10 +51,7 @@ export const analyticsFields = {
     "intent_confidence_buckets",
     "llm_fallback_count",
     "llm_fallback_rate_pct",
-    "fallback_reasons",
     "guardrail_violations_count",
-    "guardrail_violations_by_risk",
-    "guardrail_violations_by_reason",
     "intent_distribution",
   ],
   performance: [

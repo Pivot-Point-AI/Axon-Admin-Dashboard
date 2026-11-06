@@ -69,17 +69,26 @@ export default function InfoTip({ text, title, label }: InfoTipProps) {
     popup.classList.toggle("pt-3", !flip);
   }, [open, text]);
 
-  // A fixed pop-up would drift from its button, so it closes on scroll.
+  // A fixed pop-up would drift from its button, so it closes when the page
+  // scrolls. Scrolling the pop-up's own long text must not count.
   useEffect(() => {
     if (!open) return;
     const close = () => {
       setPinned(false);
       setHovered(false);
     };
-    window.addEventListener("scroll", close, true);
+    const closeOnPageScroll = (event: Event) => {
+      if (
+        event.target instanceof Node &&
+        popupRef.current?.contains(event.target)
+      )
+        return;
+      close();
+    };
+    window.addEventListener("scroll", closeOnPageScroll, true);
     window.addEventListener("resize", close);
     return () => {
-      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("scroll", closeOnPageScroll, true);
       window.removeEventListener("resize", close);
     };
   }, [open]);
@@ -140,7 +149,7 @@ export default function InfoTip({ text, title, label }: InfoTipProps) {
               <span
                 id={id}
                 role="tooltip"
-                className="axon-pop block max-h-[70vh] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-gray-200 bg-white text-start shadow-theme-xl ring-1 ring-gray-950/5 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10"
+                className="axon-pop block max-h-[70vh] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto overscroll-contain rounded-2xl border border-gray-200 bg-white text-start shadow-theme-xl ring-1 ring-gray-950/5 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10"
               >
                 {title && (
                   <span className="flex items-center gap-2.5 border-b border-gray-100 px-4 py-3 dark:border-gray-800">

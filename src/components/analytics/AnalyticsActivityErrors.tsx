@@ -22,6 +22,7 @@ import { analyticsTableRows } from "./analyticsData";
 import {
   classifyError,
   errorCategories,
+  errorWeight,
   errorHistory,
   errorSnapshot,
 } from "./analyticsTelemetryData";
@@ -73,8 +74,9 @@ export default function AnalyticsActivityErrors({
         others: 0,
       };
       const kind = classifyError(row);
-      point[kind] = (point[kind] ?? 0) + 1;
-      point.total = (point.total ?? 0) + 1;
+      const weight = errorWeight(row);
+      point[kind] = (point[kind] ?? 0) + weight;
+      point.total = (point.total ?? 0) + weight;
       days.set(day, point);
     }
     return [...days.values()].sort((a, b) => a.timestamp - b.timestamp);

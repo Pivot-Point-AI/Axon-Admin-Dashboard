@@ -19,9 +19,9 @@ const series = [
   {
     field: "completionRate",
     count: "completed",
-    bar: "bg-brand-600 dark:bg-brand-500",
+    bar: "bg-success-600 dark:bg-success-500",
     inside: "text-white",
-    text: "text-brand-700 dark:text-brand-300",
+    text: "text-success-700 dark:text-success-400",
   },
   {
     field: "abandonmentRate",
@@ -78,25 +78,22 @@ export default function AnalyticsCompletionAbandonment({
 
   const chart = (list: typeof categories) => (
     <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-5 text-theme-xs text-gray-500 dark:text-gray-400">
+        {series.map((item) => (
+          <span key={item.field} className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className={`size-2.5 rounded-full ${item.bar}`}
+            />
+            {names[item.field]}
+          </span>
+        ))}
+      </div>
       <div className="custom-scrollbar overflow-x-auto pb-1">
         <div
           className="space-y-3"
           style={{ minWidth: `${list.length * 8.5}rem` }}
         >
-          <div className="flex flex-wrap gap-5 text-theme-xs text-gray-500 dark:text-gray-400">
-            {series.map((item) => (
-              <span
-                key={item.field}
-                className="inline-flex items-center gap-1.5"
-              >
-                <span
-                  aria-hidden="true"
-                  className={`size-2.5 rounded-full ${item.bar}`}
-                />
-                {names[item.field]}
-              </span>
-            ))}
-          </div>
           <AnalyticsJourneyPlot
             tall
             ticks={[100, 75, 50, 25, 0]}
@@ -126,7 +123,7 @@ export default function AnalyticsCompletionAbandonment({
                     ),
                   ].join("\n")}
                   aria-label={`${label(row.key)}: ${names.completionRate} ${row.completionRate === null ? "—" : percent(row.completionRate)}, ${names.abandonmentRate} ${row.abandonmentRate === null ? "—" : percent(row.abandonmentRate)}, ${names.failedRate} ${row.failedRate === null ? "—" : percent(row.failedRate)}`}
-                  className="flex h-full min-w-0 items-end justify-center gap-1.5 rounded-lg transition-colors hover:bg-gray-50 dark:hover:bg-white/3"
+                  className="flex h-full min-w-0 items-end justify-center gap-1.5 rounded-lg px-1.5 transition-colors hover:bg-gray-50 dark:hover:bg-white/3"
                 >
                   {series.map((item) => {
                     const value = row[item.field];
@@ -136,7 +133,7 @@ export default function AnalyticsCompletionAbandonment({
                     return (
                       <div
                         key={item.field}
-                        className={`relative w-10 shrink-0 rounded-t-lg transition-opacity hover:opacity-80 ${item.bar}`}
+                        className={`relative max-w-10 min-w-0 flex-1 rounded-t-lg transition-opacity hover:opacity-80 ${item.bar}`}
                         style={{ height: `${Math.min(100, value ?? 0)}%` }}
                       >
                         <span
@@ -189,7 +186,7 @@ export default function AnalyticsCompletionAbandonment({
   const entries = allCategories.map((row) => ({
     key: row.key,
     label: label(row.key),
-    color: "brand-600",
+    color: "success-600",
     values: series.map((item) => {
       const value = row[item.field];
       const counts = ratio(row[item.count], row.count);
@@ -228,6 +225,7 @@ export default function AnalyticsCompletionAbandonment({
               names.failedRate,
             ]}
             entries={entries}
+            countNoun="categories"
           >
             {allCategories.length ? (
               chart(allCategories)

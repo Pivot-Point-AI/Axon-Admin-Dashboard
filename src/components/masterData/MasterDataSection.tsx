@@ -35,6 +35,11 @@ import {
 } from "@/icons/index";
 import { ApiError } from "@/lib/api/client";
 import { asRecordArray, recordId } from "@/lib/api/normalize";
+import {
+  toolbarButtonClass,
+  toolbarSearchClass,
+  toolbarSelectClass,
+} from "@/components/form/toolbarControls";
 
 export interface MasterDataField {
   key: string;
@@ -411,14 +416,10 @@ export default function MasterDataSection({
   return (
     <div className="axon-master-data space-y-5">
       <PageRefresh loading={loading} error={!!error} onRefresh={load} />
-      <MasterDataMetrics items={items} loading={loading || !!error} />
       <div className="axon-management-panel rounded-xl border border-brand-100 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-3 flex flex-wrap items-end gap-3">
-          <h4 className="w-full text-base font-semibold text-gray-800 md:w-auto md:pb-2 dark:text-white/90">
-            {title}
-          </h4>
-          <div className="flex flex-1 flex-wrap items-end gap-3">
-            <div className="min-w-60 flex-1">
+        <div className="mb-3 flex flex-wrap items-end gap-3 xl:flex-nowrap">
+          <div className="flex flex-1 flex-wrap items-end gap-3 xl:min-w-0 xl:flex-nowrap">
+            <div className="min-w-48 flex-1 sm:w-56 sm:flex-none xl:max-w-56 xl:min-w-32 xl:flex-1">
               <Input
                 type="search"
                 value={query}
@@ -427,8 +428,11 @@ export default function MasterDataSection({
                   title: title.toLowerCase(),
                 })}
                 aria-label={t("search")}
-                className="h-10! bg-gray-50 dark:bg-gray-900"
+                className={toolbarSearchClass}
               />
+            </div>
+            <div className="flex h-9 shrink-0 items-center">
+              <MasterDataMetrics items={items} loading={loading || !!error} />
             </div>
             {filters.length > 0 && (
               <>
@@ -437,7 +441,7 @@ export default function MasterDataSection({
                   return (
                     <div
                       key={filter.key}
-                      className="min-w-40 flex-1 sm:w-44 sm:flex-none"
+                      className="min-w-36 flex-1 sm:w-40 sm:flex-none xl:max-w-44 xl:min-w-28 xl:flex-1"
                     >
                       <Label
                         htmlFor={`filter-${filter.key}`}
@@ -449,7 +453,7 @@ export default function MasterDataSection({
                         id={`filter-${filter.key}`}
                         value={filterValues[filter.key] ?? ""}
                         onChange={(e) => changeFilter(index, e.target.value)}
-                        className="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
+                        className={`${toolbarSelectClass} w-full`}
                       >
                         <option value="">{`All ${filter.label}`}</option>
                         {choices.map((choice) => (
@@ -473,15 +477,13 @@ export default function MasterDataSection({
               </>
             )}
           </div>
-          <div className="flex w-full flex-wrap items-center justify-between gap-3 md:w-auto md:justify-end">
+          <div className="flex w-full flex-wrap items-center justify-between gap-3 md:w-auto md:justify-end xl:shrink-0 xl:flex-nowrap">
             <RowsPerPage pagination={pagination} disabled={loading} />
             <Button
               size="sm"
+              className={toolbarButtonClass}
               startIcon={
-                <PlusIcon
-                  aria-hidden="true"
-                  className="block size-5 text-white dark:text-white"
-                />
+                <PlusIcon aria-hidden="true" className="block size-4" />
               }
               onClick={openCreate}
             >
@@ -506,7 +508,9 @@ export default function MasterDataSection({
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-gray-800">
               <TableRow>
-                {fields.map((field) => {
+                {fields.map((field, index) => {
+                  // The first column is headed with the section name.
+                  const heading = index === 0 ? title : field.label;
                   const active = sort?.key === field.key;
                   const SortIcon =
                     active && sort.direction === "desc"
@@ -528,10 +532,10 @@ export default function MasterDataSection({
                       <button
                         type="button"
                         onClick={() => toggleSort(field.key)}
-                        title={t("sortBy", { field: field.label })}
+                        title={t("sortBy", { field: heading })}
                         className={`group inline-flex items-center gap-1.5 rounded-md font-medium transition-colors hover:text-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 dark:hover:text-gray-200 ${active ? "text-brand-600 dark:text-brand-300" : ""}`}
                       >
-                        {field.label}
+                        {heading}
                         <SortIcon
                           aria-hidden="true"
                           className={`size-3 transition-opacity ${active ? "opacity-100" : "opacity-0 group-hover:opacity-50 group-focus-visible:opacity-50"}`}

@@ -783,6 +783,24 @@
             }
           },
           {
+            "name": "flow_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter logs by flow status: completed, abandoned, failed",
+              "title": "Flow Status"
+            },
+            "description": "Filter logs by flow status: completed, abandoned, failed"
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -2863,7 +2881,7 @@
           "Dashboard Analytics"
         ],
         "summary": "Get Performance Summary",
-        "description": "Returns end-to-end voice latency percentiles (P50, P80, P90, P95, P99),\ncomponent speeds (STT, LLM generation, pipeline stages), and SLA breaches (\u003E1.5s).\nSupports period and date range filtering.",
+        "description": "Returns end-to-end voice latency percentiles (P50, P80, P90, P95, P99),\ncomponent speeds (STT, LLM generation, pipeline stages), SLA breaches (\u003E1.5s),\nand consolidated average_turn_time with configurable flow inclusions.\nSupports period and date range filtering.",
         "operationId": "get_performance_summary_dashboard_analytics_performance_summary_get",
         "security": [
           {
@@ -2935,6 +2953,24 @@
               "title": "Date"
             },
             "description": "Date string ('today', 'yesterday', or 'YYYY-MM-DD') for backward compatibility"
+          },
+          {
+            "name": "include_flows",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Flow inclusion toggles e.g. 'spin_wheel:true,balance_inquiry:false' or JSON",
+              "title": "Include Flows"
+            },
+            "description": "Flow inclusion toggles e.g. 'spin_wheel:true,balance_inquiry:false' or JSON"
           }
         ],
         "responses": {
@@ -3597,6 +3633,142 @@
         "type": "object",
         "title": "ChatStatsSummaryResponse"
       },
+      "ComparativeKpiMetric": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "Standardized human-readable title"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value",
+            "description": "Primary metric value (raw number, count, or formatted string)"
+          },
+          "previous_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Value",
+            "description": "Prior window baseline for period comparison"
+          },
+          "growth_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Growth Pct",
+            "description": "Percentage growth relative to previous value",
+            "default": 0
+          },
+          "display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display",
+            "description": "Human comparison badge string e.g. '-37.5% vs last week'"
+          },
+          "trend": {
+            "type": "string",
+            "title": "Trend",
+            "description": "Directional trend tag: up, down, neutral",
+            "default": "neutral"
+          },
+          "sentiment": {
+            "type": "string",
+            "title": "Sentiment",
+            "description": "Business polarity: positive, negative, neutral",
+            "default": "neutral"
+          },
+          "comparison_period": {
+            "type": "string",
+            "title": "Comparison Period",
+            "description": "Human reference tag (e.g. 'vs last week')",
+            "default": ""
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Concise one-line summary of what the metric represents",
+            "default": ""
+          },
+          "stat_info": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stat Info",
+            "description": "Standardized plain-English explanation",
+            "default": ""
+          },
+          "ratio_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio Display",
+            "description": "Display ratio string e.g. '12/15'"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "ComparativeKpiMetric"
+      },
       "ConfigResponse": {
         "properties": {
           "config_key": {
@@ -4209,63 +4381,29 @@
             "title": "Top Kpis",
             "description": "Activity Logs tab top 4 KPIs with trend tags"
           },
-          "interaction_outcomes": {
+          "flow_token_metrics": {
             "additionalProperties": true,
             "type": "object",
-            "title": "Interaction Outcomes",
-            "description": "Successful vs failed interactions donut"
+            "title": "Flow Token Metrics",
+            "description": "Flow token metrics summary with comparative metrics"
           },
-          "conversation_channels": {
+          "token_usage_breakdown": {
             "additionalProperties": true,
             "type": "object",
-            "title": "Conversation Channels",
-            "description": "How people interact with assistant (voice vs text)"
+            "title": "Token Usage Breakdown",
+            "description": "Consolidated computational token consumption across prompt and completion with flow averages"
+          },
+          "token_breakdown_by_intent": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Token Breakdown By Intent",
+            "description": "Token consumption breakdown segmented by intent"
           },
           "speech_recognition_events": {
             "additionalProperties": true,
             "type": "object",
             "title": "Speech Recognition Events",
             "description": "Speech-to-text event counts by category"
-          },
-          "token_usage_breakdown": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Token Usage Breakdown",
-            "description": "Token usage across top request categories"
-          },
-          "actions_delivered": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              }
-            ],
-            "title": "Actions Delivered",
-            "description": "Actions executed by the assistant"
-          },
-          "slow_interactions": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              }
-            ],
-            "title": "Slow Interactions",
-            "description": "Requests with highest response times"
           },
           "recognized_errors": {
             "anyOf": [
@@ -4283,6 +4421,26 @@
             ],
             "title": "Recognized Errors",
             "description": "Errors detected in user requests"
+          },
+          "actions_delivered": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actions Delivered",
+            "description": "Backward-compatible alias for token_breakdown_by_intent"
           }
         },
         "additionalProperties": true,
@@ -4393,35 +4551,11 @@
             "title": "Confidence Distribution",
             "description": "Interaction counts across confidence buckets"
           },
-          "why_ai_fallback_was_used": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Why Ai Fallback Was Used",
-            "description": "Reasons mapped for generative AI fallbacks"
-          },
-          "safety_blocks_by_risk": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Safety Blocks By Risk",
-            "description": "Safety violations categorized by reported risk level"
-          },
-          "safety_blocks_by_reason": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Safety Blocks By Reason",
-            "description": "Top reject reasons for safety violations"
-          },
           "what_users_ask_for": {
             "additionalProperties": true,
             "type": "object",
             "title": "What Users Ask For",
             "description": "Detected intents, counts, and shares"
-          },
-          "fallbacks_and_safety": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Fallbacks And Safety",
-            "description": "Summary totals for fallbacks and safety blocks"
           }
         },
         "additionalProperties": true,
@@ -4434,31 +4568,43 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Top Kpis",
-            "description": "Performance tab top 4 KPIs with trend tags"
+            "description": "Performance tab top KPIs with trend tags"
           },
-          "response_time_percentiles": {
+          "average_response_time_summary": {
             "additionalProperties": true,
             "type": "object",
-            "title": "Response Time Percentiles",
-            "description": "Response time (ms) percentiles and summary stats"
+            "title": "Average Response Time Summary",
+            "description": "Average response turnaround time, SLA compliance, latency percentiles, and pipeline stages"
           },
-          "speech_recognition_percentiles": {
+          "speech_to_text_summary": {
             "additionalProperties": true,
             "type": "object",
-            "title": "Speech Recognition Percentiles",
-            "description": "Speech recognition (ms) percentiles and summary stats"
+            "title": "Speech To Text Summary",
+            "description": "Speech-to-Text voice audio duration, utterances, flows, and per-turn voice density"
           },
-          "ai_generation_percentiles": {
+          "text_to_speech_summary": {
             "additionalProperties": true,
             "type": "object",
-            "title": "Ai Generation Percentiles",
-            "description": "AI generation (ms) percentiles and summary stats"
+            "title": "Text To Speech Summary",
+            "description": "Text-to-Speech outbound speech duration, characters, words, and playback metrics"
           },
-          "average_time_by_stage": {
+          "turn_time_breakdown_by_intent": {
             "additionalProperties": true,
             "type": "object",
-            "title": "Average Time By Stage",
-            "description": "Average time spent in each processing stage"
+            "title": "Turn Time Breakdown By Intent",
+            "description": "Turn turnaround time breakdown segmented by banking intent"
+          },
+          "speech_to_text_breakdown_by_intent": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Speech To Text Breakdown By Intent",
+            "description": "Speech-to-Text audio duration and density breakdown segmented by banking intent"
+          },
+          "text_to_speech_breakdown_by_intent": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Text To Speech Breakdown By Intent",
+            "description": "Text-to-Speech outbound characters and playback duration breakdown segmented by banking intent"
           },
           "slowest_interactions": {
             "anyOf": [
@@ -4475,24 +4621,7 @@
               }
             ],
             "title": "Slowest Interactions",
-            "description": "Interactions with the highest response times"
-          },
-          "response_time_distribution": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              }
-            ],
-            "title": "Response Time Distribution",
-            "description": "Response time distribution histogram buckets (0-500, 500-1000, 1000-2000, 2000-3000, 3000-5000, \u003E5000 ms)"
+            "description": "Interactions with highest response turnaround times for SLA debugging"
           }
         },
         "additionalProperties": true,
@@ -4641,24 +4770,26 @@
       "UserStatsSummaryResponse": {
         "properties": {
           "top_kpis": {
-            "additionalProperties": true,
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ComparativeKpiMetric"
+            },
             "type": "object",
             "title": "Top Kpis",
-            "description": "Audience tab top KPIs"
+            "description": "Audience tab top KPIs following standardized hard schema"
           },
           "active_audience": {
             "additionalProperties": true,
             "type": "object",
             "title": "Active Audience",
-            "description": "Daily, weekly, and monthly active audience breakdown"
+            "description": "Multi-horizon active audience series and continuous daily activity tracking"
           },
           "language_preferences": {
             "additionalProperties": true,
             "type": "object",
             "title": "Language Preferences",
-            "description": "Language preferences donut chart breakdown"
+            "description": "Language preferences distribution across Urdu and English"
           },
-          "audience_and_retention": {
+          "user_growth_and_retention": {
             "anyOf": [
               {
                 "additionalProperties": true,
@@ -4672,25 +4803,8 @@
                 "type": "array"
               }
             ],
-            "title": "Audience And Retention",
-            "description": "Audience & retention detail table metrics"
-          },
-          "new_user_acquisition": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              }
-            ],
-            "title": "New User Acquisition",
-            "description": "User acquisition & growth detail table metrics"
+            "title": "User Growth And Retention",
+            "description": "Consolidated User Growth & Retention lifecycle audit"
           }
         },
         "additionalProperties": true,
@@ -4746,3 +4860,6 @@
     }
   }
 }
+SBMM
+SBMM
+SEO Signals

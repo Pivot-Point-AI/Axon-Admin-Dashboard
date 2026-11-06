@@ -571,6 +571,30 @@ test("all-time error counts use the 130 KPI records rather than the 10-row sampl
   );
 });
 
+test("deduplicated error rows are weighted by their count", () => {
+  const snapshot = telemetry.errorSnapshot({
+    top_kpis: { recognized_errors: { value: 9 } },
+    recognized_errors: {
+      errors: [
+        { type: "cache_error", error: "Timeout connecting to server", count: 2 },
+        { type: "runtime_error", error: "handle_text_message_failed", count: 1 },
+        ...Array.from({ length: 6 }, () => ({
+          type: "runtime_error",
+          error: "404 Client Error. Entry Not Found",
+          count: 1,
+        })),
+      ],
+    },
+  });
+  assert.equal(snapshot.total, 9);
+  assert.equal(snapshot.listed, 9);
+  assert.equal(snapshot.counts.timeout, 2);
+  assert.equal(snapshot.counts.others, 1);
+  assert.equal(snapshot.counts.api, 6);
+  assert.equal(snapshot.counts.unknown, 0);
+  assert.equal(snapshot.truncated, false);
+});
+
 test("daily history requires an explicit calendar range and resolves individual telemetry dates", () => {
   const now = new Date(2026, 9, 22, 15);
   assert.deepEqual(daily.historyDates({ period: "all_time" }, now), []);
@@ -790,6 +814,28 @@ test("current chat and audience block names feed the existing charts", () => {
     [
       ["ur", 10, 62.5],
       ["en", 6, 37.5],
+    ],
+  );
+  // Current API: rows are sessions with `session_share_pct`.
+  const sessionLanguages = summaries.analyticsSummaryData("users", {
+    language_preferences: {
+      total_sessions: 652,
+      total_users: 14,
+      languages: [
+        { language: "English", code: "en", sessions: 579, session_share_pct: 88.8 },
+        { language: "Urdu", code: "ur", sessions: 43, session_share_pct: 6.6 },
+        { language: "Bilingual (Switched)", code: "mixed", sessions: 30, session_share_pct: 4.6 },
+      ],
+    },
+  });
+  assert.deepEqual(
+    chartData
+      .chartRows("language_breakdown", sessionLanguages.language_breakdown)
+      .map((row) => [row.key, row.count, row.percentage]),
+    [
+      ["English", 579, 88.8],
+      ["Urdu", 43, 6.6],
+      ["Bilingual (Switched)", 30, 4.6],
     ],
   );
   // The older field names still win when both are present.

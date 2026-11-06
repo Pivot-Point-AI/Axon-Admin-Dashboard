@@ -73,6 +73,19 @@ export default function FaqsManager() {
       setBusyId(null);
     }
   };
+  // "Edit header" lives in the Sections panel; the filter bar repeats it where
+  // that sidebar is hidden.
+  const headerSettings =
+    data && accessToken ? (
+      <FaqHeaderSettings
+        key={`${data.settings.title}:${data.settings.subtitle}`}
+        settings={data.settings}
+        accessToken={accessToken}
+        onSaved={(settings) =>
+          setData((current) => (current ? { ...current, settings } : current))
+        }
+      />
+    ) : null;
   return (
     <div className="space-y-5">
       <PageRefresh
@@ -80,22 +93,13 @@ export default function FaqsManager() {
         error={!!error}
         onRefresh={() => void load()}
       />
-      {data && accessToken && (
-        <FaqHeaderSettings
-          key={`${data.settings.title}:${data.settings.subtitle}`}
-          settings={data.settings}
-          accessToken={accessToken}
-          onSaved={(settings) =>
-            setData((current) => (current ? { ...current, settings } : current))
-          }
-        />
-      )}
-      <div className="grid items-start gap-4 xl:grid-cols-7">
-        <aside className="hidden min-w-0 xl:sticky xl:top-24 xl:col-span-2 xl:block">
+      <div className="axon-panel grid items-start overflow-clip rounded-2xl border border-brand-100/70 bg-white shadow-theme-xs xl:grid-cols-7 dark:border-gray-800 dark:bg-gray-900">
+        <aside className="hidden min-w-0 xl:sticky xl:top-24 xl:col-span-2 xl:block xl:border-e xl:border-gray-100 xl:dark:border-gray-800">
           <FaqSections
             items={data?.items ?? []}
             selected={selected}
             onSelect={setSelectedSection}
+            headerAction={headerSettings}
           />
         </aside>
         <div className="min-w-0 xl:col-span-5">
@@ -115,6 +119,7 @@ export default function FaqsManager() {
             }}
             onDelete={(item) => void handleDelete(item)}
             onSelectSection={setSelectedSection}
+            headerAction={headerSettings}
           />
         </div>
       </div>

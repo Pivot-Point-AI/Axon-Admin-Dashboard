@@ -14,9 +14,6 @@ const aliases: Partial<Record<AnalyticsSection, Record<string, string[]>>> = {
   },
   nlp: {
     intent_confidence_buckets: ["confidence_distribution"],
-    fallback_reasons: ["why_ai_fallback_was_used"],
-    guardrail_violations_by_risk: ["safety_blocks_by_risk"],
-    guardrail_violations_by_reason: ["safety_blocks_by_reason"],
     intent_distribution: ["what_users_ask_for"],
   },
   performance: {

@@ -26,8 +26,11 @@ import {
 import type { ConfigResponse } from "@/lib/api/types";
 
 import ConfigurationRow from "./ConfigurationRow";
-import ConfigurationMetrics from "./ConfigurationMetrics";
 import { configKind, typeLabel, type ConfigKind } from "./configurationFields";
+import {
+  toolbarSearchClass,
+  toolbarSelectClass,
+} from "@/components/form/toolbarControls";
 
 export default function ConfigurationsManager() {
   const t = useTranslations("managementDesign");
@@ -123,7 +126,6 @@ export default function ConfigurationsManager() {
         onRefresh={load}
         disabled={editing}
       />
-      <ConfigurationMetrics configs={configs} loading={loading || !!error} />
       <div className="axon-management-panel rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 dark:border-gray-800 dark:bg-white/3">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 lg:mb-7">
           <div className="flex flex-1 flex-wrap gap-3">
@@ -133,13 +135,13 @@ export default function ConfigurationsManager() {
               placeholder={t("searchSettings")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="h-10! min-w-60 bg-gray-50 dark:bg-gray-900"
+              className={`${toolbarSearchClass} min-w-60`}
             />
             <select
               aria-label={t("allTypes")}
               value={kindFilter}
               onChange={(e) => setKindFilter(e.target.value)}
-              className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+              className={toolbarSelectClass}
             >
               <option value="">{t("allTypes")}</option>
               {(["boolean", "integer", "number", "string"] as ConfigKind[]).map(

@@ -33,6 +33,11 @@ import {
   listDashboardUsers,
 } from "@/lib/api/adminUsers";
 import type { DashboardUserResponse } from "@/lib/api/types";
+import {
+  toolbarButtonClass,
+  toolbarSearchClass,
+  toolbarSelectClass,
+} from "@/components/form/toolbarControls";
 
 const USER_ROLES = ["MANAGER", "VIEWER"];
 
@@ -214,13 +219,13 @@ export default function UsersManager() {
               placeholder={t("searchUsers")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="h-10! min-w-60 bg-gray-50 dark:bg-gray-900"
+              className={`${toolbarSearchClass} min-w-60`}
             />
             <select
               aria-label={t("allRoles")}
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+              className={toolbarSelectClass}
             >
               <option value="">{t("allRoles")}</option>
               {Array.from(
@@ -236,9 +241,8 @@ export default function UsersManager() {
             <RowsPerPage pagination={pagination} disabled={loading} />
             <Button
               size="sm"
-              startIcon={
-                <PlusIcon className="size-5 text-success-200 dark:text-success-200" />
-              }
+              className={toolbarButtonClass}
+              startIcon={<PlusIcon aria-hidden="true" className="size-4" />}
               onClick={openCreate}
             >
               New User

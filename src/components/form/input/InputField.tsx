@@ -49,38 +49,41 @@ const Input: FC<InputProps> = ({
   }
 
   return (
-    <div className={`relative min-w-0 ${type === "search" ? "flex-1" : ""}`}>
-      {type === "search" && (
-        <SearchOutlineIcon
-          aria-hidden="true"
-          className="pointer-events-none absolute start-3.5 top-5.5 z-1 size-4 -translate-y-1/2 text-gray-500 dark:text-gray-400"
+    <div className={`min-w-0 ${type === "search" ? "flex-1" : ""}`}>
+      {/* Wraps only the field, so the icon centres on it at any height. */}
+      <div className="relative">
+        {type === "search" && (
+          <SearchOutlineIcon
+            aria-hidden="true"
+            className="pointer-events-none absolute start-3.5 top-1/2 z-1 size-4 -translate-y-1/2 text-gray-500 dark:text-gray-400"
+          />
+        )}
+        <input
+          type={type}
+          id={id}
+          name={name}
+          placeholder={placeholder}
+          defaultValue={defaultValue}
+          value={value}
+          onChange={(event) => {
+            if (nativeInvalid)
+              setNativeInvalid(!event.currentTarget.validity.valid);
+            onChange?.(event);
+          }}
+          onInvalid={(event) => {
+            event.preventDefault();
+            setNativeInvalid(true);
+            onInvalid?.(event);
+          }}
+          min={min}
+          max={max}
+          step={step}
+          disabled={disabled}
+          className={`${inputClasses} ${type === "search" ? "ps-10" : ""}`}
+          {...props}
+          aria-invalid={error || props["aria-invalid"] || undefined}
         />
-      )}
-      <input
-        type={type}
-        id={id}
-        name={name}
-        placeholder={placeholder}
-        defaultValue={defaultValue}
-        value={value}
-        onChange={(event) => {
-          if (nativeInvalid)
-            setNativeInvalid(!event.currentTarget.validity.valid);
-          onChange?.(event);
-        }}
-        onInvalid={(event) => {
-          event.preventDefault();
-          setNativeInvalid(true);
-          onInvalid?.(event);
-        }}
-        min={min}
-        max={max}
-        step={step}
-        disabled={disabled}
-        className={`${inputClasses} ${type === "search" ? "ps-10" : ""}`}
-        {...props}
-        aria-invalid={error || props["aria-invalid"] || undefined}
-      />
+      </div>
 
       {hint && (
         <p

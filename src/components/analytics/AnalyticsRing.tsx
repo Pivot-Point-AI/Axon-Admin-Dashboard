@@ -15,7 +15,7 @@ interface AnalyticsRingProps {
   total: number;
   label: string;
   color: (key: string, index: number) => string;
-  size?: "md" | "lg" | "xl";
+  size?: "md" | "lg" | "xl" | "2xl";
   nameOf?: (key: string) => string;
 }
 
@@ -74,7 +74,7 @@ export default function AnalyticsRing({
   );
   return (
     <div
-      className={`relative aspect-square max-w-full shrink-0 ${size === "xl" ? "w-72" : size === "lg" ? "w-48" : "w-44"}`}
+      className={`relative aspect-square max-w-full shrink-0 ${size === "2xl" ? "w-96" : size === "xl" ? "w-72" : size === "lg" ? "w-48" : "w-44"}`}
     >
       <AnalyticsChartCanvas
         draw={draw}
@@ -90,7 +90,7 @@ export default function AnalyticsRing({
       />
       <div className="pointer-events-none absolute inset-[26%] flex flex-col items-center justify-center text-center">
         <span
-          className={`font-bold ${size === "xl" ? "text-xl" : "text-lg"} text-gray-950 tabular-nums dark:text-white`}
+          className={`font-bold ${size === "2xl" ? "text-3xl" : size === "xl" ? "text-xl" : "text-lg"} text-gray-950 tabular-nums dark:text-white`}
         >
           <CountUpText text={format.number(total)} />
         </span>

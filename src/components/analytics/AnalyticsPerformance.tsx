@@ -2,7 +2,6 @@
 
 import AnalyticsCardScope from "./AnalyticsCardScope";
 import AnalyticsIntentBreakdown from "./AnalyticsIntentBreakdown";
-import AnalyticsSlowInteractions from "./AnalyticsSlowInteractions";
 import AnalyticsSummaryBlock from "./AnalyticsSummaryBlock";
 
 interface AnalyticsPerformanceProps {
@@ -68,9 +67,6 @@ export default function AnalyticsPerformance({
           </div>
         ))}
       </div>
-      <AnalyticsCardScope section="performance" data={data}>
-        {(d) => <AnalyticsSlowInteractions value={d.top_slowest_turns} />}
-      </AnalyticsCardScope>
     </div>
   );
 }

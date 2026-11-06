@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
+import { toolbarButtonClass } from "@/components/form/toolbarControls";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
-import { GlobeIcon, PencilIcon } from "@/icons";
+import { PencilIcon } from "@/icons";
 import useModal from "@/hooks/useModal";
 import { ApiError } from "@/lib/api/client";
 import { updateFaqHeader, type FAQSettingsModel } from "@/lib/api/faqs";
@@ -29,46 +30,20 @@ export default function FaqHeaderSettings({
   const [error, setError] = useState("");
   return (
     <>
-      <section
-        aria-label={t("headerSettings")}
-        className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3"
+      <Button
+        size="sm"
+        variant="outline"
+        title={t("design.editHeader")}
+        className={`${toolbarButtonClass} shrink-0 text-brand-600 ring-brand-200 hover:bg-brand-50 dark:text-brand-300 dark:ring-brand-700 dark:hover:bg-brand-500/10`}
+        startIcon={<PencilIcon className="size-4" />}
+        onClick={() => {
+          setDraft(settings);
+          setError("");
+          modal.openModal();
+        }}
       >
-        <div className="flex flex-wrap items-center gap-4">
-          <span
-            aria-hidden="true"
-            className="hidden size-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 sm:flex dark:bg-brand-500/15 dark:text-brand-300"
-          >
-            <GlobeIcon className="size-6" />
-          </span>
-          <div className="min-w-0 flex-1 basis-0">
-            <p className="mb-1 text-theme-xs font-medium text-gray-400 dark:text-gray-500">
-              {t("design.clientHeader")}
-            </p>
-            <h2 className="text-base font-semibold break-words text-gray-800 dark:text-white/90">
-              {settings.title || t("design.headerPlaceholder")}
-            </h2>
-            <p className="mt-1 line-clamp-2 text-sm leading-6 break-words text-gray-500 dark:text-gray-400">
-              {settings.subtitle || t("design.subtitlePlaceholder")}
-            </p>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            title={t("design.editHeader")}
-            className="h-11 shrink-0 text-brand-600 ring-brand-200 hover:bg-brand-50 dark:text-brand-300 dark:ring-brand-700 dark:hover:bg-brand-500/10"
-            startIcon={<PencilIcon className="size-4" />}
-            onClick={() => {
-              setDraft(settings);
-              setError("");
-              modal.openModal();
-            }}
-          >
-            <span className="sr-only sm:not-sr-only">
-              {t("design.editHeader")}
-            </span>
-          </Button>
-        </div>
-      </section>
+        {t("design.editHeader")}
+      </Button>
       <Modal
         isOpen={modal.isOpen}
         onClose={() => {

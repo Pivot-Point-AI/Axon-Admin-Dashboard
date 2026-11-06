@@ -1,5 +1,28 @@
 import { ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+// The theme's own font sizes (see `@theme` in globals.css). Without this the
+// merger reads `text-theme-xs` as a text *colour* and drops `text-white`.
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        {
+          text: [
+            "theme-xs",
+            "theme-sm",
+            "theme-xl",
+            "title-sm",
+            "title-md",
+            "title-lg",
+            "title-xl",
+            "title-2xl",
+          ],
+        },
+      ],
+    },
+  },
+});
 
 /**
  * Combines and merges Tailwind CSS class names with conditional logic.

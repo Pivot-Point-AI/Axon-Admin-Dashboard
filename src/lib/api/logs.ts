@@ -121,8 +121,13 @@ export interface LogHistoryQuery {
   sessionId?: string;
   userId?: string;
   flowId?: string;
+  // Filter by flow outcome.
+  flowStatus?: LogFlowStatus;
   limit?: number;
 }
+
+export const LOG_FLOW_STATUSES = ["completed", "abandoned", "failed"] as const;
+export type LogFlowStatus = (typeof LOG_FLOW_STATUSES)[number];
 
 export function getLogHistory(
   {
@@ -131,6 +136,7 @@ export function getLogHistory(
     sessionId,
     userId,
     flowId,
+    flowStatus,
     limit = 500,
   }: LogHistoryQuery,
   bearerToken: string,
@@ -143,6 +149,7 @@ export function getLogHistory(
       session_id: sessionId || undefined,
       user_id: userId || undefined,
       flow_id: flowId || undefined,
+      flow_status: flowStatus || undefined,
       limit,
     },
     bearerToken,

@@ -16,8 +16,10 @@ import {
   logEventsFrom,
   toLogEntry,
   type LogEventEntry,
+  type LogFlowStatus,
 } from "@/lib/api/logs";
 import type { LogEvent } from "@/lib/api/types";
+import LogFlowStatusSelect from "./LogFlowStatusSelect";
 import RawLogViewer from "./RawLogViewer";
 import LogHistoryTerminal from "./LogHistoryTerminal";
 
@@ -114,6 +116,8 @@ export default function LogHistoryViewer({
   const [filterSessionId, setFilterSessionId] = useState("");
   const [userId, setUserId] = useState("");
   const [flowId, setFlowId] = useState("");
+  const [flowStatus, setFlowStatus] = useState<LogFlowStatus | "">("");
+  const tl = useTranslations("logTerminal");
 
   const [entries, setEntries] = useState<LogEventEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -152,6 +156,7 @@ export default function LogHistoryViewer({
           sessionId: sessionId ?? filterSessionId.trim(),
           userId: userId.trim(),
           flowId: flowId.trim(),
+          flowStatus: flowStatus || undefined,
         },
         accessToken,
         AbortSignal.any([
@@ -206,7 +211,15 @@ export default function LogHistoryViewer({
     const timer = setTimeout(() => void search(), 400);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate, endDate, fetchLimit, filterSessionId, userId, flowId]);
+  }, [
+    startDate,
+    endDate,
+    fetchLimit,
+    filterSessionId,
+    userId,
+    flowId,
+    flowStatus,
+  ]);
 
   const pagination = usePagination(entries, "", 50);
   const pageEntries = pagination.items;
@@ -231,9 +244,10 @@ export default function LogHistoryViewer({
         onUserChange={setUserId}
         flowId={flowId}
         onFlowChange={setFlowId}
+        flowStatus={flowStatus}
+        onFlowStatusChange={setFlowStatus}
         limit={fetchLimit}
         onLimitChange={setFetchLimit}
-        onSearch={() => void search()}
         loading={loading}
         searched={searched}
         error={error}
@@ -343,6 +357,15 @@ export default function LogHistoryViewer({
                   value={flowId}
                   placeholder="Optional"
                   onChange={(e) => setFlowId(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="log-flow-status">{tl("flowStatus")}</Label>
+                <LogFlowStatusSelect
+                  id="log-flow-status"
+                  value={flowStatus}
+                  onChange={setFlowStatus}
+                  className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                 />
               </div>
             </>

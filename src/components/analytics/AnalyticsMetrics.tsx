@@ -85,7 +85,7 @@ function journeyFigure(
 }
 
 const icons = [GroupIcon, ChatIcon, BoltIcon, PieChartIcon];
-const journeyIcons = [GroupIcon, CheckCircleIcon, BoltIcon, TimeIcon];
+const journeyIcons = [GroupIcon, CheckCircleIcon, TimeIcon, BoltIcon];
 export default function AnalyticsMetrics({
   section,
   data,
@@ -111,9 +111,9 @@ export default function AnalyticsMetrics({
       (Array.isArray(data.errors) ? data.errors.length : null),
   };
   if (section === "users") return <AudienceKpiCards data={data} />;
-  // Performance and activity logs show the KPIs the API itself lists.
+  // Performance, AI quality and activity logs show the KPIs the API itself lists.
   if (
-    (section === "performance" || section === "logs") &&
+    (section === "performance" || section === "logs" || section === "nlp") &&
     kpiEntries(data).length
   )
     return <AnalyticsTopKpis data={data} />;
@@ -138,8 +138,23 @@ export default function AnalyticsMetrics({
           >
             <MetricHeader
               label={t(`fields.${field}`)}
+              // Journeys show their count (e.g. "266/550") under the title; a card
+              // without one keeps an invisible line so the headers stay level.
               detail={
-                journeys?.figure ?? formattedValue(metricRecord(data, field))
+                section === "flows"
+                  ? null
+                  : (journeys?.figure ??
+                    formattedValue(metricRecord(data, field)))
+              }
+              badge={
+                section === "flows" ? (
+                  <span
+                    aria-hidden={journeys?.figure ? undefined : true}
+                    className={`block text-theme-xs leading-4 font-medium tabular-nums ${journeys?.figure ? "text-gray-500 dark:text-gray-400" : "invisible"}`}
+                  >
+                    {journeys?.figure ?? "0/0"}
+                  </span>
+                ) : undefined
               }
               icon={<Icon />}
               info={

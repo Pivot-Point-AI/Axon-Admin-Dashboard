@@ -11,7 +11,7 @@ import { useFormatter, useLocale, useTranslations } from "next-intl";
 import ComponentCard from "@/components/common/ComponentCard";
 import { ChatIcon, GlobeIcon, GroupIcon } from "@/icons";
 import AnalyticsEmptyState from "./AnalyticsEmptyState";
-import { languageName, languageRows } from "./analyticsData";
+import { languageName, languageRows, languageUnit } from "./analyticsData";
 
 const colors = [
   "var(--color-brand-600)",
@@ -43,6 +43,7 @@ export default function AnalyticsLanguageBreakdown({
   const format = useFormatter();
   const [expanded, setExpanded] = useState(false);
   const { rows, total } = languageRows(value);
+  const unit = languageUnit(value);
   const languageCount = rows.filter((row) => row.key !== "unknown").length;
   const gradient = rows
     .map((row, index) => {
@@ -148,7 +149,11 @@ export default function AnalyticsLanguageBreakdown({
                 tone: "bg-brand-50/60 dark:bg-brand-500/10",
               },
               {
-                label: t("design.totalUsersLabel"),
+                label: t(
+                  unit === "sessions"
+                    ? "design.totalSessionsLabel"
+                    : "design.totalUsersLabel",
+                ),
                 value: total,
                 icon: <GroupIcon />,
                 tone: "bg-theme-purple-500/5 dark:bg-theme-purple-500/10",

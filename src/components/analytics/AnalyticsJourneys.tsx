@@ -54,9 +54,11 @@ export default function AnalyticsJourneys({ data }: AnalyticsJourneysProps) {
             }
             actions={
               <AnalyticsCardActions>
+                {/* Same height as the period button beside it. */}
                 <div className="w-full sm:w-64">
                   <Input
                     type="search"
+                    className="h-8 py-1 text-theme-xs"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder={t("design.searchJourneys")}

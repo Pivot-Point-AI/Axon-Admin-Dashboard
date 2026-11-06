@@ -1,11 +1,34 @@
 // Response types from the admin OpenAPI schema.
+/** Standardized KPI block (`ComparativeKpiMetric` in the OpenAPI schema). */
+export interface ComparativeKpiMetric {
+  title?: string | null;
+  value: number | string;
+  previous_value?: number | string | null;
+  growth_pct?: number | null;
+  /** Human comparison badge, e.g. "-37.5% vs last week". */
+  display?: string | null;
+  trend?: "up" | "down" | "neutral" | string;
+  sentiment?: "positive" | "negative" | "neutral" | string;
+  comparison_period?: string;
+  description?: string | null;
+  stat_info?: string | null;
+  /** Ratio string, e.g. "12/15". */
+  ratio_display?: string | null;
+  [key: string]: unknown;
+}
+
 interface AnalyticsTrendBlocks {
   top_kpis?: Record<string, unknown>;
 }
 
-export interface UserStatsSummaryResponse extends AnalyticsTrendBlocks {
+export interface UserStatsSummaryResponse {
+  top_kpis?: Record<string, ComparativeKpiMetric>;
   active_audience?: Record<string, unknown>;
+  language_preferences?: Record<string, unknown>;
+  user_growth_and_retention?: Array<Record<string, unknown>>;
+  /** @deprecated Older name for `user_growth_and_retention`. */
   audience_and_retention?: Array<Record<string, unknown>>;
+  /** @deprecated Merged into `user_growth_and_retention`. */
   new_user_acquisition?: Record<string, unknown>;
   total_users: number;
   active_sessions: number;
@@ -64,11 +87,7 @@ export interface FlowStatsSummaryResponse extends AnalyticsTrendBlocks {
 
 export interface NlpStatsSummaryResponse extends AnalyticsTrendBlocks {
   confidence_distribution?: Record<string, unknown>;
-  why_ai_fallback_was_used?: Record<string, unknown>;
-  safety_blocks_by_risk?: Record<string, unknown>;
-  safety_blocks_by_reason?: Record<string, unknown>;
   what_users_ask_for?: Record<string, unknown>;
-  fallbacks_and_safety?: Record<string, unknown>;
   date: string;
   total_classified_turns: number;
   average_intent_confidence: number;
@@ -76,18 +95,17 @@ export interface NlpStatsSummaryResponse extends AnalyticsTrendBlocks {
   intent_confidence_buckets: Record<string, unknown>;
   llm_fallback_count: number;
   llm_fallback_rate_pct: number;
-  fallback_reasons: Record<string, number>;
   guardrail_violations_count: number;
-  guardrail_violations_by_risk: Record<string, number>;
-  guardrail_violations_by_reason: Record<string, number>;
   intent_distribution: Record<string, unknown>;
 }
 
 export interface PerformanceStatsSummaryResponse extends AnalyticsTrendBlocks {
-  response_time_percentiles?: Record<string, unknown>;
-  speech_recognition_percentiles?: Record<string, unknown>;
-  ai_generation_percentiles?: Record<string, unknown>;
-  average_time_by_stage?: Record<string, number>;
+  average_response_time_summary?: Record<string, unknown>;
+  speech_to_text_summary?: Record<string, unknown>;
+  text_to_speech_summary?: Record<string, unknown>;
+  turn_time_breakdown_by_intent?: Record<string, unknown>;
+  speech_to_text_breakdown_by_intent?: Record<string, unknown>;
+  text_to_speech_breakdown_by_intent?: Record<string, unknown>;
   slowest_interactions?: Array<Record<string, unknown>>;
   date: string;
   total_measured_turns: number;
@@ -100,13 +118,13 @@ export interface PerformanceStatsSummaryResponse extends AnalyticsTrendBlocks {
 }
 
 export interface LogStatsSummaryResponse extends AnalyticsTrendBlocks {
-  interaction_outcomes?: Record<string, unknown>;
-  conversation_channels?: Record<string, unknown>;
-  speech_recognition_events?: Record<string, unknown>;
+  flow_token_metrics?: Record<string, unknown>;
   token_usage_breakdown?: Record<string, unknown>;
-  actions_delivered?: Array<Record<string, unknown>>;
-  slow_interactions?: Array<Record<string, unknown>>;
+  token_breakdown_by_intent?: Record<string, unknown>;
+  speech_recognition_events?: Record<string, unknown>;
   recognized_errors?: Array<Record<string, unknown>>;
+  /** @deprecated Backward-compatible alias for `token_breakdown_by_intent`. */
+  actions_delivered?: Array<Record<string, unknown>> | Record<string, unknown> | null;
   found: boolean;
   date: string;
   turn_success_count?: number;

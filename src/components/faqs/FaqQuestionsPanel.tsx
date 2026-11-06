@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import ComponentCard from "@/components/common/ComponentCard";
 import Pagination, { RowsPerPage } from "@/components/common/Pagination";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
-import { DocsIcon, PlusIcon, SearchOutlineIcon } from "@/icons";
+import {
+  ChevronDownIcon,
+  DocsIcon,
+  PlusIcon,
+  SearchOutlineIcon,
+} from "@/icons";
 import usePagination from "@/hooks/usePagination";
 import FaqQuestion from "./FaqQuestion";
 import type { FAQItem } from "./faqData";
+import { toolbarButtonClass } from "@/components/form/toolbarControls";
 
 interface FaqQuestionsPanelProps {
   items: FAQItem[] | null;
@@ -21,6 +26,8 @@ interface FaqQuestionsPanelProps {
   onEdit: (item: FAQItem) => void;
   onDelete: (item: FAQItem) => void;
   onSelectSection: (section: string | null) => void;
+  /** Extra toolbar action shown before the Add button, e.g. "Edit header". */
+  headerAction?: ReactNode;
 }
 
 export default function FaqQuestionsPanel({
@@ -33,6 +40,7 @@ export default function FaqQuestionsPanel({
   onEdit,
   onDelete,
   onSelectSection,
+  headerAction,
 }: FaqQuestionsPanelProps) {
   const t = useTranslations("faqs");
   const statusText = useTranslations("status");
@@ -57,16 +65,64 @@ export default function FaqQuestionsPanel({
   const hasFilters =
     query.trim() !== "" || status !== "all" || selected !== null;
   const selectClass =
-    "h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-600 focus-visible:outline-2 focus-visible:outline-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300";
+    "h-9 w-full appearance-none rounded-lg border border-gray-200 bg-white ps-3 pe-9 text-theme-xs font-medium text-gray-700 shadow-theme-xs transition-colors hover:border-gray-300 focus-visible:outline-2 focus-visible:outline-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-600";
+  const selectChevron = (
+    <ChevronDownIcon
+      aria-hidden="true"
+      className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+    />
+  );
   return (
-    <ComponentCard
-      title={selected ?? t("items")}
-      description={t("design.listHint")}
-      actions={
-        <div className="flex flex-wrap gap-2">
+    <section className="axon-panel min-w-0 p-4 sm:p-5">
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-60 grow basis-60">
+          <SearchOutlineIcon
+            aria-hidden="true"
+            className="pointer-events-none absolute start-3.5 top-1/2 z-1 size-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+          />
+          <Input
+            aria-label={t("search")}
+            placeholder={t("design.searchPlaceholder")}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            className="h-9! rounded-lg! ps-10 text-theme-xs"
+          />
+        </div>
+        <div className="relative min-w-0 grow sm:w-44 sm:grow-0">
+          <select
+            aria-label={t("design.statusFilter")}
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+            className={selectClass}
+          >
+            <option value="all">{t("design.allStatuses")}</option>
+            <option value="active">{statusText("active")}</option>
+            <option value="inactive">{statusText("inactive")}</option>
+          </select>
+          {selectChevron}
+        </div>
+        <div className="relative min-w-0 grow sm:w-52 sm:grow-0 xl:hidden">
+          <select
+            aria-label={t("design.sectionFilter")}
+            value={selected ?? ""}
+            onChange={(event) => onSelectSection(event.target.value || null)}
+            className={selectClass}
+          >
+            <option value="">{t("design.allSections")}</option>
+            {sections.map((section) => (
+              <option key={section} value={section}>
+                {section}
+              </option>
+            ))}
+          </select>
+          {selectChevron}
+        </div>
+        <RowsPerPage pagination={pagination} disabled={loading} />
+        <div className="ms-auto flex flex-wrap items-center gap-2">
+          <span className="contents xl:hidden">{headerAction}</span>
           <Button
             size="sm"
-            className="h-10"
+            className={toolbarButtonClass}
             disabled={items === null || loading || busyId !== null}
             startIcon={<PlusIcon aria-hidden="true" className="size-4" />}
             onClick={onCreate}
@@ -74,46 +130,6 @@ export default function FaqQuestionsPanel({
             {t("add")}
           </Button>
         </div>
-      }
-    >
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative min-w-60 grow basis-60">
-          <SearchOutlineIcon
-            aria-hidden="true"
-            className="pointer-events-none absolute start-3.5 top-3 size-4 text-gray-400 dark:text-gray-500"
-          />
-          <Input
-            aria-label={t("search")}
-            placeholder={t("design.searchPlaceholder")}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            className="h-10! ps-10"
-          />
-        </div>
-        <select
-          aria-label={t("design.statusFilter")}
-          value={status}
-          onChange={(event) => setStatus(event.target.value)}
-          className={`${selectClass} min-w-0 grow sm:grow-0`}
-        >
-          <option value="all">{t("design.allStatuses")}</option>
-          <option value="active">{statusText("active")}</option>
-          <option value="inactive">{statusText("inactive")}</option>
-        </select>
-        <select
-          aria-label={t("design.sectionFilter")}
-          value={selected ?? ""}
-          onChange={(event) => onSelectSection(event.target.value || null)}
-          className={`${selectClass} min-w-0 grow sm:grow-0 xl:hidden`}
-        >
-          <option value="">{t("design.allSections")}</option>
-          {sections.map((section) => (
-            <option key={section} value={section}>
-              {section}
-            </option>
-          ))}
-        </select>
-        <RowsPerPage pagination={pagination} disabled={loading} />
       </div>
       {error && (
         <p
@@ -131,7 +147,7 @@ export default function FaqQuestionsPanel({
           showRows={false}
         />
       )}
-      <div aria-busy={loading} className="space-y-1.5">
+      <div aria-busy={loading} className="space-y-3">
         {loading && items === null ? (
           <>
             <p role="status" className="sr-only">
@@ -209,6 +225,6 @@ export default function FaqQuestionsPanel({
           disabled={loading}
         />
       )}
-    </ComponentCard>
+    </section>
   );
 }

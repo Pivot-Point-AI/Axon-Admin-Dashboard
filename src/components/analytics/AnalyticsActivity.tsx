@@ -3,9 +3,7 @@ import AnalyticsCardScope from "./AnalyticsCardScope";
 import AnalyticsActivityOutcomes from "./AnalyticsActivityOutcomes";
 import AnalyticsActivityColumns from "./AnalyticsActivityColumns";
 import AnalyticsActivityErrors from "./AnalyticsActivityErrors";
-import AnalyticsDataTable from "./AnalyticsDataTable";
 import { analyticsTableRows } from "./analyticsData";
-import { blockDescription, blocksInfo } from "./analyticsTrends";
 import AnalyticsIntentBreakdown from "./AnalyticsIntentBreakdown";
 import AnalyticsSummaryBlock from "./AnalyticsSummaryBlock";
 
@@ -63,21 +61,6 @@ export default function AnalyticsActivity({
       </AnalyticsCardScope>
       <AnalyticsCardScope section="logs" data={data}>
         {(d) => <AnalyticsActivityErrors data={d} />}
-      </AnalyticsCardScope>
-      {/* The errors exactly as the API lists them, whatever their columns. */}
-      <AnalyticsCardScope section="logs" data={data}>
-        {(d) =>
-          analyticsTableRows(d.recognized_errors ?? d.errors).length > 0 ? (
-            <AnalyticsDataTable
-              field="recognized_errors"
-              value={d.recognized_errors ?? d.errors}
-              description={
-                blockDescription(d, "recognized_errors", "errors") ?? undefined
-              }
-              info={blocksInfo(d, ["recognized_errors", "errors"])}
-            />
-          ) : null
-        }
       </AnalyticsCardScope>
     </div>
   );

@@ -7,7 +7,11 @@ import DateField from "@/components/form/DateField";
 import Button from "@/components/ui/button/Button";
 import { CalenderIcon, CheckLineIcon, ChevronDownIcon } from "@/icons";
 import { useClickOutside } from "@/hooks/useClickOutside";
-import { analyticsPeriods, type AnalyticsPeriod } from "./analyticsPeriods";
+import {
+  analyticsPeriods,
+  weekBounds,
+  type AnalyticsPeriod,
+} from "./analyticsPeriods";
 import { localDateTimeValue } from "@/utils/dateTime";
 
 interface AnalyticsPeriodSelectProps {
@@ -17,7 +21,7 @@ interface AnalyticsPeriodSelectProps {
   end?: string;
   onChange: (period: AnalyticsPeriod) => void;
   onCustomChange?: (start: string, end: string) => void;
-  customMode?: "day" | "range";
+  customMode?: "day" | "range" | "week";
   size?: "sm" | "md";
 }
 
@@ -62,11 +66,15 @@ export default function AnalyticsPeriodSelect({
       : start
         ? displayDate(start)
         : t("design.customRange");
+  // A week is picked by any day in it; the range runs Sunday to Saturday,
+  // stopping at today.
+  const week = customMode === "week" && from ? weekBounds(from) : null;
+  const weekEnd = week && week.end > today ? today : week?.end;
   const invalid =
     !from ||
     (customMode === "range" && (!to || from > to)) ||
     from > today ||
-    (to && to > today);
+    (customMode !== "week" && to && to > today);
 
   return (
     <div
@@ -207,7 +215,9 @@ export default function AnalyticsPeriodSelect({
                 {t(
                   customMode === "day"
                     ? "design.chooseDate"
-                    : "design.customRange",
+                    : customMode === "week"
+                      ? "design.chooseWeek"
+                      : "design.customRange",
                 )}
                 <ChevronDownIcon
                   aria-hidden="true"
@@ -220,19 +230,35 @@ export default function AnalyticsPeriodSelect({
                   onSubmit={(event) => {
                     event.preventDefault();
                     if (!invalid) {
-                      onCustomChange(from, customMode === "day" ? from : to);
+                      if (week && weekEnd) onCustomChange(week.start, weekEnd);
+                      else
+                        onCustomChange(from, customMode === "day" ? from : to);
                       close();
                     }
                   }}
                 >
                   <DateField
                     id={`${id}-from`}
-                    label={t(customMode === "day" ? "date" : "from")}
+                    label={t(
+                      customMode === "day"
+                        ? "date"
+                        : customMode === "week"
+                          ? "design.anyDayInWeek"
+                          : "from",
+                    )}
                     value={from}
                     onChange={setFrom}
                     max={customMode === "range" ? to || today : today}
                     required
                   />
+                  {week && weekEnd && (
+                    <p className="rounded-lg bg-brand-25 px-3 py-2 text-theme-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+                      {t("design.dateRange", {
+                        from: displayDate(week.start),
+                        to: displayDate(weekEnd),
+                      })}
+                    </p>
+                  )}
                   {customMode === "range" && (
                     <DateField
                       id={`${id}-to`}
